@@ -1,4 +1,4 @@
-package com.example.bookforya.ui.theme
+package com.example.bookphoria.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

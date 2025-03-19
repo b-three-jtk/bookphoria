@@ -1,4 +1,4 @@
-package com.example.bookforya
+package com.example.bookphoria
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -11,7 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.bookforya.ui.theme.BookForYaTheme
+import com.example.bookphoria.ui.theme.BookForYaTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

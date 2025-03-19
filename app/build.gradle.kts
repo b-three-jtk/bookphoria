@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.bookforya"
+    namespace = "com.example.bookphoria"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.bookforya"
+        applicationId = "com.example.bookphoria"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

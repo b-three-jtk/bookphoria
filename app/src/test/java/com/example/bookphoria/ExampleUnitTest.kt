@@ -1,4 +1,4 @@
-package com.example.bookforya
+package com.example.bookphoria
 
 import org.junit.Test
 
