@@ -8,39 +8,61 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.bookphoria.R
 
-// Define Variable Font Families
-val Manrope = FontFamily(
-    Font(R.font.manrope_extralight, FontWeight.W200),
-    Font(R.font.manrope_light, FontWeight.W300),
-    Font(R.font.manrope_regular, FontWeight.W400),
-    Font(R.font.manrope_medium, FontWeight.W500),
-    Font(R.font.manrope_semibold, FontWeight.W600),
-    Font(R.font.manrope_bold, FontWeight.W700),
-    Font(R.font.manrope_extrabold, FontWeight.W800),
-)
-
+// FontFamily Quicksand
 val Quicksand = FontFamily(
-    Font(R.font.quicksand_light, FontWeight.W100),
-    Font(R.font.quicksand_regular, FontWeight.W400), // Normal
-    Font(R.font.quicksand_medium, FontWeight.W500),
-    Font(R.font.quicksand_semibold, FontWeight.W600),
-    Font(R.font.quicksand_bold, FontWeight.W700), // Bold
+    Font(R.font.quicksand)
 )
 
-// Set Typography with Variable Fonts
-val Typography = Typography(
+val Manrope = FontFamily(
+    Font(R.font.manrope)
+)
+
+// Typography
+val AppTypography = Typography(
+    //Title
+    titleLarge = TextStyle(
+        fontFamily = Quicksand,
+        fontWeight = FontWeight.Bold,
+        fontSize = 40.sp
+    ),
+    titleMedium = TextStyle(
+        fontFamily = Quicksand,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 20.sp
+    ),
+
+    //Subtitle
+    headlineLarge = TextStyle(
+        fontFamily = Quicksand,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp
+    ),
+    headlineMedium = TextStyle(
+        fontFamily = Quicksand,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp
+    ),
+
+    //Body
     bodyLarge = TextStyle(
         fontFamily = Manrope,
-        fontWeight = FontWeight.W400, // Normal weight
-        fontSize = 14.sp,
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
         lineHeight = 24.sp,
         letterSpacing = 0.5.sp
     ),
-    titleLarge = TextStyle(
-        fontFamily = Quicksand,
-        fontWeight = FontWeight.W700, // Bold weight
-        fontSize = 32.sp,
-        lineHeight = 28.sp,
-        letterSpacing = 0.sp
+    bodyMedium = TextStyle(
+        fontFamily = Manrope,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.25.sp
+    ),
+    bodySmall = TextStyle(
+        fontFamily = Manrope,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.4.sp
     )
 )
