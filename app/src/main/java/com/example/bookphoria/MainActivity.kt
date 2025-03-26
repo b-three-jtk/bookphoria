@@ -11,17 +11,22 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bookphoria.ui.AppNavHost
-import com.example.bookphoria.ui.theme.BookForYaTheme
+import com.example.bookphoria.ui.theme.BookPhoriaTheme
+import com.example.bookphoria.ui.viewmodel.AuthViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
 
         setContent {
-            BookForYaTheme {
-                AppNavHost()
+            BookPhoriaTheme {
+                val authViewModel: AuthViewModel = viewModel()
+                AppNavHost(authViewModel = authViewModel)
             }
         }
     }

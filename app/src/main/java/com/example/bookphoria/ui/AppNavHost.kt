@@ -11,20 +11,20 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.bookphoria.ui.auth.LoginScreen
+import com.example.bookphoria.ui.viewmodel.AuthViewModel
 
 @Composable
-fun AppNavHost() {
+fun AppNavHost(authViewModel: AuthViewModel) {
     val navController = rememberNavController()
-    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route ?: "list"
 
-    Scaffold() { innerPadding ->
+    Scaffold { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = "login",
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home") {
-                LoginScreen()
+            composable("login") {
+                LoginScreen(viewModel = authViewModel)
             }
         }
     }

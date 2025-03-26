@@ -1,9 +1,10 @@
 package com.example.bookphoria.data.remote.responses
 
+import com.google.gson.annotations.SerializedName
+
 data class UserResponse(
-    val id: Int,
-    val name: String,
-    val email: String,
-    val password: String,
-    val profilePicture: String? = null
+//    val profilePicture: String? = null,
+    @SerializedName("id") val id: Int,
+    @SerializedName("name") val name: String,
+    @SerializedName("email") val email: String
 )

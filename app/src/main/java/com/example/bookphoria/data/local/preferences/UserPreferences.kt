@@ -12,7 +12,7 @@ import javax.inject.Inject
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_prefs")
 
 class UserPreferences @Inject constructor(@ApplicationContext context: Context) {
-    private val dataStore = context.dataStore
+    private val dataStore: DataStore<Preferences> = preferencesDataStore(name = "user_prefs").getValue(context, UserPreferences::dataStore)
 
     companion object {
         private val ACCESS_TOKEN_KEY = stringPreferencesKey("access_token")

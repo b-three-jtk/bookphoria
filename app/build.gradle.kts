@@ -23,7 +23,6 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -53,8 +52,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.runtime.livedata)
-    implementation (libs.androidx.constraintlayout)
+    implementation (libs.androidx.runtime.livedata)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -70,14 +68,11 @@ dependencies {
     implementation ("androidx.paging:paging-runtime-ktx:3.3.0")
     implementation ("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.5.0")
-    implementation ("com.google.dagger:hilt-android:2.51")
-    ksp("com.google.dagger:hilt-android-compiler:2.51")
+    implementation ("com.google.dagger:hilt-android:2.50")
+    ksp("com.google.dagger:hilt-android-compiler:2.50")
     implementation ("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation("androidx.compose.foundation:foundation:1.5.0")
-    implementation ("androidx.constraintlayout:constraintlayout-compose:1.0.1")
-//    implementation 'co.yml:ycharts:2.1.0'
-    implementation ("androidx.datastore:datastore-preferences:1.0.0")
 
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))
     implementation("androidx.paging:paging-compose:3.3.0")
