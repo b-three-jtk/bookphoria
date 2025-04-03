@@ -11,6 +11,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.bookphoria.ui.auth.LoginScreen
+import com.example.bookphoria.ui.book.SearchScreen
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
 
 @Composable
@@ -24,7 +25,13 @@ fun AppNavHost(authViewModel: AuthViewModel) {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("login") {
-                LoginScreen(viewModel = authViewModel)
+                LoginScreen(viewModel = authViewModel, navController = navController)
+            }
+            composable("home") {
+                HomeScreen()
+            }
+            composable("search") {
+                SearchScreen()
             }
         }
     }

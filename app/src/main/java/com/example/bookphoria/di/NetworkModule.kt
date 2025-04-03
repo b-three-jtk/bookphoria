@@ -35,7 +35,7 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(client: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://127.0.0.1:8000/api/")
+            .baseUrl("https://42ed-2001-448a-3048-87ad-63af-7f52-ba7b-a749.ngrok-free.app/api/")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

@@ -25,9 +25,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             BookPhoriaTheme {
-                val authViewModel: AuthViewModel = viewModel()
+                val authViewModel: AuthViewModel = hiltViewModel()
                 AppNavHost(authViewModel = authViewModel)
             }
         }
     }
 }
+
