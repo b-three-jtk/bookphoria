@@ -41,6 +41,7 @@ import com.example.bookphoria.ui.viewmodel.AuthViewModel
 
 @Composable
 fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
+    val isLoading by viewModel.isLoading.collectAsState()
     val context = LocalContext.current
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -122,26 +123,25 @@ fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
             text = "DAFTAR",
             backgroundColor = PrimaryOrange,
             onClick = {
-                viewModel.register(
-                    username = username,
-                    email = email,
-                    password = password,
-                    onSuccess = {
-                        Toast.makeText(
-                            context,
-                            "Anda telah Terdaftar! Selamat Datang.",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        navController.navigate("home")
-                    },
-                    onError = {
-                        Toast.makeText(
-                            context,
-                            "Terjadi kesalahan saat mendaftar! Coba beberapa saat lagi.",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                if (!isLoading) {
+                    when {
+                        username.isBlank() -> Toast.makeText(context, "Username harus diisi!", Toast.LENGTH_SHORT).show()
+                        email.isBlank() -> Toast.makeText(context, "Email harus diisi!", Toast.LENGTH_SHORT).show()
+                        password.isBlank() -> Toast.makeText(context, "Password harus diisi!", Toast.LENGTH_SHORT).show()
+                        else -> viewModel.register(
+                            name = username,
+                            email = email,
+                            password = password,
+                            onSuccess = {
+                                Toast.makeText(context, "Anda telah Terdaftar! Selamat Datang.", Toast.LENGTH_SHORT).show()
+                                navController.navigate("home")
+                            },
+                            onError = {
+                                Toast.makeText(context, "Terjadi kesalahan: $it", Toast.LENGTH_SHORT).show()
+                            }
+                        )
                     }
-                )
+                }
             }
         )
 
@@ -206,7 +206,9 @@ fun RegisterButton(
     backgroundColor: Color
 ) {
     Button(
-        onClick = onClick,
+        onClick = {
+            onClick()
+        },
         modifier = modifier.fillMaxWidth().padding(vertical = 22.dp),
         shape = RoundedCornerShape(15.dp),
         contentPadding = PaddingValues(vertical = 14.dp),
