@@ -8,9 +8,18 @@ interface AuthApiService {
 
     @POST("login")
     suspend fun login(@Body request: LoginRequest): AuthResponse
+
+    @POST("register")
+    suspend fun register(@Body request: RegisterRequest): AuthResponse
 }
 
 data class LoginRequest(
+    val email: String,
+    val password: String
+)
+
+data class RegisterRequest(
+    val name: String,
     val email: String,
     val password: String
 )
