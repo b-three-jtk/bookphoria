@@ -76,3 +76,15 @@ val AppTypography = Typography(
         letterSpacing = 0.4.sp
     )
 )
+
+val BodyBottomSheet = TextStyle(
+    fontFamily = Quicksand,
+    fontWeight = FontWeight.Normal,
+    fontSize = 18.sp
+)
+
+val TitleExtraSmall = TextStyle(
+    fontFamily = Quicksand,
+    fontWeight = FontWeight.Bold,
+    fontSize = 18.sp
+)
