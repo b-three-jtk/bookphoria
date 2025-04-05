@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.bookphoria.ui.auth.LoginScreen
+import com.example.bookphoria.ui.auth.RegisterScreen
 import com.example.bookphoria.ui.book.SearchScreen
 import com.example.bookphoria.ui.home.HomeScreen
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
@@ -24,6 +25,9 @@ fun AppNavHost(authViewModel: AuthViewModel) {
         ) {
             composable("login") {
                 LoginScreen(viewModel = authViewModel, navController = navController)
+            }
+            composable("register") {
+                RegisterScreen(viewModel = authViewModel, navController = navController)
             }
             composable("home") {
                 HomeScreen()

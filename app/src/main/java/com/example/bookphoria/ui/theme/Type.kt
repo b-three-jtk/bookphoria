@@ -27,17 +27,27 @@ val AppTypography = Typography(
     ),
     titleMedium = TextStyle(
         fontFamily = Quicksand,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 20.sp
+        fontWeight = FontWeight.Bold,
+        fontSize = 32.sp
+    ),
+    titleSmall = TextStyle(
+        fontFamily = Quicksand,
+        fontWeight = FontWeight.Bold,
+        fontSize = 24.sp
     ),
 
     //Subtitle
     headlineLarge = TextStyle(
         fontFamily = Quicksand,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 16.sp
+        fontSize = 20.sp
     ),
     headlineMedium = TextStyle(
+        fontFamily = Quicksand,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp
+    ),
+    headlineSmall = TextStyle(
         fontFamily = Quicksand,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp
