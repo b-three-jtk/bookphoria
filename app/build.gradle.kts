@@ -83,5 +83,5 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation("androidx.compose.material:material-icons-extended:1.5.0")
     implementation ("com.github.0xRahad:RioBottomNavigation:1.0.2")
-
+    implementation ("com.airbnb.android:lottie-compose:6.4.0")
 }
