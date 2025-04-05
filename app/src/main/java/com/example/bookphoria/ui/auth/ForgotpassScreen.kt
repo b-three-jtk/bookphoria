@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,23 +39,19 @@ fun ForgotpassScreen(viewModel: AuthViewModel, navController: NavController) {
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(80.dp))
+        Spacer(modifier = Modifier.height(150.dp))
 
         // Key Icon
-        Box(
+        Image(
+            painter = painterResource(id = R.drawable.forgot),
+            contentDescription = "Key Icon",
             modifier = Modifier
-                .size(100.dp)
+                .size(80.dp)
                 .shadow(6.dp, CircleShape)
-                .clip(CircleShape)
-                .background(Color.White),
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.forgot),
-                contentDescription = "Key Icon",
-                modifier = Modifier.size(60.dp)
-            )
-        }
+                .clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+
 
         Spacer(modifier = Modifier.height(20.dp))
 
