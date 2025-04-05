@@ -7,8 +7,10 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.bookphoria.ui.auth.ForgotpassScreen
 import com.example.bookphoria.ui.auth.LoginScreen
 import com.example.bookphoria.ui.auth.RegisterScreen
+import com.example.bookphoria.ui.auth.ResetpassScreen
 import com.example.bookphoria.ui.book.SearchScreen
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
 
@@ -19,7 +21,7 @@ fun AppNavHost(authViewModel: AuthViewModel) {
     Scaffold { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "login",
+            startDestination = "reset",
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("login") {
@@ -27,6 +29,12 @@ fun AppNavHost(authViewModel: AuthViewModel) {
             }
             composable("register") {
                 RegisterScreen(viewModel = authViewModel, navController = navController)
+            }
+            composable("forgot") {
+                ForgotpassScreen(viewModel = authViewModel, navController = navController)
+            }
+            composable("reset") {
+                ResetpassScreen(viewModel = authViewModel, navController = navController)
             }
             composable("home") {
                 HomeScreen()
