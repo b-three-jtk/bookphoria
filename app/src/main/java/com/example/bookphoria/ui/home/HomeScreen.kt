@@ -1,4 +1,4 @@
-package com.example.bookphoria.ui
+package com.example.bookphoria.ui.home
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,16 +13,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.bookphoria.R
 import com.example.bookphoria.ui.book.SearchScreen
 import com.example.bookphoria.ui.theme.PrimaryOrange
 import com.rahad.riobottomnavigation.composables.RioBottomNavItemData
@@ -68,7 +65,7 @@ fun HomeScreen() {
 @Composable
 fun ScreenContent(selectedIndex: Int, modifier: Modifier = Modifier) {
     when (selectedIndex) {
-        0 -> ShowText("Home")
+        0 -> HomeScreen()
         1 -> SearchScreen()
         2 -> ShowText("My Shelf")
         3 -> ShowText("Profile")
