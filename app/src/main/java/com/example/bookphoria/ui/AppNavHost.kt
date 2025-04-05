@@ -21,7 +21,7 @@ fun AppNavHost(authViewModel: AuthViewModel) {
     Scaffold { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "reset",
+            startDestination = "login",
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("login") {
