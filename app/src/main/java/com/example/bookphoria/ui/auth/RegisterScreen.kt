@@ -84,7 +84,7 @@ fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
 
         Text(
             text = "Buat akun untuk bergabung dengan Bookphoria!",
-            style = AppTypography.headlineLarge,
+            style = AppTypography.headlineMedium,
             color = Color.Gray,
             textAlign = TextAlign.Start,
             modifier = Modifier
