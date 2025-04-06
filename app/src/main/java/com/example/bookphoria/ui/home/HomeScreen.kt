@@ -18,6 +18,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.bookphoria.ui.book.SearchScreen
 import com.example.bookphoria.ui.theme.BodyBottomSheet
 import com.example.bookphoria.ui.theme.PrimaryOrange
@@ -27,73 +31,70 @@ import com.rahad.riobottomnavigation.composables.RioBottomNavigation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(navController: NavController) {
+    val childNavController = rememberNavController()
+    val selectedIndex = rememberSaveable { mutableIntStateOf(0) }
+    val showSheet = remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var isSheetOpen by remember { mutableStateOf(false) }
+
+    if (showSheet.value) {
+        ModalBottomSheet(
+            onDismissRequest = { showSheet.value = false },
+            sheetState = sheetState,
+            containerColor = Color.White
+        ) {
+            BottomSheetContent(navController)
+        }
+    }
 
     val items = listOf(
-        Icons.Default.Home,
-        Icons.Default.Search,
-        Icons.Default.Book,
-        Icons.Default.Person
+        BottomNavItem("home-tab", Icons.Default.Home, "Home"),
+        BottomNavItem("search-tab", Icons.Default.Search, "Search"),
+        BottomNavItem("shelf-tab", Icons.Default.Book, "My Shelf"),
+        BottomNavItem("profile-tab", Icons.Default.Person, "Profile")
     )
-
-    val labels = listOf("Home", "Search", "My Shelf", "Profile")
-    val selectedIndex = rememberSaveable { mutableIntStateOf(0) }
-
-    val buttons = items.mapIndexed { index, icon ->
-        RioBottomNavItemData(
-            imageVector = icon,
-            selected = index == selectedIndex.value,
-            onClick = { selectedIndex.value = index },
-            label = labels[index]
-        )
-    }
 
     Scaffold(
         bottomBar = {
-            BottomNavigationBar(
-                buttons = buttons,
-                onFabClick = { isSheetOpen = true }
+            RioBottomNavigation(
+                fabIcon = Icons.Default.Add,
+                onFabClick = { showSheet.value = true },
+                buttons = items.mapIndexed { index, item ->
+                    RioBottomNavItemData(
+                        imageVector = item.icon,
+                        selected = selectedIndex.intValue == index,
+                        onClick = {
+                            selectedIndex.intValue = index
+                            childNavController.navigate(item.route) {
+                                popUpTo(childNavController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        label = item.label
+                    )
+                },
+                fabSize = 70.dp,
+                barHeight = 70.dp,
+                selectedItemColor = PrimaryOrange,
+                fabBackgroundColor = PrimaryOrange,
             )
-        },
-        modifier = Modifier.fillMaxSize()
+        }
     ) { innerPadding ->
-        ScreenContent(selectedIndex.intValue, modifier = Modifier.padding(innerPadding))
-    }
-
-    if (isSheetOpen) {
-        ModalBottomSheet(sheetState = sheetState, onDismissRequest = { isSheetOpen = false }) {
-            BottomSheetContent()
+        NavHost(
+            navController = childNavController,
+            startDestination = "home-tab",
+            modifier = Modifier.padding(innerPadding)
+        ) {
+            composable("home-tab") { HomeContent() }
+            composable("search-tab") { SearchScreen() }
+            composable("shelf-tab") { ShowText("My Shelf") }
+            composable("profile-tab") { ShowText("Profile") }
         }
     }
 }
 
-@Composable
-fun ScreenContent(selectedIndex: Int, modifier: Modifier = Modifier) {
-    when (selectedIndex) {
-        0 -> HomeContent()
-        1 -> SearchScreen()
-        2 -> ShowText("My Shelf")
-        3 -> ShowText("Profile")
-    }
-}
-
-@Composable
-fun BottomNavigationBar(
-    buttons: List<RioBottomNavItemData>,
-    onFabClick: () -> Unit
-) {
-    RioBottomNavigation(
-        fabIcon = Icons.Default.Add,
-        onFabClick = onFabClick,
-        buttons = buttons,
-        fabSize = 70.dp,
-        barHeight = 70.dp,
-        selectedItemColor = PrimaryOrange,
-        fabBackgroundColor = PrimaryOrange,
-    )
-}
+data class BottomNavItem(val route: String, val icon: ImageVector, val label: String)
 
 @Composable
 fun ShowText(text: String) {
@@ -104,13 +105,11 @@ fun ShowText(text: String) {
 
 @Composable
 fun HomeContent() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = "Home", style = TextStyle(fontSize = 24.sp))
-    }
+
 }
 
 @Composable
-fun BottomSheetContent() {
+fun BottomSheetContent(navController: NavController) {
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         Text(
             text = "Tambahkan buku Anda ke koleksi",
@@ -136,7 +135,9 @@ fun BottomSheetContent() {
             bgColor = Color(0xFFE5A22D),
             title = "Tambahkan buku Anda",
             description = "Tambahkan buku Anda secara manual",
-            onClick = {}
+            onClick = {
+                navController.navigate("add-new-book")
+            }
         )
     }
 }

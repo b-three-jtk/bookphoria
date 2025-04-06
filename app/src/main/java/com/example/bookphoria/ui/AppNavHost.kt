@@ -31,10 +31,12 @@ import com.example.bookphoria.ui.auth.ForgotpassScreen
 import com.example.bookphoria.ui.auth.LoginScreen
 import com.example.bookphoria.ui.auth.RegisterScreen
 import com.example.bookphoria.ui.auth.ResetpassScreen
+import com.example.bookphoria.ui.book.EntryBookScreen
 import com.example.bookphoria.ui.book.SearchScreen
 import com.example.bookphoria.ui.home.HomeScreen
 import com.example.bookphoria.ui.onboarding.OnboardingScreen
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
+import com.example.bookphoria.ui.viewmodel.BookViewModel
 import com.example.bookphoria.ui.viewmodel.OnboardingViewModel
 
 @Composable
@@ -42,6 +44,8 @@ fun AppNavHost(
     authViewModel: AuthViewModel,
     onboardingViewModel: OnboardingViewModel = hiltViewModel(),
     onDeepLinkTriggered: (NavController) -> Unit = {}
+    bookViewModel: BookViewModel,
+    onboardingViewModel: OnboardingViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
     val isOnboardingCompleteState = onboardingViewModel
@@ -69,7 +73,7 @@ fun AppNavHost(
             }
 
             else -> {
-                val startDestination = if (isOnboardingComplete) "login" else "onboarding"
+                val startDestination = if (isOnboardingComplete) "register" else "onboarding"
 
                 NavHost(
                     navController = navController,
@@ -99,7 +103,7 @@ fun AppNavHost(
                         ResetpassScreen(viewModel = authViewModel, navController = navController)
                     }
                     composable("home") {
-                        HomeScreen()
+                        HomeScreen(navController = navController)
                     }
                     composable("search") {
                         SearchScreen()
@@ -119,6 +123,9 @@ fun AppNavHost(
                             token = token,
                             email = email
                         )
+                    }
+                    composable("add-new-book") {
+                        EntryBookScreen(navController = navController, viewModel = bookViewModel)
                     }
                 }
             }
