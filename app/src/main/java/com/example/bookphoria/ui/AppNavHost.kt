@@ -21,9 +21,12 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.bookphoria.ui.auth.ForgotpassScreen
 import com.example.bookphoria.ui.auth.LoginScreen
 import com.example.bookphoria.ui.auth.RegisterScreen
@@ -40,6 +43,8 @@ import com.example.bookphoria.ui.viewmodel.OnboardingViewModel
 @Composable
 fun AppNavHost(
     authViewModel: AuthViewModel,
+    onboardingViewModel: OnboardingViewModel = hiltViewModel(),
+    onDeepLinkTriggered: (NavController) -> Unit = {}
     bookViewModel: BookViewModel,
     onboardingViewModel: OnboardingViewModel = hiltViewModel()
 ) {
@@ -49,6 +54,10 @@ fun AppNavHost(
         .collectAsState(initial = null)
 
     val isOnboardingComplete = isOnboardingCompleteState.value
+
+    LaunchedEffect(navController) {
+        onDeepLinkTriggered(navController)
+    }
 
     Scaffold { innerPadding ->
         when (isOnboardingComplete) {
@@ -99,6 +108,22 @@ fun AppNavHost(
                     }
                     composable("search") {
                         SearchScreen()
+                    }
+                    composable(
+                        "reset?token={token}&email={email}",
+                        arguments = listOf(
+                            navArgument("token") { type = NavType.StringType; defaultValue = "" },
+                            navArgument("email") { type = NavType.StringType; defaultValue = "" }
+                        )
+                    ) { backStackEntry ->
+                        val token = backStackEntry.arguments?.getString("token") ?: ""
+                        val email = backStackEntry.arguments?.getString("email") ?: ""
+                        ResetpassScreen(
+                            viewModel = authViewModel,
+                            navController = navController,
+                            token = token,
+                            email = email
+                        )
                     }
                     composable("add-new-book") {
                         EntryBookScreen(navController = navController, viewModel = bookViewModel)

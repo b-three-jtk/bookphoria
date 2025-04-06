@@ -11,6 +11,12 @@ interface AuthApiService {
 
     @POST("register")
     suspend fun register(@Body request: RegisterRequest): AuthResponse
+
+    @POST("forgot-password")
+    suspend fun forgotPassword(@Body request: ForgotPasswordRequest): MessageResponse
+
+    @POST("reset-password")
+    suspend fun resetPassword(@Body request: ResetPasswordRequest): MessageResponse
 }
 
 data class LoginRequest(
@@ -22,4 +28,19 @@ data class RegisterRequest(
     val name: String,
     val email: String,
     val password: String
+)
+
+data class ForgotPasswordRequest(
+    val email: String
+)
+
+data class ResetPasswordRequest(
+    val token: String,
+    val email: String,
+    val password: String,
+    val password_confirmation: String
+)
+
+data class MessageResponse(
+    val message: String
 )

@@ -31,6 +31,15 @@ import com.example.bookphoria.ui.viewmodel.AuthViewModel
 fun ForgotpassScreen(viewModel: AuthViewModel, navController: NavController) {
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf<String?>(null) }
+    val forgotPasswordState by viewModel.forgotPasswordState.collectAsState()
+
+    LaunchedEffect(viewModel) {
+        viewModel.isLoading.collect { loading ->
+            isLoading = loading
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -102,23 +111,51 @@ fun ForgotpassScreen(viewModel: AuthViewModel, navController: NavController) {
 
         Spacer(modifier = Modifier.height(40.dp))
 
+        LaunchedEffect(forgotPasswordState) {
+            forgotPasswordState?.let { result ->
+                if (result.isSuccess) {
+                    message = "Link reset telah dikirim ke $email"
+                } else {
+                    message = result.exceptionOrNull()?.message ?: "Gagal mengirim email reset"
+                }
+            }
+        }
+
         // Reset Button
         Button(
             onClick = {
-                // Handle reset password logic
-                navController.navigate("createNewPassword")
+                viewModel.forgotPassword(email)
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange)
+            colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange),
+            enabled = !isLoading && email.isNotEmpty()
         ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    color = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            } else {
+                Text(
+                    text = "RESET PASSWORD",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+        }
+
+        // Show message if available
+        message?.let {
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "RESET PASSWORD",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
+                text = it,
+                color = PrimaryOrange,
+                textAlign = TextAlign.Center,
+                fontSize = 14.sp
             )
         }
 

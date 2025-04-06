@@ -1,5 +1,6 @@
 package com.example.bookphoria.ui.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,12 +34,37 @@ import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
 
 @Composable
-fun ResetpassScreen(viewModel: AuthViewModel, navController: NavController) {
+fun ResetpassScreen(viewModel: AuthViewModel, navController: NavController, token: String = "", email: String = "") {
     val context = LocalContext.current
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var displayedEmail by remember { mutableStateOf(email) }
+
+    val resetPasswordState by viewModel.resetPasswordState.collectAsState()
+
+    LaunchedEffect(resetPasswordState) {
+        when {
+            resetPasswordState?.isSuccess == true -> {
+                Toast.makeText(context, "Password berhasil diubah", Toast.LENGTH_SHORT).show()
+                navController.navigate("login") {
+                    popUpTo("login") { inclusive = true }
+                }
+            }
+            resetPasswordState?.isFailure == true -> {
+                errorMessage = resetPasswordState?.exceptionOrNull()?.message ?: "Gagal reset password"
+            }
+        }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.isLoading.collect { loading ->
+            isLoading = loading
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -83,6 +109,16 @@ fun ResetpassScreen(viewModel: AuthViewModel, navController: NavController) {
 
         Spacer(modifier = Modifier.height(40.dp))
 
+        // Email Display (jika dari deep link)
+        if (displayedEmail.isNotEmpty()) {
+            Text(
+                text = "Email: $displayedEmail",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+
         // Password Input Field
         OutlinedTextField(
             value = password,
@@ -117,6 +153,15 @@ fun ResetpassScreen(viewModel: AuthViewModel, navController: NavController) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        if (email.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Email: $email",
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+        }
+
         // Confirm Password Input Field
         OutlinedTextField(
             value = confirmPassword,
@@ -149,26 +194,51 @@ fun ResetpassScreen(viewModel: AuthViewModel, navController: NavController) {
             singleLine = true
         )
 
+        errorMessage?.let { message ->
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(top = 8.dp))
+        }
+
         Spacer(modifier = Modifier.height(40.dp))
 
         // Save Button
         Button(
             onClick = {
-                // Handle password save logic
-                navController.navigate("login")
+                when {
+                    password.isEmpty() || confirmPassword.isEmpty() -> {
+                        errorMessage = "Harap isi semua field"
+                    }
+                    password != confirmPassword -> {
+                        errorMessage = "Password tidak cocok"
+                    }
+                    else -> {
+                        errorMessage = null
+                        viewModel.resetPassword(token, displayedEmail, password, confirmPassword)
+                    }
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange)
+            colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange),
+            enabled = !isLoading && password.isNotEmpty() && confirmPassword.isNotEmpty()
         ) {
-            Text(
-                text = "SIMPAN",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    color = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            } else {
+                Text(
+                    text = "SIMPAN",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(20.dp))

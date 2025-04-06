@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -42,9 +44,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lint.kotlin.metadata.Visibility
 import androidx.navigation.NavController
 import com.example.bookphoria.R
-import com.example.bookphoria.ui.components.PrimaryButton
 import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.theme.PrimaryOrange
 import com.example.bookphoria.ui.theme.SoftCream
@@ -206,13 +208,13 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginTextField(
-    modifier: Modifier = Modifier,
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
     leadingIcon: ImageVector,
     contentDescription: String,
     isPassword: Boolean = false,
+    modifier: Modifier = Modifier
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
 
@@ -253,6 +255,24 @@ fun LoginTextField(
         ),
         shape = RoundedCornerShape(20.dp),
     )
+}
+
+@Composable
+fun PrimaryButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    backgroundColor: Color
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth().padding(vertical = 22.dp, horizontal = 56.dp),
+        shape = RoundedCornerShape(15.dp),
+        contentPadding = PaddingValues(vertical = 14.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = backgroundColor)
+    ) {
+        Text(text = text, style = MaterialTheme.typography.bodyLarge, color = Color.White)
+    }
 }
 
 @Preview(showBackground = true)
