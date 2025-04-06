@@ -4,13 +4,29 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.example.bookphoria.data.local.dao.BookDao
 import com.example.bookphoria.data.local.dao.UserDao
+import com.example.bookphoria.data.local.entities.AuthorEntity
+import com.example.bookphoria.data.local.entities.BookAuthorCrossRef
+import com.example.bookphoria.data.local.entities.BookEntity
+import com.example.bookphoria.data.local.entities.BookGenreCrossRef
+import com.example.bookphoria.data.local.entities.GenreEntity
+import com.example.bookphoria.data.local.entities.UserBookCrossRef
 import com.example.bookphoria.data.local.entities.UserEntity
 import kotlinx.coroutines.CoroutineScope
 
-@Database(entities = [UserEntity::class], version = 1, exportSchema = false)
+@Database(entities = [
+    UserEntity::class,
+    BookEntity::class,
+    AuthorEntity::class,
+    GenreEntity::class,
+    BookAuthorCrossRef::class,
+    BookGenreCrossRef::class,
+    UserBookCrossRef::class], version = 2,
+    exportSchema = false)
 abstract class AppDatabase: RoomDatabase() {
     abstract fun userDao(): UserDao
+    abstract fun bookDao(): BookDao
 
     companion object {
         @Volatile
@@ -22,7 +38,9 @@ abstract class AppDatabase: RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "bookphoria"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
 
                 INSTANCE = instance
                 instance
