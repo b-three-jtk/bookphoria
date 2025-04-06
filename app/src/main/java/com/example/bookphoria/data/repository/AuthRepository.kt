@@ -4,8 +4,10 @@ import com.example.bookphoria.data.local.dao.UserDao
 import com.example.bookphoria.data.local.entities.UserEntity
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.AuthApiService
+import com.example.bookphoria.data.remote.api.ForgotPasswordRequest
 import com.example.bookphoria.data.remote.api.LoginRequest
 import com.example.bookphoria.data.remote.api.RegisterRequest
+import com.example.bookphoria.data.remote.api.ResetPasswordRequest
 import com.example.bookphoria.data.remote.responses.AuthResponse
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -54,6 +56,26 @@ class AuthRepository @Inject constructor(
             Result.success(Unit)
         } catch (e: Exception) {
             println("Error saat register: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun forgotPassword(email: String): Result<String> {
+        return try {
+            val response = apiService.forgotPassword(ForgotPasswordRequest(email))
+            Result.success(response.message)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun resetPassword(token: String, email: String, password: String, confirmPassword: String): Result<String> {
+        return try {
+            val response = apiService.resetPassword(
+                ResetPasswordRequest(token, email, password, confirmPassword)
+            )
+            Result.success(response.message)
+        } catch (e: Exception) {
             Result.failure(e)
         }
     }

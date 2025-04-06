@@ -1,5 +1,6 @@
 package com.example.bookphoria.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bookphoria.data.local.dao.UserDao
@@ -18,7 +19,11 @@ class AuthViewModel @Inject constructor(
     private val dao: UserDao
 ) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
+    private val _resetPasswordState = MutableStateFlow<Result<String>?>(null)
+    private val _forgotPasswordState = MutableStateFlow<Result<String>?>(null)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    val resetPasswordState: StateFlow<Result<String>?> = _resetPasswordState.asStateFlow()
+    val forgotPasswordState: StateFlow<Result<String>?> = _forgotPasswordState.asStateFlow()
 
     fun login(email: String, password: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
@@ -46,6 +51,30 @@ class AuthViewModel @Inject constructor(
             }.onFailure { exception ->
                 onError(exception.message ?: "Registration failed")
             }
+        }
+    }
+
+    fun forgotPassword(email: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val result = authRepository.forgotPassword(email)
+                _forgotPasswordState.value = result
+            } catch (e: Exception) {
+                _forgotPasswordState.value = Result.failure(e)
+                Log.e("ForgotPassword", "Error: ${e.message}", e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun resetPassword(token: String, email: String, password: String, confirmPassword: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = authRepository.resetPassword(token, email, password, confirmPassword)
+            _resetPasswordState.value = result
+            _isLoading.value = false
         }
     }
 }

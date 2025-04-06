@@ -44,7 +44,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lint.kotlin.metadata.Visibility
+//import androidx.lint.kotlin.metadata.Visibility
 import androidx.navigation.NavController
 import com.example.bookphoria.R
 import com.example.bookphoria.ui.theme.DarkIndigo
@@ -144,7 +144,10 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
                 Text(
                     text = "Lupa Password?",
                     color = DarkIndigo,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.clickable {
+                        navController.navigate("forgot")
+                    }.padding(top = 8.dp)
                 )
             }
 

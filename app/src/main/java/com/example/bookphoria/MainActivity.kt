@@ -1,5 +1,6 @@
 package com.example.bookphoria
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -27,36 +28,71 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
 import com.example.bookphoria.ui.AppNavHost
 import com.example.bookphoria.ui.theme.BookPhoriaTheme
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        handleDeepLink(intent)
         setContent {
             CobaSplash()
         }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleDeepLink(intent)
+    }
+
+    private fun handleDeepLink(intent: Intent) {
+        if (intent?.action == Intent.ACTION_VIEW) {
+            intent.data?.let { uri ->
+                if (uri.host == "reset-password") {
+                    DeepLinkHolder.apply {
+                        token = uri.getQueryParameter("token") ?: ""
+                        email = uri.getQueryParameter("email") ?: ""
+                        shouldNavigate = true
+                    }
+                }
+            }
+        }
+    }
+}
+
+object DeepLinkHolder {
+    var token by mutableStateOf("")
+    var email by mutableStateOf("")
+    var shouldNavigate by mutableStateOf(false)
 }
 
 @Composable
 fun CobaSplash() {
     var isSplashVisible by remember { mutableStateOf(true) }
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val navController = rememberNavController()
 
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.splashbuku))
-    val progress by animateLottieCompositionAsState(
-        composition,
-        iterations = 1 // hanya sekali animasi
-    )
+    val progress by animateLottieCompositionAsState(composition, iterations = 1)
 
-    // Ganti screen saat animasi selesai
-    LaunchedEffect(key1 = progress) {
+    LaunchedEffect(progress) {
         if (progress == 1f) {
             isSplashVisible = false
+        }
+    }
+
+    LaunchedEffect(DeepLinkHolder.shouldNavigate) {
+        if (DeepLinkHolder.shouldNavigate && !isSplashVisible) {
+            navController.navigate("reset/${DeepLinkHolder.token}/${DeepLinkHolder.email}") {
+                popUpTo("login") { inclusive = true }
+            }
+            DeepLinkHolder.shouldNavigate = false
         }
     }
 
@@ -64,8 +100,17 @@ fun CobaSplash() {
         SplashScreen(composition, progress)
     } else {
         BookPhoriaTheme {
-            val authViewModel: AuthViewModel = hiltViewModel()
-            AppNavHost(authViewModel = authViewModel)
+            AppNavHost(
+                authViewModel = authViewModel,
+                onDeepLinkTriggered = { navController ->
+                    if (DeepLinkHolder.shouldNavigate) {
+                        navController.navigate("reset/${DeepLinkHolder.token}/${DeepLinkHolder.email}") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                        DeepLinkHolder.shouldNavigate = false
+                    }
+                }
+            )
         }
     }
 }
