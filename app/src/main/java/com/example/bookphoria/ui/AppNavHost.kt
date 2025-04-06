@@ -28,6 +28,7 @@ import com.example.bookphoria.ui.auth.ForgotpassScreen
 import com.example.bookphoria.ui.auth.LoginScreen
 import com.example.bookphoria.ui.auth.RegisterScreen
 import com.example.bookphoria.ui.auth.ResetpassScreen
+import com.example.bookphoria.ui.book.DetailBookScreen
 import com.example.bookphoria.ui.book.EntryBookScreen
 import com.example.bookphoria.ui.book.SearchScreen
 import com.example.bookphoria.ui.home.HomeScreen
@@ -101,6 +102,9 @@ fun AppNavHost(
                     }
                     composable("add-new-book") {
                         EntryBookScreen(navController = navController, viewModel = bookViewModel)
+                    }
+                    composable("detail-book") {
+                        DetailBookScreen(navController = navController)
                     }
                 }
             }
