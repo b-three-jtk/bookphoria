@@ -89,7 +89,7 @@ fun AppNavHost(
                 HomeScreen(navController = navController, viewModel = homeViewModel)
             }
             composable("search") {
-                SearchScreen()
+                SearchScreen(navController = navController)
             }
 
             composable(
@@ -139,12 +139,13 @@ fun AppNavHost(
             composable("scan") {
                 ScanCodeScreen(
                     onScanResult = { code ->
+                        // Navigasi ke entry book dengan hasil scan
                         // Simpan ISBN hasil scan ke savedStateHandle
-                        navController.previousBackStackEntry
+                        navController.currentBackStackEntry
                             ?.savedStateHandle
-                            ?.set("isbn_result", code)
+                            ?.set("search_query", code)
 
-                        navController.navigate("add-new-book")
+                        navController.navigate("search")
                     },
                     onCancel = {
                         navController.popBackStack() // kembali ke layar sebelumnya
