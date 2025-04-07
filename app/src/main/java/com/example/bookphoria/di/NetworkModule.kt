@@ -11,6 +11,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
+import com.google.gson.GsonBuilder
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -35,10 +36,15 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideRetrofit(client: OkHttpClient): Retrofit {
+        // Buat Gson dengan setLenient untuk mengatasi JSON yang tidak valid
+        val gson = GsonBuilder()
+            .setLenient()
+            .create()
+
         return Retrofit.Builder()
-            .baseUrl("https://2a99-2001-448a-3043-8a01-24ac-1e8a-f54f-c43c.ngrok-free.app/api/")
+            .baseUrl("https://7b6d-2001-448a-3021-32d8-b9ed-d5-bab5-c1c2.ngrok-free.app/api/")
             .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 

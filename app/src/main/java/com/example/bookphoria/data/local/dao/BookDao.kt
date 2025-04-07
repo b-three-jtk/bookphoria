@@ -38,7 +38,10 @@ interface BookDao {
 
 //    @Query("SELECT * FROM books")
 //    suspend fun getAllBooks(): List<BookEntity>
-
+//
+//    @Query("SELECT * FROM books WHERE title LIKE '%' || :query || '%' OR isbn LIKE '%' || :query || '%'")
+//    suspend fun searchBooksByTitleOrIsbn(query: String): List<BookEntity>
+//
 //    @Query("SELECT * FROM books WHERE isbn  LIKE '%' || :query || '%'")
 //    suspend fun searchBooksByIsbn(query: String): List<BookEntity>
 
@@ -64,6 +67,18 @@ interface BookDao {
 
     @Query("SELECT id FROM books WHERE isbn = :isbn LIMIT 1")
     suspend fun getBookIdByIsbn(isbn: String): Int
+
+    @Query("SELECT * FROM authors")
+    suspend fun getAllAuthors(): List<AuthorEntity>
+
+    @Query("SELECT * FROM genres")
+    suspend fun getAllGenres(): List<GenreEntity>
+
+    @Query("DELETE FROM BookAuthorCrossRef WHERE bookId = :bookId")
+    suspend fun deleteBookAuthorCrossRefs(bookId: Int)
+
+    @Query("DELETE FROM BookGenreCrossRef WHERE bookId = :bookId")
+    suspend fun deleteBookGenreCrossRefs(bookId: Int)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUserBookCrossRef(crossRef: UserBookCrossRef)

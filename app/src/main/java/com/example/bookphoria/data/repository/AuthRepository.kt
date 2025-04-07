@@ -79,4 +79,14 @@ class AuthRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    suspend fun logout(): Result<Unit> {
+        return try {
+            userPreferences.clearAccessToken()
+            userDao.clearUsers()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

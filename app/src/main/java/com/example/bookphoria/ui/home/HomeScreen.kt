@@ -269,7 +269,9 @@ fun BottomSheetContent(navController: NavController) {
             bgColor = PrimaryOrange,
             title = "Scan Barcode ISBN",
             description = "Scan Barcode ISBN Buku Anda untuk pencarian cepat",
-            onClick = {}
+            onClick = {
+                navController.navigate("scan")
+            }
         )
         BottomSheetCard(
             icon = Icons.Default.Search,

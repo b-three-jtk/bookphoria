@@ -86,4 +86,18 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.5.0")
     implementation ("com.github.0xRahad:RioBottomNavigation:1.0.2")
     implementation ("com.airbnb.android:lottie-compose:6.4.0")
+
+    // ML Kit Barcode Scanning
+    implementation ("com.google.mlkit:barcode-scanning:17.2.0")
+
+    // CameraX dependencies
+    val cameraxVersion = "1.3.0"
+    implementation("androidx.camera:camera-core:$cameraxVersion")
+    implementation("androidx.camera:camera-camera2:$cameraxVersion")
+    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
+    implementation("androidx.camera:camera-view:$cameraxVersion")
+
+// ML Kit Barcode Scanning (standalone - doesn't need CameraX integration)
+    implementation("com.google.mlkit:barcode-scanning:17.2.0")
+
 }

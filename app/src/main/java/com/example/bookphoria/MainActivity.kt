@@ -22,12 +22,15 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.bookphoria.ui.AppNavHost
 import com.example.bookphoria.ui.theme.BookPhoriaTheme
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
 import com.example.bookphoria.ui.viewmodel.BookViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.bookphoria.ui.viewmodel.HomeViewModel
 
 @AndroidEntryPoint
