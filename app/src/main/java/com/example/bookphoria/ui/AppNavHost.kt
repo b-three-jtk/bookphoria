@@ -6,6 +6,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -17,12 +18,14 @@ import com.example.bookphoria.ui.auth.LoginScreen
 import com.example.bookphoria.ui.auth.RegisterScreen
 import com.example.bookphoria.ui.auth.ResetpassScreen
 import com.example.bookphoria.ui.book.DetailBookScreen
+import com.example.bookphoria.ui.book.EditBookScreen
 import com.example.bookphoria.ui.book.EntryBookScreen
 import com.example.bookphoria.ui.book.SearchScreen
 import com.example.bookphoria.ui.home.HomeScreen
 import com.example.bookphoria.ui.onboarding.OnboardingScreen
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
 import com.example.bookphoria.ui.viewmodel.BookViewModel
+import com.example.bookphoria.ui.viewmodel.EditBookViewModel
 import com.example.bookphoria.ui.viewmodel.OnboardingViewModel
 
 @Composable
@@ -82,6 +85,22 @@ fun AppNavHost(
             composable("search") {
                 SearchScreen()
             }
+
+            composable(
+                route = "edit_book/{bookId}",
+                arguments = listOf(navArgument("bookId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val bookId = backStackEntry.arguments?.getInt("bookId") ?: return@composable
+
+                val viewModel: EditBookViewModel = hiltViewModel()
+
+                EditBookScreen(
+                    bookId = bookId,
+                    viewModel = viewModel,
+                    navController = navController
+                )
+            }
+
             composable(
                 "reset?token={token}&email={email}",
                 arguments = listOf(
