@@ -11,6 +11,7 @@ import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.BookGenreCrossRef
 import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.data.local.entities.GenreEntity
+import com.example.bookphoria.data.local.entities.UserBookCrossRef
 import com.example.bookphoria.data.local.entities.UserWithBooks
 import kotlinx.coroutines.flow.Flow
 
@@ -72,5 +73,18 @@ interface BookDao {
 
     @Query("SELECT * FROM genres")
     suspend fun getAllGenres(): List<GenreEntity>
+
+    @Query("DELETE FROM BookAuthorCrossRef WHERE bookId = :bookId")
+    suspend fun deleteBookAuthorCrossRefs(bookId: Int)
+
+    @Query("DELETE FROM BookGenreCrossRef WHERE bookId = :bookId")
+    suspend fun deleteBookGenreCrossRefs(bookId: Int)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertUserBookCrossRef(crossRef: UserBookCrossRef)
+
+    @Transaction
+    @Query("SELECT * FROM books")
+    fun getAllBooksWithDetails(): Flow<List<BookWithGenresAndAuthors>>
 
 }

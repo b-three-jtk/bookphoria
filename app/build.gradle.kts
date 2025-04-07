@@ -69,6 +69,7 @@ dependencies {
     implementation ("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
     implementation ("androidx.compose:compose-bom:2025.03.01")
+    implementation ("io.coil-kt:coil-compose:2.3.0")
 
     implementation ("com.google.dagger:hilt-android:2.51.1")
     ksp("com.google.dagger:hilt-android-compiler:2.51.1")

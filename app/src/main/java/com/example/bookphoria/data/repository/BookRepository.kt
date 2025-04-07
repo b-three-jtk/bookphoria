@@ -1,18 +1,23 @@
 package com.example.bookphoria.data.repository
 
 import android.util.Log
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import com.example.bookphoria.data.local.dao.BookDao
 import com.example.bookphoria.data.local.entities.AuthorEntity
 import com.example.bookphoria.data.local.entities.BookAuthorCrossRef
-import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.BookGenreCrossRef
 import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.data.local.entities.GenreEntity
+import com.example.bookphoria.data.local.entities.UserBookCrossRef
 import com.example.bookphoria.data.local.entities.toBookEntity
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.BookApiService
+import com.example.bookphoria.data.remote.pagingsources.BookSearchPagingSource
 import com.example.bookphoria.data.remote.responses.AddBookRequest
 import com.example.bookphoria.data.remote.responses.BookNetworkModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
@@ -69,7 +74,11 @@ class BookRepository @Inject constructor(
 
                 if (response.message == "Book added successfully") {
                     val bookNetworkModel = response.book
-                    return insertBook(bookNetworkModel)
+                    val localBookId = insertBook(bookNetworkModel)
+
+                    addToUserBooks(localBookId)
+
+                    return localBookId
                 } else {
                     throw Exception("Gagal menambahkan buku: ${response.message}")
                 }
@@ -81,9 +90,39 @@ class BookRepository @Inject constructor(
         }
     }
 
+    suspend fun addToUserBooks(bookId: Int, status: String = "Belum dibaca") {
+        val userId = userPreferences.getUserId().first()
+
+        val userBook = userId?.let {
+            UserBookCrossRef(
+                userId = it,
+                bookId = bookId,
+                status = status,
+                pagesRead = 0,
+                startDate = null,
+                endDate = null
+            )
+        }
+
+        if (userBook != null) {
+            bookDao.insertUserBookCrossRef(userBook)
+        }
+    }
 
     suspend fun getBookById(bookId: Int): BookWithGenresAndAuthors? {
         return bookDao.getBookById(bookId)
     }
 
+    fun getAllBooksWithDetails(): Flow<List<BookWithGenresAndAuthors>> {
+        return bookDao.getAllBooksWithDetails()
+    }
+
+    fun searchBook(query: String, token: String): Flow<PagingData<BookNetworkModel>> {
+        return Pager(
+            config = PagingConfig(pageSize = 10, enablePlaceholders = false),
+            pagingSourceFactory = {
+                BookSearchPagingSource(apiService, query, token)
+            }
+        ).flow
+    }
 }

@@ -1,9 +1,7 @@
 package com.example.bookphoria.ui.book
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -14,74 +12,100 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.bookphoria.ui.viewmodel.SearchViewModel
 
 @Composable
-fun SearchScreen() {
-    Column {
-        val results =
+fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
+    val query by viewModel.searchQuery.collectAsState()
+    val results = viewModel.searchResults.collectAsLazyPagingItems()
 
-        SearchBarCustom()
-//        LazyColumn {
-//            items()
-//        }
+    Column {
+        SearchBarCustom(
+            query = query,
+            onQueryChange = { viewModel.setSearchQuery(it) },
+            onSearch = {}
+        )
+
+        LazyColumn {
+            items(results.itemCount) { index ->
+                val book = results[index]
+                if (book != null) {
+                    ListItem(
+                        headlineContent = { Text(book.title) },
+                        supportingContent = {
+                            Text(book.authors.joinToString(", ") { it.name })
+                        }
+                    )
+                }
+            }
+
+            results.apply {
+                when {
+                    loadState.refresh is LoadState.Loading -> {
+                        item { Text("Loading...") }
+                    }
+                    loadState.append is LoadState.Loading -> {
+                        item { Text("Loading more...") }
+                    }
+                    loadState.refresh is LoadState.Error -> {
+                        val e = loadState.refresh as LoadState.Error
+                        item { Text("Error: ${e.error.message}") }
+                    }
+                }
+            }
+        }
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchBarCustom() {
-    var query by remember { mutableStateOf("") }
+fun SearchBarCustom(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit
+) {
     var active by remember { mutableStateOf(false) }
     val searchHistory = listOf("Search History 1", "Search History 2", "Search History 3")
 
     DockedSearchBar(
         query = query,
-        onQueryChange = { query = it },
-        onSearch = {
-            println("do search with query $query")
-        },
+        onQueryChange = onQueryChange,
+        onSearch = { onSearch() },
         active = active,
         onActiveChange = { active = it },
-        placeholder = {
-            Text(text = "Search")
-        },
-        leadingIcon = {
-            Icon(imageVector = Icons.Default.Search, contentDescription = "Search Icon")
-        },
+        placeholder = { Text(text = "Search") },
+        leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search Icon") },
         trailingIcon = if (active) {
             {
-                IconButton(onClick = { if (query.isNotEmpty()) query = "" else active = false }) {
-                    Icon(imageVector = Icons.Default.Close, contentDescription = "Close Icon")
+                IconButton(onClick = { if (query.isNotEmpty()) onQueryChange("") else active = false }) {
+                    Icon(Icons.Default.Close, contentDescription = "Close Icon")
                 }
             }
         } else null
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            searchHistory.takeLast(3).forEach { item ->
-                ListItem(
-                    modifier = Modifier.clickable { query = item },
-                    headlineContent = { Text(text = item) },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Default.History,
-                            contentDescription = "History Icon"
-                        )
-                    }
-                )
-            }
+        searchHistory.takeLast(3).forEach { item ->
+            ListItem(
+                modifier = Modifier.clickable {
+                    onQueryChange(item)
+                    onSearch()
+                },
+                headlineContent = { Text(text = item) },
+                leadingContent = {
+                    Icon(Icons.Default.History, contentDescription = "History Icon")
+                }
+            )
         }
     }
 }

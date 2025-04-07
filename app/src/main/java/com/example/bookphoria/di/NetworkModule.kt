@@ -42,7 +42,7 @@ object NetworkModule {
             .create()
 
         return Retrofit.Builder()
-            .baseUrl("https://eec6-2404-c0-7140-00-2-22b-3965.ngrok-free.app/api/")
+            .baseUrl("https://7b6d-2001-448a-3021-32d8-b9ed-d5-bab5-c1c2.ngrok-free.app/api/")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
@@ -56,6 +56,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideBookApiService(retrofit: Retrofit): BookApiService =
-        retrofit.create(BookApiService::class.java)
+    fun provideBookApiService(retrofit: Retrofit): BookApiService {
+        return retrofit.create(BookApiService::class.java)
+    }
 }

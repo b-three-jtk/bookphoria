@@ -16,6 +16,7 @@ class UserPreferences @Inject constructor(@ApplicationContext context: Context) 
 
     companion object {
         private val ACCESS_TOKEN_KEY = stringPreferencesKey("access_token")
+        private val USER_ID_KEY = intPreferencesKey("user_id")
     }
 
     suspend fun saveAccessToken(token: String) {
@@ -33,6 +34,18 @@ class UserPreferences @Inject constructor(@ApplicationContext context: Context) 
     suspend fun clearAccessToken() {
         dataStore.edit { preferences ->
             preferences.remove(ACCESS_TOKEN_KEY)
+        }
+    }
+
+    suspend fun saveUserId(userId: Int) {
+        dataStore.edit { preferences ->
+            preferences[USER_ID_KEY] = userId
+        }
+    }
+
+    fun getUserId(): Flow<Int?> {
+        return dataStore.data.map { preferences ->
+            preferences[USER_ID_KEY]
         }
     }
 }

@@ -22,7 +22,7 @@ import kotlinx.coroutines.CoroutineScope
     GenreEntity::class,
     BookAuthorCrossRef::class,
     BookGenreCrossRef::class,
-    UserBookCrossRef::class], version = 2,
+    UserBookCrossRef::class], version = 3,
     exportSchema = false)
 abstract class AppDatabase: RoomDatabase() {
     abstract fun userDao(): UserDao

@@ -22,17 +22,17 @@ val AppTypography = Typography(
     //Title
     titleLarge = TextStyle(
         fontFamily = Quicksand,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.ExtraBold,
         fontSize = 40.sp
     ),
     titleMedium = TextStyle(
         fontFamily = Quicksand,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.ExtraBold,
         fontSize = 32.sp
     ),
     titleSmall = TextStyle(
         fontFamily = Quicksand,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.ExtraBold,
         fontSize = 24.sp
     ),
 

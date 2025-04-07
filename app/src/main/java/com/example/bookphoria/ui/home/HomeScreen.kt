@@ -4,7 +4,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -19,28 +21,31 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.example.bookphoria.R
+import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.ui.book.MyShelfScreen
 import com.example.bookphoria.ui.book.SearchScreen
 import com.example.bookphoria.ui.components.BottomSheetCard
 import com.example.bookphoria.ui.profile.ProfileScreen
 import com.example.bookphoria.ui.theme.BodyBottomSheet
 import com.example.bookphoria.ui.theme.PrimaryOrange
+import com.example.bookphoria.ui.viewmodel.HomeViewModel
 import com.rahad.riobottomnavigation.composables.RioBottomNavItemData
 import com.rahad.riobottomnavigation.composables.RioBottomNavigation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
     val childNavController = rememberNavController()
     val selectedIndex = rememberSaveable { mutableIntStateOf(0) }
     val showSheet = remember { mutableStateOf(false) }
@@ -95,7 +100,7 @@ fun HomeScreen(navController: NavController) {
             startDestination = "home-tab",
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home-tab") { HomeContent() }
+            composable("home-tab") { HomeContent(viewModel = viewModel) }
             composable("search-tab") { SearchScreen() }
             composable("shelf-tab") { MyShelfScreen() }
             composable("profile-tab") { ProfileScreen() }
@@ -106,14 +111,7 @@ fun HomeScreen(navController: NavController) {
 data class BottomNavItem(val route: String, val icon: ImageVector, val label: String)
 
 @Composable
-fun ShowText(text: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = text, style = TextStyle(fontSize = 24.sp))
-    }
-}
-
-@Composable
-fun HomeContent(userName: String = "Asep") {
+fun HomeContent(userName: String = "Asep", viewModel: HomeViewModel) {
     Box(modifier = Modifier.fillMaxSize()) {
         // Header Box
         Box(
@@ -174,7 +172,7 @@ fun HomeContent(userName: String = "Asep") {
                 .fillMaxSize()
                 .padding(top = 240.dp)
         ) {
-            BookSection()
+            BookSection(viewModel = viewModel)
         }
     }
 }
@@ -293,9 +291,13 @@ fun BottomSheetContent(navController: NavController) {
         )
     }
 }
-
 @Composable
-fun BookSection() {
+fun BookSection(
+    userBooks: List<BookWithGenresAndAuthors> = emptyList(),
+    viewModel: HomeViewModel
+) {
+    val books by viewModel.books.collectAsState(initial = userBooks)
+
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -303,11 +305,11 @@ fun BookSection() {
         ) {
             Text(
                 text = "Your Books",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
             )
             Text(
                 text = "Lainnya",
-                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray)
+                style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
             )
         }
 
@@ -315,10 +317,20 @@ fun BookSection() {
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
         ) {
-            BookItem("The Little Prince", "Antoine de Saint-Exupéry", R.drawable.bookshelf)
-            BookItem("Tentang Kamu", "Tere Liye", R.drawable.bookshelf)
+            books.take(5).forEach { bookWithDetails ->
+                val book = bookWithDetails.book
+                val authorNames = bookWithDetails.authors.joinToString(", ") { it.name }
+
+                BookItem(
+                    title = book.title,
+                    author = authorNames,
+                    imageUrl = book.imageUrl
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -330,17 +342,26 @@ fun BookSection() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        CurrentReadingItem(
-            title = "The Little Prince",
-            author = "Antoine de Saint-Exupéry",
-            progress = 0.5f,
-            imageRes = R.drawable.bookshelf
-        )
+        if (books.isNotEmpty()) {
+            val currentBook = books.first()
+            val authorNames = currentBook.authors.joinToString(", ") { it.name }
+
+            CurrentReadingItem(
+                title = currentBook.book.title,
+                author = authorNames,
+                progress = 0.5f,
+                imageUrl = currentBook.book.imageUrl
+            )
+        }
     }
 }
 
 @Composable
-fun BookItem(title: String, author: String, imageRes: Int) {
+fun BookItem(
+    title: String,
+    author: String,
+    imageUrl: String?
+) {
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(24.dp))
@@ -348,21 +369,38 @@ fun BookItem(title: String, author: String, imageRes: Int) {
             .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(
-            painter = painterResource(id = imageRes),
-            contentDescription = null,
+        AsyncImage(
+            model = imageUrl ?: R.drawable.bookshelf, // Fallback ke gambar lokal
+            contentDescription = title,
             modifier = Modifier
                 .height(140.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(RoundedCornerShape(8.dp)),
+            contentScale = ContentScale.Crop
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = title, fontWeight = FontWeight.Bold)
-        Text(text = author, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+        Text(
+            text = title,
+            fontWeight = FontWeight.Bold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = author,
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.Gray,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
 @Composable
-fun CurrentReadingItem(title: String, author: String, progress: Float, imageRes: Int) {
+fun CurrentReadingItem(
+    title: String,
+    author: String,
+    progress: Float,
+    imageUrl: String? // Ubah dari imageRes: Int ke imageUrl: String?
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -371,12 +409,13 @@ fun CurrentReadingItem(title: String, author: String, progress: Float, imageRes:
             .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(24.dp))
             .padding(16.dp)
     ) {
-        Image(
-            painter = painterResource(id = imageRes),
-            contentDescription = null,
+        AsyncImage(
+            model = imageUrl ?: R.drawable.bookshelf, // Fallback ke gambar lokal
+            contentDescription = title,
             modifier = Modifier
                 .height(120.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(12.dp)),
+            contentScale = ContentScale.Crop
         )
         Spacer(modifier = Modifier.width(16.dp))
         Column(
@@ -400,13 +439,13 @@ fun CurrentReadingItem(title: String, author: String, progress: Float, imageRes:
             Spacer(modifier = Modifier.height(8.dp))
 
             LinearProgressIndicator(
-                progress = progress,
-                color = Color(0xFF4F46E5),
-                trackColor = Color(0xFFEAEAEA),
+                progress = { progress },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(6.dp)
-                    .clip(RoundedCornerShape(50))
+                    .clip(RoundedCornerShape(50)),
+                color = Color(0xFF4F46E5),
+                trackColor = Color(0xFFEAEAEA),
             )
             Text(text = "${(progress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)
         }
