@@ -1,7 +1,10 @@
 package com.example.bookphoria.data.local.entities
 
+import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.Junction
 import androidx.room.PrimaryKey
+import androidx.room.Relation
 import com.example.bookphoria.data.remote.responses.BookNetworkModel
 
 @Entity(tableName = "books")
@@ -26,4 +29,30 @@ fun BookNetworkModel.toBookEntity(): BookEntity = BookEntity(
     isbn = this.isbn,
     pages = this.pages,
     imageUrl = this.cover
+)
+
+data class BookWithGenresAndAuthors(
+    @Embedded val book: BookEntity,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "id",
+        associateBy = Junction(
+            value = BookAuthorCrossRef::class,
+            parentColumn = "bookId",
+            entityColumn = "authorId"
+        )
+    )
+    val authors: List<AuthorEntity>,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "id",
+        associateBy = Junction(
+            value = BookGenreCrossRef::class,
+            parentColumn = "bookId",
+            entityColumn = "genreId"
+        )
+    )
+    val genres: List<GenreEntity>
 )

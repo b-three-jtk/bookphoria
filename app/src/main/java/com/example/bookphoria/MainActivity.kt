@@ -21,6 +21,7 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.compose.rememberNavController
 import com.example.bookphoria.ui.AppNavHost
 import com.example.bookphoria.ui.theme.BookPhoriaTheme
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
@@ -41,6 +42,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun CobaSplash() {
     var isSplashVisible by remember { mutableStateOf(true) }
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val bookViewModel: BookViewModel = hiltViewModel()
+    val navController = rememberNavController()
 
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.splashbuku))
     val progress by animateLottieCompositionAsState(
