@@ -73,4 +73,11 @@ interface BookDao {
     @Query("SELECT * FROM genres")
     suspend fun getAllGenres(): List<GenreEntity>
 
+    @Query("DELETE FROM BookAuthorCrossRef WHERE bookId = :bookId")
+    suspend fun deleteBookAuthorCrossRefs(bookId: Int)
+
+    @Query("DELETE FROM BookGenreCrossRef WHERE bookId = :bookId")
+    suspend fun deleteBookGenreCrossRefs(bookId: Int)
+
+
 }
