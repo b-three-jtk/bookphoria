@@ -200,17 +200,17 @@ fun EntryBookScreen(
 
                 viewModel.addBookToDatabase(
                     request = request,
-                    onSuccess = {
+                    onSuccess = { newBookId ->
                         Toast.makeText(
                             context,
                             "Buku berhasil ditambahkan!",
                             Toast.LENGTH_SHORT
                         ).show()
-                        navController.navigate("home")
+                        navController.navigate("detail/$newBookId")
                     },
                     onError = {
                         Toast.makeText(
-                            navController.context,
+                            context,
                             "Terjadi kesalahan saat menambahkan buku!",
                             Toast.LENGTH_SHORT
                         ).show()

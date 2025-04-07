@@ -72,6 +72,7 @@ object DeepLinkHolder {
 fun CobaSplash() {
     var isSplashVisible by remember { mutableStateOf(true) }
     val authViewModel: AuthViewModel = hiltViewModel()
+    val bookViewModel: BookViewModel = hiltViewModel()
     val navController = rememberNavController()
 
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.splashbuku))
@@ -98,6 +99,7 @@ fun CobaSplash() {
         BookPhoriaTheme {
             AppNavHost(
                 authViewModel = authViewModel,
+                bookViewModel = bookViewModel,
                 onDeepLinkTriggered = { navController ->
                     if (DeepLinkHolder.shouldNavigate) {
                         navController.navigate("reset/${DeepLinkHolder.token}/${DeepLinkHolder.email}") {
@@ -107,8 +109,7 @@ fun CobaSplash() {
                     }
                 }
             )
-            val authViewModel: AuthViewModel = hiltViewModel()
-            val bookViewModel: BookViewModel = hiltViewModel()
+
             AppNavHost(bookViewModel = bookViewModel, authViewModel = authViewModel)
         }
     }
