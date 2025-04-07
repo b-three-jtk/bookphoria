@@ -53,7 +53,6 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
     implementation (libs.androidx.runtime.livedata)
-    implementation(libs.androidx.appcompat)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -85,5 +84,4 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.5.0")
     implementation ("com.github.0xRahad:RioBottomNavigation:1.0.2")
     implementation ("com.airbnb.android:lottie-compose:6.4.0")
-    implementation ("androidx.navigation:navigation-compose:2.7.7")
 }

@@ -42,8 +42,7 @@ import com.example.bookphoria.ui.viewmodel.OnboardingViewModel
 @Composable
 fun AppNavHost(
     authViewModel: AuthViewModel,
-    onboardingViewModel: OnboardingViewModel = hiltViewModel(),
-    onDeepLinkTriggered: (NavController) -> Unit = {}
+    onDeepLinkTriggered: (NavController) -> Unit = {},
     bookViewModel: BookViewModel,
     onboardingViewModel: OnboardingViewModel = hiltViewModel()
 ) {
