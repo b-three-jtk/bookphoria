@@ -143,7 +143,11 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
                 Text(
                     text = "Lupa Password?",
                     color = DarkIndigo,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.clickable {
+                        navController.navigate("forgot")
+                    }.padding(top = 8.dp)
+
                 )
             }
 
