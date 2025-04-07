@@ -9,6 +9,7 @@ import com.example.bookphoria.data.local.entities.AuthorEntity
 import com.example.bookphoria.data.local.entities.BookAuthorCrossRef
 import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.BookGenreCrossRef
+import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.data.local.entities.GenreEntity
 import com.example.bookphoria.data.local.entities.UserWithBooks
 import kotlinx.coroutines.flow.Flow
@@ -32,7 +33,7 @@ interface BookDao {
     suspend fun insertBookGenreCrossRef(crossRef: BookGenreCrossRef)
 
     @Query("SELECT * FROM books WHERE id = :bookId LIMIT 1")
-    suspend fun getBookById(bookId: Int): BookEntity?
+    suspend fun getBookById(bookId: Int): BookWithGenresAndAuthors?
 
 //    @Query("SELECT * FROM books")
 //    suspend fun getAllBooks(): List<BookEntity>
@@ -66,5 +67,10 @@ interface BookDao {
     @Query("SELECT id FROM books WHERE isbn = :isbn LIMIT 1")
     suspend fun getBookIdByIsbn(isbn: String): Int
 
+    @Query("SELECT * FROM authors")
+    suspend fun getAllAuthors(): List<AuthorEntity>
+
+    @Query("SELECT * FROM genres")
+    suspend fun getAllGenres(): List<GenreEntity>
 
 }

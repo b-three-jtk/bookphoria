@@ -101,8 +101,12 @@ fun AppNavHost(
             composable("add-new-book") {
                 EntryBookScreen(navController = navController, viewModel = bookViewModel)
             }
-            composable("detail-book") {
-                DetailBookScreen(navController = navController)
+            composable(
+                route = "detail/{id}",
+                arguments = listOf(navArgument("id") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val id = backStackEntry.arguments?.getInt("id") ?: 0
+                DetailBookScreen(navController = navController, bookViewModel = bookViewModel, bookId = id)
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.example.bookphoria.di
 
 import com.example.bookphoria.data.remote.api.AuthApiService
+import com.example.bookphoria.data.remote.api.BookApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -46,4 +47,9 @@ object NetworkModule {
     fun provideApiService(retrofit: Retrofit): AuthApiService {
         return retrofit.create(AuthApiService::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideBookApiService(retrofit: Retrofit): BookApiService =
+        retrofit.create(BookApiService::class.java)
 }

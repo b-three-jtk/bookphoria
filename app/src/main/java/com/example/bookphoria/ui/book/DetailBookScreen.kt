@@ -2,17 +2,22 @@ package com.example.bookphoria.ui.book
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,94 +29,127 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.bookphoria.R
+import com.example.bookphoria.ui.theme.DarkIndigo
+import com.example.bookphoria.ui.viewmodel.BookViewModel
 
 @Composable
-fun DetailBookScreen(navController: NavController) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
+fun DetailBookScreen(
+    navController: NavController,
+    bookId: Int,
+    bookViewModel: BookViewModel
+) {
+    val selectedBookState = bookViewModel.selectedBook.collectAsState()
+    val book = selectedBookState.value
+
+    LaunchedEffect(bookId) {
+        bookViewModel.getBookById(bookId)
+    }
+
+    if (book == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Kembali"
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Kembali"
+                    )
+                }
+                Text(
+                    text = "Detail Buku",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(start = 8.dp)
                 )
             }
-            Text(
-                text = "Detail Buku",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = 8.dp)
-            )
-        }
 
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Image(
-                painter = painterResource(R.drawable.bookshelf),
-                contentDescription = "Sampul Buku",
-                modifier = Modifier
-                    .width(120.dp)
-                    .height(180.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
-            )
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Image(
+                    painter = painterResource(R.drawable.bookshelf),
+                    contentDescription = "Sampul Buku",
+                    modifier = Modifier
+                        .width(120.dp)
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop
+                )
 
-            Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(16.dp))
 
-            Column(modifier = Modifier.align(Alignment.Top)) {
-                Text("The Little Prince", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text("by Antoine de Saint-Exupéry", fontSize = 14.sp, color = Color.Gray)
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = {},
-                    shape = RoundedCornerShape(20.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE45758)),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
-                ) {
-                    Text("Owned", color = Color.White)
+                Column(modifier = Modifier.align(Alignment.Top)) {
+                    Text(book.book.title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text("by ${book.author}", fontSize = 14.sp, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row {
+                        Button(
+                            onClick = { /* TODO: Toggle owned/bookmarked */ },
+                            shape = RoundedCornerShape(20.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE45758)),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+                        ) {
+                            Text("Owned", color = Color.White)
+                        }
+                        IconButton(
+                            onClick = { /* aksi edit */ },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit",
+                                tint = DarkIndigo,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+
+                    }
+
                 }
             }
-        }
 
-        Text(
-            text = "Pangeran Cilik termasuk buku yang paling banyak diterjemahkan di dunia...", // truncated
-            fontSize = 14.sp,
-            lineHeight = 20.sp
-        )
+            Text(
+                text = book.book.synopsis ?: "Tidak ada deskripsi.",
+                fontSize = 14.sp,
+                lineHeight = 20.sp
+            )
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("Drama", "Psychological", "Fiction").forEach { genre ->
-                Text(
-                    text = genre,
-                    modifier = Modifier
-                        .background(Color(0xFFE0E0E0), RoundedCornerShape(50))
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                    fontSize = 12.sp
-                )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                book.genres.forEach { genre ->
+                    Text(
+                        text = genre,
+                        modifier = Modifier
+                            .background(Color(0xFFE0E0E0), RoundedCornerShape(50))
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                        fontSize = 12.sp
+                    )
+                }
             }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                InfoItem(label = "Penerbit", value = book.book.publisher)
+                InfoItem(label = "Tanggal Terbit", value = book.book.publishedDate)
+                InfoItem(label = "Jumlah Halaman", value = "${book.book.pages} halaman")
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            Text("Review", style = MaterialTheme.typography.titleMedium)
+
+            ReviewSection(
+                reviewerName = "Ningen Sastrawijaya",
+                reviewText = "Bagus bukunya, andalan tiap aku mau tidur",
+                rating = 4
+            )
         }
-
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            InfoItem(label = "Penerbit", value = "Gramedia Pustaka Utama")
-            InfoItem(label = "Tanggal Terbit", value = "15 April 1989")
-            InfoItem(label = "Jumlah Halaman", value = "234 halaman")
-        }
-
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-        Text("Review", style = MaterialTheme.typography.titleMedium)
-
-        ReviewSection(
-            reviewerName = "Ningen Sastrawijaya",
-            reviewText = "Bagus bukunya, andalan tiap aku mau tidur",
-            rating = 4
-        )
     }
 }
 
