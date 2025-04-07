@@ -66,5 +66,10 @@ interface BookDao {
     @Query("SELECT id FROM books WHERE isbn = :isbn LIMIT 1")
     suspend fun getBookIdByIsbn(isbn: String): Int
 
+    @Query("SELECT * FROM authors")
+    suspend fun getAllAuthors(): List<AuthorEntity>
+
+    @Query("SELECT * FROM genres")
+    suspend fun getAllGenres(): List<GenreEntity>
 
 }
