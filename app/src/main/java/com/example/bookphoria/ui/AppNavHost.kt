@@ -23,6 +23,7 @@ import com.example.bookphoria.ui.home.HomeScreen
 import com.example.bookphoria.ui.onboarding.OnboardingScreen
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
 import com.example.bookphoria.ui.viewmodel.BookViewModel
+import com.example.bookphoria.ui.viewmodel.HomeViewModel
 import com.example.bookphoria.ui.viewmodel.OnboardingViewModel
 
 @Composable
@@ -30,6 +31,7 @@ fun AppNavHost(
     authViewModel: AuthViewModel,
     onDeepLinkTriggered: (NavController) -> Unit = {},
     bookViewModel: BookViewModel,
+    homeViewModel: HomeViewModel,
     onboardingViewModel: OnboardingViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
@@ -77,7 +79,7 @@ fun AppNavHost(
                 ResetpassScreen(viewModel = authViewModel, navController = navController)
             }
             composable("home") {
-                HomeScreen(navController = navController)
+                HomeScreen(navController = navController, viewModel = homeViewModel)
             }
             composable("search") {
                 SearchScreen()

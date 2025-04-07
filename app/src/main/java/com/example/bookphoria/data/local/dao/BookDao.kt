@@ -11,6 +11,7 @@ import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.BookGenreCrossRef
 import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.data.local.entities.GenreEntity
+import com.example.bookphoria.data.local.entities.UserBookCrossRef
 import com.example.bookphoria.data.local.entities.UserWithBooks
 import kotlinx.coroutines.flow.Flow
 
@@ -37,10 +38,7 @@ interface BookDao {
 
 //    @Query("SELECT * FROM books")
 //    suspend fun getAllBooks(): List<BookEntity>
-//
-//    @Query("SELECT * FROM books WHERE title LIKE '%' || :query || '%' OR isbn LIKE '%' || :query || '%'")
-//    suspend fun searchBooksByTitleOrIsbn(query: String): List<BookEntity>
-//
+
 //    @Query("SELECT * FROM books WHERE isbn  LIKE '%' || :query || '%'")
 //    suspend fun searchBooksByIsbn(query: String): List<BookEntity>
 
@@ -67,5 +65,11 @@ interface BookDao {
     @Query("SELECT id FROM books WHERE isbn = :isbn LIMIT 1")
     suspend fun getBookIdByIsbn(isbn: String): Int
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertUserBookCrossRef(crossRef: UserBookCrossRef)
+
+    @Transaction
+    @Query("SELECT * FROM books")
+    fun getAllBooksWithDetails(): Flow<List<BookWithGenresAndAuthors>>
 
 }

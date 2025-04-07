@@ -3,9 +3,9 @@ package com.example.bookphoria.data.remote.responses
 import com.google.gson.annotations.SerializedName
 import java.util.Date
 
-//data class BookSearchResponse(
-//    @SerializedName("books") val data: List<BookNetworkModel>
-//)
+data class BookSearchResponse(
+    @SerializedName("books") val data: List<BookNetworkModel>
+)
 
 data class BookNetworkModel(
     @SerializedName("isbn") val isbn: String,

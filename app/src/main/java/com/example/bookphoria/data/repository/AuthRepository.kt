@@ -8,7 +8,6 @@ import com.example.bookphoria.data.remote.api.ForgotPasswordRequest
 import com.example.bookphoria.data.remote.api.LoginRequest
 import com.example.bookphoria.data.remote.api.RegisterRequest
 import com.example.bookphoria.data.remote.api.ResetPasswordRequest
-import com.example.bookphoria.data.remote.responses.AuthResponse
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,6 +22,7 @@ class AuthRepository @Inject constructor(
             val response = apiService.login(LoginRequest(email, password))
 
             userPreferences.saveAccessToken(response.accessToken)
+            userPreferences.saveUserId(response.user.id)
 
             val userEntity = UserEntity(
                 id = response.user.id,

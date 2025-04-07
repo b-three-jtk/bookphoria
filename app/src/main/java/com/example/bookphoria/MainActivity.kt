@@ -22,15 +22,13 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.bookphoria.ui.AppNavHost
 import com.example.bookphoria.ui.theme.BookPhoriaTheme
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
 import com.example.bookphoria.ui.viewmodel.BookViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
+import com.example.bookphoria.ui.viewmodel.HomeViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -73,6 +71,7 @@ fun CobaSplash() {
     var isSplashVisible by remember { mutableStateOf(true) }
     val authViewModel: AuthViewModel = hiltViewModel()
     val bookViewModel: BookViewModel = hiltViewModel()
+    val homeViewModel: HomeViewModel = hiltViewModel()
     val navController = rememberNavController()
 
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.splashbuku))
@@ -100,6 +99,7 @@ fun CobaSplash() {
             AppNavHost(
                 authViewModel = authViewModel,
                 bookViewModel = bookViewModel,
+                homeViewModel = homeViewModel,
                 onDeepLinkTriggered = { navController ->
                     if (DeepLinkHolder.shouldNavigate) {
                         navController.navigate("reset/${DeepLinkHolder.token}/${DeepLinkHolder.email}") {
@@ -110,7 +110,7 @@ fun CobaSplash() {
                 }
             )
 
-            AppNavHost(bookViewModel = bookViewModel, authViewModel = authViewModel)
+            AppNavHost(bookViewModel = bookViewModel, authViewModel = authViewModel, homeViewModel = homeViewModel)
         }
     }
 }
