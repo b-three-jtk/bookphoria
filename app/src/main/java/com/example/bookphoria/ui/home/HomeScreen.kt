@@ -29,6 +29,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.bookphoria.R
+import com.example.bookphoria.ui.book.MyShelfScreen
 import com.example.bookphoria.ui.book.SearchScreen
 import com.example.bookphoria.ui.components.BottomSheetCard
 import com.example.bookphoria.ui.profile.ProfileScreen
@@ -96,7 +97,7 @@ fun HomeScreen(navController: NavController) {
         ) {
             composable("home-tab") { HomeContent() }
             composable("search-tab") { SearchScreen() }
-            composable("shelf-tab") { ShowText("My Shelf") }
+            composable("shelf-tab") { MyShelfScreen() }
             composable("profile-tab") { ProfileScreen() }
         }
     }
