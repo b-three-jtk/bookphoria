@@ -101,7 +101,9 @@ fun DetailBookScreen(
                             Text("Owned", color = Color.White)
                         }
                         IconButton(
-                            onClick = { /* aksi edit */ },
+                            onClick = {
+                                navController.navigate("edit_book/${book.book.id}")
+                            },
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
