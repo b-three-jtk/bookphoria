@@ -119,7 +119,11 @@ fun AppNavHost(
             composable("scan") {
                 ScanCodeScreen(
                     onScanResult = { code ->
-                        // Navigasi ke entry book dengan hasil scan
+                        // Simpan ISBN hasil scan ke savedStateHandle
+                        navController.previousBackStackEntry
+                            ?.savedStateHandle
+                            ?.set("isbn_result", code)
+
                         navController.navigate("add-new-book")
                     },
                     onCancel = {

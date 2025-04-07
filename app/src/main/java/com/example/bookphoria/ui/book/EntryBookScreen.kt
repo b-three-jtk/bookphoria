@@ -50,6 +50,19 @@ fun EntryBookScreen(
     var genreInput by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
 
+    // Untuk mengambil hasil scan dari savedStateHandle (jika ada)
+    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+    val scannedIsbn = savedStateHandle?.get<String>("isbn_result")
+
+    // Mengisi field ISBN dengan hasil scan
+    LaunchedEffect(scannedIsbn) {
+        scannedIsbn?.let {
+            isbn = it
+            // Bersihkan data setelah digunakan untuk menghindari pengisian ulang
+            savedStateHandle.remove<String>("isbn_result")
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
