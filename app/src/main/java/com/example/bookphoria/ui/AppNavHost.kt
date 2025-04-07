@@ -1,6 +1,8 @@
 package com.example.bookphoria.ui
 
 
+import androidx.annotation.OptIn
+import androidx.camera.core.ExperimentalGetImage
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
@@ -20,14 +22,17 @@ import com.example.bookphoria.ui.auth.ResetpassScreen
 import com.example.bookphoria.ui.book.DetailBookScreen
 import com.example.bookphoria.ui.book.EditBookScreen
 import com.example.bookphoria.ui.book.EntryBookScreen
+import com.example.bookphoria.ui.book.ScanCodeScreen
 import com.example.bookphoria.ui.book.SearchScreen
 import com.example.bookphoria.ui.home.HomeScreen
 import com.example.bookphoria.ui.onboarding.OnboardingScreen
+import com.example.bookphoria.ui.profile.ProfileScreen
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
 import com.example.bookphoria.ui.viewmodel.BookViewModel
 import com.example.bookphoria.ui.viewmodel.EditBookViewModel
 import com.example.bookphoria.ui.viewmodel.OnboardingViewModel
 
+@OptIn(ExperimentalGetImage::class)
 @Composable
 fun AppNavHost(
     authViewModel: AuthViewModel,
@@ -101,6 +106,9 @@ fun AppNavHost(
                 )
             }
 
+            composable("profile") {
+                ProfileScreen()
+            }
             composable(
                 "reset?token={token}&email={email}",
                 arguments = listOf(
@@ -126,6 +134,17 @@ fun AppNavHost(
             ) { backStackEntry ->
                 val id = backStackEntry.arguments?.getInt("id") ?: 0
                 DetailBookScreen(navController = navController, bookViewModel = bookViewModel, bookId = id)
+            }
+            composable("scan") {
+                ScanCodeScreen(
+                    onScanResult = { code ->
+                        // Navigasi ke entry book dengan hasil scan
+                        navController.navigate("add-new-book")
+                    },
+                    onCancel = {
+                        navController.popBackStack() // kembali ke layar sebelumnya
+                    }
+                )
             }
         }
     }

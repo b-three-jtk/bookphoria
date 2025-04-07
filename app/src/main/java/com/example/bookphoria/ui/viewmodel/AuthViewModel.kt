@@ -87,4 +87,15 @@ class AuthViewModel @Inject constructor(
             _isLoading.value = false
         }
     }
+
+    fun logout(onLogoutSuccess: () -> Unit, onError: (Throwable) -> Unit) {
+        viewModelScope.launch {
+            val result = authRepository.logout()
+            result.onSuccess {
+                onLogoutSuccess()
+            }.onFailure {
+                onError(it)
+            }
+        }
+    }
 }
