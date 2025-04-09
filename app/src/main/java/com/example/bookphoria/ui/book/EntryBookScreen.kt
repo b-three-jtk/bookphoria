@@ -4,7 +4,6 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -55,6 +54,10 @@ fun EntryBookScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
+    // Untuk mengambil hasil scan dari savedStateHandle (jika ada)
+    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+    val scannedIsbn = savedStateHandle?.get<String>("isbn_result")
+
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -63,7 +66,16 @@ fun EntryBookScreen(
     val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { viewModel.coverUrl = uri.toString() }
     }
-
+    
+    // Mengisi field ISBN dengan hasil scan
+    LaunchedEffect(scannedIsbn) {
+        scannedIsbn?.let {
+            viewModel.isbn = it
+            // Bersihkan data setelah digunakan untuk menghindari pengisian ulang
+            savedStateHandle.remove<String>("isbn_result")
+        }
+    }
+    
     AnimatedVisibility(
         visible = true,
         enter = fadeIn(animationSpec = tween(500)),

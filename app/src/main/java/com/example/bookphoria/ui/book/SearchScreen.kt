@@ -18,6 +18,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,19 +28,40 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.bookphoria.ui.viewmodel.SearchViewModel
 
 @Composable
-fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
+fun SearchScreen(viewModel: SearchViewModel = hiltViewModel(), navController: NavController) {
     val query by viewModel.searchQuery.collectAsState()
     val results = viewModel.searchResults.collectAsLazyPagingItems()
+    // Get the current NavBackStackEntry
+    val navBackStackEntry = navController.currentBackStackEntry
+
+    // Check if there's a scan result to use as search query
+    val scannedQuery = navBackStackEntry?.savedStateHandle?.get<String>("search_query")
 
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
+    // When a scanned query is available, update the search
+    LaunchedEffect(scannedQuery) {
+        scannedQuery?.let { scanResult ->
+            // Clear the saved state to avoid reusing it if user navigates away and comes back
+            navBackStackEntry.savedStateHandle.remove<String>("search_query")
+
+            // Update the search query with the scan result
+            viewModel.setSearchQuery(scanResult)
+            // No need to explicitly trigger search since your ViewModel already does that
+            // when the query changes through the reactive flow
+        }
+    }
+
+    Column {
         SearchBarCustom(
             query = query,
             onQueryChange = { viewModel.setSearchQuery(it) },
@@ -87,6 +109,9 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
         }
     }
 }
+}
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchBarCustom(

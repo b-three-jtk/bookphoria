@@ -101,7 +101,7 @@ fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home-tab") { HomeContent(viewModel = viewModel) }
-            composable("search-tab") { SearchScreen() }
+            composable("search-tab") { SearchScreen(navController = navController) }
             composable("shelf-tab") { MyShelfScreen() }
             composable("profile-tab") { ProfileScreen() }
         }
