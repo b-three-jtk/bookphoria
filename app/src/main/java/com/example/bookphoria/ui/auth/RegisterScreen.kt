@@ -12,34 +12,27 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.bookphoria.R
+import com.example.bookphoria.ui.components.AuthTextField
+import com.example.bookphoria.ui.components.GoogleButton
 import com.example.bookphoria.ui.theme.AppTypography
-import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.theme.PrimaryOrange
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
+import com.example.bookphoria.ui.components.PrimaryButton
 
 @Composable
 fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
@@ -97,7 +90,7 @@ fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
         )
 
         // Input Fields
-        RegisterTextField(
+        AuthTextField(
             value = username,
             onValueChange = { username = it },
             label = "Username",
@@ -105,7 +98,7 @@ fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
             contentDescription = "Username Icon",
             modifier = Modifier.padding(top = 20.dp)
         )
-        RegisterTextField(
+        AuthTextField(
             value = email,
             onValueChange = { email = it },
             label = "Email",
@@ -113,7 +106,7 @@ fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
             contentDescription = "Email Icon",
             modifier = Modifier.padding(top = 20.dp)
         )
-        RegisterTextField(
+        AuthTextField(
             value = password,
             onValueChange = { password = it },
             label = "Password",
@@ -123,7 +116,7 @@ fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
             modifier = Modifier.padding(top = 20.dp)
         )
 
-        RegisterButton(
+        PrimaryButton(
             text = "DAFTAR",
             backgroundColor = PrimaryOrange,
             onClick = {
@@ -167,7 +160,7 @@ fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
                 .padding(8.dp),
             horizontalArrangement = Arrangement.Center
         ) {
-            GoogleRegisterButton(
+            GoogleButton(
                 iconRes = R.drawable.ic_google,
                 contentDesc = "Google Register"
             )
@@ -201,101 +194,3 @@ fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
         }
     }
 }
-
-@Composable
-fun RegisterButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    backgroundColor: Color
-) {
-    Button(
-        onClick = {
-            onClick()
-        },
-        modifier = modifier.fillMaxWidth().padding(vertical = 22.dp),
-        shape = RoundedCornerShape(15.dp),
-        contentPadding = PaddingValues(vertical = 14.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = backgroundColor)
-    ) {
-        Text(text = text, style = MaterialTheme.typography.bodyLarge, color = Color.White)
-    }
-}
-
-@Composable
-fun RegisterTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    leadingIcon: ImageVector,
-    contentDescription: String,
-    isPassword: Boolean = false,
-    modifier: Modifier = Modifier
-) {
-    var passwordVisible by remember { mutableStateOf(false) }
-
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = modifier.fillMaxWidth(),
-        label = { Text(label, color = DarkIndigo, style = MaterialTheme.typography.bodyLarge) },
-        leadingIcon = {
-            Icon(
-                imageVector = leadingIcon,
-                contentDescription = contentDescription,
-                tint = DarkIndigo,
-                modifier = Modifier.padding(start = 16.dp, end = 10.dp)
-            )
-        },
-        trailingIcon = {
-            if (isPassword) {
-                Icon(
-                    imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                    contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                    tint = DarkIndigo,
-                    modifier = Modifier
-                        .padding(end = 12.dp)
-                        .clickable { passwordVisible = !passwordVisible }
-                )
-            }
-        },
-        visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
-        colors = TextFieldDefaults.colors(
-            unfocusedTextColor = DarkIndigo,
-            focusedTextColor = DarkIndigo.copy(alpha = 0.5f),
-            cursorColor = DarkIndigo,
-            focusedContainerColor = Color.LightGray,
-            unfocusedContainerColor = Color.White,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-        ),
-        shape = RoundedCornerShape(20.dp),
-    )
-}
-
-@Composable
-fun GoogleRegisterButton(iconRes: Int, contentDesc: String) {
-    Box(
-        modifier = Modifier
-            .size(80.dp)
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Button(
-            onClick = { /* Handle Google Register */ },
-            modifier = Modifier
-                .requiredSize(64.dp)
-                .clip(RoundedCornerShape(12.dp)),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-            elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
-            contentPadding = PaddingValues(0.dp)
-        ) {
-            Image(
-                painter = painterResource(id = iconRes),
-                contentDescription = contentDesc,
-                modifier = Modifier.size(60.dp)
-            )
-        }
-    }
-}
-

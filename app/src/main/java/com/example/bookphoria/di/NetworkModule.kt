@@ -42,7 +42,7 @@ object NetworkModule {
             .create()
 
         return Retrofit.Builder()
-            .baseUrl("https://7b6d-2001-448a-3021-32d8-b9ed-d5-bab5-c1c2.ngrok-free.app/api/")
+            .baseUrl("https://03f2-2001-448a-3043-8a01-74ad-b101-2eb7-7b78.ngrok-free.app/api/")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()

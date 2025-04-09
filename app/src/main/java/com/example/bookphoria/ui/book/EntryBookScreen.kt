@@ -1,8 +1,15 @@
 package com.example.bookphoria.ui.book
 
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,272 +18,409 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.bookphoria.data.remote.responses.AddBookRequest
-import com.example.bookphoria.ui.components.PrimaryButton
-import com.example.bookphoria.ui.theme.BodyBottomSheet
+import com.example.bookphoria.ui.components.BookTextField
+import com.example.bookphoria.ui.theme.AppTypography
 import com.example.bookphoria.ui.theme.DarkIndigo
+import com.example.bookphoria.ui.theme.LightBlue
 import com.example.bookphoria.ui.theme.PrimaryOrange
-import com.example.bookphoria.ui.viewmodel.BookViewModel
+import com.example.bookphoria.ui.viewmodel.EntryBookViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EntryBookScreen(
-    viewModel: BookViewModel,
+    viewModel: EntryBookViewModel,
     navController: NavController
 ) {
     val context = LocalContext.current
-    val coverUrl = remember { mutableStateOf("") }
-    var title by remember { mutableStateOf("") }
-    val authors = remember { mutableStateListOf<String>() }
-    var authorInput by remember { mutableStateOf("") }
-    var publisher by remember { mutableStateOf("") }
-    var publishedDate by remember { mutableStateOf("") }
-    var isbn by remember { mutableStateOf("") }
-    var pageCount by remember { mutableStateOf("") }
-    var synopsis by remember { mutableStateOf("") }
-    val genres = remember { mutableStateListOf<String>() }
-    var genreInput by remember { mutableStateOf("") }
     val scrollState = rememberScrollState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            IconButton(onClick = { navController.popBackStack() }) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Kembali"
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Column {
-                Text("Tambahkan Buku Baru", style = MaterialTheme.typography.titleSmall)
-                Text("Baca buku apa hari ini?", style = BodyBottomSheet)
-            }
-        }
+    var showConfirmDialog by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
 
+    val datePickerState = rememberDatePickerState()
 
-
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            CoverImagePicker(coverUrl.value) { newUrl -> coverUrl.value = newUrl }
-        }
-
-        LabeledTextField(
-            value = title,
-            onValueChange = { title = it },
-            label = "Judul Buku"
-        )
-
-        LabeledTextField(
-            value = authorInput,
-            onValueChange = { authorInput = it },
-            label = "Penulis",
-            trailingIcon = {
-                IconButton(onClick = {
-                    if (authorInput.isNotBlank()) {
-                        authors.add(authorInput.trim())
-                        authorInput = ""
-                    }
-                }) {
-                    Icon(Icons.Default.Add, contentDescription = "Tambah Penulis")
-                }
-            }
-        )
-
-        if (authors.isNotEmpty()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                authors.forEach { name ->
-                    AssistChip(
-                        onClick = { /* optional edit */ },
-                        label = { Text(name) }
-                    )
-                }
-            }
-        }
-
-        LabeledTextField(
-            value = publisher,
-            onValueChange = { publisher = it },
-            label = "Penerbit"
-        )
-
-        LabeledTextField(
-            value = publishedDate,
-            onValueChange = { publishedDate = it },
-            label = "Tanggal Terbit"
-        )
-
-        LabeledTextField(
-            value = isbn,
-            onValueChange = { isbn = it },
-            label = "ISBN"
-        )
-
-        LabeledTextField(
-            value = pageCount,
-            onValueChange = { pageCount = it },
-            label = "Jumlah Halaman",
-            keyboardType = KeyboardType.Number
-        )
-
-        LabeledTextField(
-            value = synopsis,
-            onValueChange = { synopsis = it },
-            label = "Sinopsis",
-        )
-
-        LabeledTextField(
-            value = genreInput,
-            onValueChange = { genreInput = it },
-            label = "Genre",
-            trailingIcon = {
-                IconButton(onClick = {
-                    if (genreInput.isNotBlank()) {
-                        genres.add(genreInput.trim())
-                        genreInput = ""
-                    }
-                }) {
-                    Icon(Icons.Default.Add, contentDescription = "Tambah Genre")
-                }
-            }
-        )
-
-        if (genres.isNotEmpty()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                genres.forEach { g ->
-                    AssistChip(
-                        onClick = { /* optional edit */ },
-                        label = { Text(g) }
-                    )
-                }
-            }
-        }
-
-        PrimaryButton(
-            text = "Simpan",
-            backgroundColor = PrimaryOrange,
-            onClick = {
-                val request = AddBookRequest(
-                    title = title,
-                    publisher = publisher,
-                    publishedDate = publishedDate,
-                    synopsis = synopsis,
-                    isbn = isbn,
-                    pages = pageCount.toIntOrNull() ?: 0,
-                    cover = coverUrl.value,
-                    authors = authors.toList(),
-                    genres = genres.toList(),
-                    userStatus = "owned",
-                    userPageCount = 0,
-                    userStartDate = null,
-                    userFinishDate = null
-                )
-
-                viewModel.addBookToDatabase(
-                    request = request,
-                    onSuccess = { newBookId ->
-                        Toast.makeText(
-                            context,
-                            "Buku berhasil ditambahkan!",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        navController.navigate("detail/$newBookId")
-                    },
-                    onError = {
-                        Toast.makeText(
-                            context,
-                            "Terjadi kesalahan saat menambahkan buku!",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                )
-            }
-        )
+    val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let { viewModel.coverUrl = uri.toString() }
     }
-}
 
-
-@Composable
-fun CoverImagePicker(imageUrl: String, onImagePicked: (String) -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(120.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color.LightGray)
-            .clickable {
-                onImagePicked("https://example.com/fake-uploaded-image.jpg")
-            },
-        contentAlignment = Alignment.Center,
+    AnimatedVisibility(
+        visible = true,
+        enter = fadeIn(animationSpec = tween(500)),
+        exit = fadeOut()
     ) {
-        if (imageUrl.isEmpty()) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(Icons.Default.Image, contentDescription = null)
-                Text("Upload", style = MaterialTheme.typography.bodySmall)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(16.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Kembali"
+                    )
+                }
+                Text(
+                    text = "Tambahkan Buku Baru",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
             }
-        } else {
-            AsyncImage(
-                model = imageUrl,
-                contentDescription = "Cover Buku",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Box(
+                contentAlignment = Alignment.BottomEnd,
+                modifier = Modifier
+                    .shadow(elevation = 4.dp, spotColor = Color(0x40000000), ambientColor = Color(0x40000000))
+                    .align(Alignment.CenterHorizontally)
+                    .size(width = 140.dp, height = 200.dp)
+                    .clip(RoundedCornerShape(15.dp))
+                    .background(LightBlue)
+                    .clickable { imageLauncher.launch("image/*") }
+            ) {
+                if (viewModel.coverUrl != null) {
+                    AsyncImage(
+                        model = viewModel.coverUrl,
+                        contentDescription = "Book Cover",
+                        modifier = Modifier.matchParentSize(),
+                        contentScale = ContentScale.Crop,
+                        placeholder = painterResource(android.R.drawable.ic_menu_gallery),
+                        error = painterResource(android.R.drawable.ic_menu_gallery)
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier.matchParentSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.Image, contentDescription = null, tint = Color.Gray)
+                            Text("Add Cover", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                        }
+                    }
+                }
+                Icon(
+                    imageVector = Icons.Default.PhotoCamera,
+                    contentDescription = "Edit Cover",
+                    tint = Color.Gray,
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .size(32.dp)
+                        .padding(4.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            BookTextField(
+                label = "Judul Buku",
+                value = viewModel.title,
+                onValueChange = {
+                    viewModel.title = it
+                },
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            BookTextField(label = "Penerbit", value = viewModel.publisher, onValueChange = {
+                viewModel.publisher = it
+            })
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            BookTextField(
+                value = viewModel.authorInput,
+                onValueChange = { viewModel.authorInput = it },
+                label = "Penulis",
+                trailingIcon = {
+                    IconButton(onClick = {
+                        if (viewModel.authorInput.isNotBlank()) {
+                            viewModel.authors.add(viewModel.authorInput.trim())
+                            viewModel.authorInput = ""
+                        }
+                    }) {
+                        Icon(Icons.Default.Add, contentDescription = "Tambah Penulis")
+                    }
+                },
+            )
+
+            if (viewModel.authors.isNotEmpty()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    viewModel.authors.forEach { name ->
+                        AssistChip(
+                            onClick = { },
+                            label = { Text(name) },
+                            trailingIcon = {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Hapus Penulis",
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .clickable {
+                                            viewModel.authors.remove(name)
+                                        }
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                BookTextField(
+                    label = "Tanggal Terbit",
+                    value = viewModel.publishedDate,
+                    onValueChange = { viewModel.publishedDate = it },
+                    modifier = Modifier.weight(1f),
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(Icons.Default.DateRange, contentDescription = "Pilih Tanggal")
+                        }
+                    },
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                BookTextField(
+                    label = "Jumlah Halaman",
+                    value = viewModel.pageCount,
+                    onValueChange = {
+                        viewModel.pageCount = it
+                    },
+                    modifier = Modifier.weight(1f),
+                    keyboardType = KeyboardType.Number,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            BookTextField(
+                label = "ISBN",
+                value = viewModel.isbn,
+                onValueChange = {
+                    viewModel.isbn = it
+                },
+                keyboardType = KeyboardType.Number,
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            BookTextField(
+                label = "Sinopsis",
+                value = viewModel.synopsis,
+                onValueChange = { viewModel.synopsis = it },
+                maxLines = 6,
+                modifier = Modifier.height(120.dp)
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            BookTextField(
+                label = "Genre",
+                value = viewModel.genreInput,
+                onValueChange = { viewModel.genreInput = it },
+                trailingIcon = {
+                    IconButton(onClick = {
+                        if (viewModel.genreInput.isNotBlank()) {
+                            viewModel.genres.add(viewModel.genreInput.trim())
+                            viewModel.genreInput = ""
+                        }
+                    }) {
+                        Icon(Icons.Default.Add, contentDescription = "Tambah Genre")
+                    }
+                },
+            )
+
+            if (viewModel.genres.isNotEmpty()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    viewModel.genres.forEach { g ->
+                        AssistChip(
+                            onClick = { /* optional edit */ },
+                            label = { Text(g) },
+                            trailingIcon = {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Hapus Genre",
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .clickable {
+                                            viewModel.genres.remove(g)
+                                        }
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Button(
+                onClick = {
+                    if (viewModel.isValid()) {
+                        showConfirmDialog = true
+                    } else {
+                        Toast.makeText(context, "Mohon lengkapi semua data.", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(50),
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange)
+            ) {
+                Text("SIMPAN", style = AppTypography.bodyLarge, color = Color.White)
+            }
+
+        }
+
+        if (showConfirmDialog) {
+            AlertDialog(
+                onDismissRequest = { showConfirmDialog = false },
+                title = { Text("Konfirmasi", style = AppTypography.titleMedium) },
+                text = { Text("Apakah kamu yakin ingin menyimpan perubahan?", style = AppTypography.bodyMedium) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        viewModel.addBookToDatabase(
+                            onSuccess = { newBookId ->
+                                Toast.makeText(
+                                    context,
+                                    "Buku berhasil ditambahkan!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                navController.navigate("detail/$newBookId")
+                            },
+                            onError = {
+                                Toast.makeText(
+                                    context,
+                                    "Terjadi kesalahan saat menambahkan buku!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        )
+                        showConfirmDialog = false
+                    }) {
+                        Text("Ya", color = PrimaryOrange)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showConfirmDialog = false }) {
+                        Text("Batal")
+                    }
+                }
             )
         }
+
+}
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let {
+                        val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        viewModel.publishedDate = formatter.format(Date(it))
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Batal")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
     }
 }
 
+
 @Composable
-fun LabeledTextField(
+fun AddBookTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
     modifier: Modifier = Modifier,
     keyboardType: KeyboardType = KeyboardType.Text,
-    trailingIcon: @Composable (() -> Unit)? = null,
-    singleLine: Boolean = false
+    trailingIcon: @Composable() (() -> Unit)? = null,
+    singleLine: Boolean = false,
+    maxLines: Int = 1,
+    errorMessage: String? = null
 ) {
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label, style = MaterialTheme.typography.bodyMedium) },
-        modifier = modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = keyboardType),
-        trailingIcon = trailingIcon,
-        singleLine = singleLine,
-        colors = TextFieldDefaults.colors(
-            unfocusedTextColor = DarkIndigo,
-            focusedTextColor = DarkIndigo.copy(alpha = 0.5f),
-            cursorColor = DarkIndigo,
-            focusedContainerColor = Color.LightGray,
-            unfocusedContainerColor = Color.White,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-        ),
-        shape = RoundedCornerShape(20.dp),
-    )
+    Column {
+        TextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text(label, style = MaterialTheme.typography.bodyMedium) },
+            modifier = modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = keyboardType),
+            trailingIcon = trailingIcon,
+            singleLine = singleLine,
+            maxLines = maxLines,
+            colors = TextFieldDefaults.colors(
+                unfocusedTextColor = DarkIndigo,
+                focusedTextColor = DarkIndigo.copy(alpha = 0.5f),
+                cursorColor = DarkIndigo,
+                focusedContainerColor = Color.LightGray,
+                unfocusedContainerColor = Color.White,
+                focusedIndicatorColor = if (errorMessage != null) Color.Red else Color.Transparent,
+                unfocusedIndicatorColor = if (errorMessage != null) Color.Red else Color.Transparent,
+            ),
+            shape = RoundedCornerShape(20.dp),
+            isError = errorMessage != null
+        )
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                color = Color.Red,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
+    }
 }

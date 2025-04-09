@@ -29,19 +29,20 @@ import com.example.bookphoria.ui.profile.ProfileScreen
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
 import com.example.bookphoria.ui.viewmodel.BookViewModel
 import com.example.bookphoria.ui.viewmodel.EditBookViewModel
+import com.example.bookphoria.ui.viewmodel.EntryBookViewModel
 import com.example.bookphoria.ui.viewmodel.HomeViewModel
 import com.example.bookphoria.ui.viewmodel.OnboardingViewModel
 
 @OptIn(ExperimentalGetImage::class)
 @Composable
 fun AppNavHost(
-    authViewModel: AuthViewModel,
     onDeepLinkTriggered: (NavController) -> Unit = {},
-    bookViewModel: BookViewModel,
-    homeViewModel: HomeViewModel,
     onboardingViewModel: OnboardingViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val bookViewModel: BookViewModel = hiltViewModel()
+    val homeViewModel: HomeViewModel = hiltViewModel()
     val isOnboardingCompleteState = onboardingViewModel
         .isOnboardingComplete
         .collectAsState(initial = null)
@@ -127,7 +128,8 @@ fun AppNavHost(
                 )
             }
             composable("add-new-book") {
-                EntryBookScreen(navController = navController, viewModel = bookViewModel)
+                val viewModel: EntryBookViewModel = hiltViewModel()
+                EntryBookScreen(navController = navController, viewModel = viewModel)
             }
             composable(
                 route = "detail/{id}",

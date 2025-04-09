@@ -31,6 +31,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.bookphoria.ui.components.BookTextField
 import com.example.bookphoria.ui.theme.*
 import com.example.bookphoria.ui.viewmodel.EditBookViewModel
 import java.text.SimpleDateFormat
@@ -128,7 +129,7 @@ fun EditBookScreen(
                 viewModel.publisher = it
             })
 
-            Row(modifier = Modifier.fillMaxWidth()) {
+            Row(modifier = Modifier.fillMaxWidth().padding()) {
                 BookTextField(
                     label = "Tanggal Terbit",
                     value = viewModel.publishedDate,
@@ -271,27 +272,4 @@ fun EditBookScreen(
             DatePicker(state = datePickerState)
         }
     }
-}
-
-@Composable
-fun BookTextField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    maxLines: Int = 1,
-    readOnly: Boolean = false,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    trailingIcon: @Composable (() -> Unit)? = null
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        modifier = modifier.fillMaxWidth(),
-        maxLines = maxLines,
-        readOnly = readOnly,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        trailingIcon = trailingIcon
-    )
 }

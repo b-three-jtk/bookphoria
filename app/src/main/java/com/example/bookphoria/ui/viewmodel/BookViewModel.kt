@@ -18,26 +18,8 @@ class BookViewModel @Inject constructor(
     private val bookRepository: BookRepository
 ) : ViewModel() {
 
-    private val _errorMessage = MutableStateFlow<String?>(null)
     private val _selectedBook = MutableStateFlow<BookDetailUIState?>(null)
     val selectedBook: StateFlow<BookDetailUIState?> = _selectedBook
-
-    fun addBookToDatabase(
-        request: AddBookRequest,
-        onSuccess: (Int) -> Unit,
-        onError: () -> Unit
-    ) {
-        Log.d("BookViewModel", "Adding book to database: $request")
-        viewModelScope.launch {
-            try {
-                val newBookId = bookRepository.addBookFromApi(request)
-                onSuccess(newBookId)
-            } catch (e: Exception) {
-                _errorMessage.value = "Gagal menambahkan buku: ${e.message}"
-                onError()
-            }
-        }
-    }
 
     fun getBookById(bookId: Int) {
         viewModelScope.launch {
@@ -57,6 +39,4 @@ class BookViewModel @Inject constructor(
         val author: String,
         val genres: List<String>
     )
-
-
 }

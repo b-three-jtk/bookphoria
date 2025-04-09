@@ -21,8 +21,10 @@ fun PrimaryButton(
     backgroundColor: Color
 ) {
     Button(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth().padding(vertical = 22.dp, horizontal = 56.dp),
+        onClick = {
+            onClick()
+        },
+        modifier = modifier.fillMaxWidth().padding(vertical = 22.dp),
         shape = RoundedCornerShape(15.dp),
         contentPadding = PaddingValues(vertical = 14.dp),
         colors = ButtonDefaults.buttonColors(containerColor = backgroundColor)
