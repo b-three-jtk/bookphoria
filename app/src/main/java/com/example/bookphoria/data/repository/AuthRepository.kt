@@ -89,4 +89,8 @@ class AuthRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    suspend fun getUserNameById(userId: Int): String {
+        return userDao.getUserById(userId)?.name ?: "Pengguna"
+    }
 }

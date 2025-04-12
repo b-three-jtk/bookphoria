@@ -10,9 +10,11 @@ import com.example.bookphoria.data.local.entities.BookAuthorCrossRef
 import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.BookGenreCrossRef
 import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
+import com.example.bookphoria.data.local.entities.FullBookDataWithUserInfo
 import com.example.bookphoria.data.local.entities.GenreEntity
 import com.example.bookphoria.data.local.entities.UserBookCrossRef
 import com.example.bookphoria.data.local.entities.UserWithBooks
+import com.google.android.gms.common.api.Status
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -84,7 +86,11 @@ interface BookDao {
     suspend fun insertUserBookCrossRef(crossRef: UserBookCrossRef)
 
     @Transaction
-    @Query("SELECT * FROM books")
-    fun getAllBooksWithDetails(): Flow<List<BookWithGenresAndAuthors>>
+    @Query("SELECT * FROM books WHERE id IN ( SELECT bookId FROM userbookcrossref WHERE userId = :userId )")
+    fun getYourBooks(userId: Int): Flow<List<BookWithGenresAndAuthors>>
+
+    @Transaction
+    @Query("SELECT * FROM books WHERE id IN ( SELECT bookId FROM userbookcrossref WHERE userId = :userId AND status = :status )")
+    fun getYourCurrentlyReadingBooks(userId: Int, status: String): Flow<List<FullBookDataWithUserInfo>>
 
 }

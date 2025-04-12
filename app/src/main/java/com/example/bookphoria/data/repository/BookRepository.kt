@@ -9,6 +9,7 @@ import com.example.bookphoria.data.local.entities.AuthorEntity
 import com.example.bookphoria.data.local.entities.BookAuthorCrossRef
 import com.example.bookphoria.data.local.entities.BookGenreCrossRef
 import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
+import com.example.bookphoria.data.local.entities.FullBookDataWithUserInfo
 import com.example.bookphoria.data.local.entities.GenreEntity
 import com.example.bookphoria.data.local.entities.UserBookCrossRef
 import com.example.bookphoria.data.local.entities.toBookEntity
@@ -113,8 +114,22 @@ class BookRepository @Inject constructor(
         return bookDao.getBookById(bookId)
     }
 
-    fun getAllBooksWithDetails(): Flow<List<BookWithGenresAndAuthors>> {
-        return bookDao.getAllBooksWithDetails()
+    fun getYourBooks(
+        userId: Int
+    ): Flow<List<BookWithGenresAndAuthors>> {
+        return bookDao.getYourBooks(
+            userId
+        )
+    }
+
+    fun getYourCurrentlyReadingBooks(
+        userId: Int,
+        status: String
+    ): Flow<List<FullBookDataWithUserInfo>> {
+        return bookDao.getYourCurrentlyReadingBooks(
+            userId,
+            status
+        )
     }
 
     fun searchBook(query: String, token: String): Flow<PagingData<BookNetworkModel>> {

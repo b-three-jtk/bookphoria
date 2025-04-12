@@ -5,115 +5,70 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DockedSearchBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.bookphoria.R
 import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
-import com.example.bookphoria.ui.book.MyShelfScreen
-import com.example.bookphoria.ui.book.SearchScreen
-import com.example.bookphoria.ui.components.BottomSheetCard
-import com.example.bookphoria.ui.profile.ProfileScreen
-import com.example.bookphoria.ui.theme.BodyBottomSheet
-import com.example.bookphoria.ui.theme.PrimaryOrange
+import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.viewmodel.HomeViewModel
-import com.rahad.riobottomnavigation.composables.RioBottomNavItemData
-import com.rahad.riobottomnavigation.composables.RioBottomNavigation
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
-    val childNavController = rememberNavController()
-    val selectedIndex = rememberSaveable { mutableIntStateOf(0) }
-    val showSheet = remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    if (showSheet.value) {
-        ModalBottomSheet(
-            onDismissRequest = { showSheet.value = false },
-            sheetState = sheetState,
-            containerColor = Color.White
-        ) {
-            BottomSheetContent(navController)
-        }
-    }
-
-    val items = listOf(
-        BottomNavItem("home-tab", Icons.Default.Home, "Home"),
-        BottomNavItem("search-tab", Icons.Default.Search, "Search"),
-        BottomNavItem("shelf-tab", Icons.Default.Book, "My Shelf"),
-        BottomNavItem("profile-tab", Icons.Default.Person, "Profile")
-    )
-
-    Scaffold(
-        bottomBar = {
-            RioBottomNavigation(
-                fabIcon = Icons.Default.Add,
-                onFabClick = { showSheet.value = true },
-                buttons = items.mapIndexed { index, item ->
-                    RioBottomNavItemData(
-                        imageVector = item.icon,
-                        selected = selectedIndex.intValue == index,
-                        onClick = {
-                            selectedIndex.intValue = index
-                            childNavController.navigate(item.route) {
-                                popUpTo(childNavController.graph.startDestinationId) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        label = item.label
-                    )
-                },
-                fabSize = 70.dp,
-                barHeight = 70.dp,
-                selectedItemColor = PrimaryOrange,
-                fabBackgroundColor = PrimaryOrange,
-            )
-        }
-    ) { innerPadding ->
-        NavHost(
-            navController = childNavController,
-            startDestination = "home-tab",
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable("home-tab") { HomeContent(viewModel = viewModel) }
-            composable("search-tab") { SearchScreen(navController = navController) }
-            composable("shelf-tab") { MyShelfScreen() }
-            composable("profile-tab") { ProfileScreen() }
-        }
-    }
-}
-
-data class BottomNavItem(val route: String, val icon: ImageVector, val label: String)
 
 @Composable
-fun HomeContent(userName: String = "Asep", viewModel: HomeViewModel) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Header Box
+fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
+    val userName by viewModel.userName.collectAsState()
+
+    Box(modifier = Modifier.fillMaxSize().background(SoftCream)) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -125,31 +80,32 @@ fun HomeContent(userName: String = "Asep", viewModel: HomeViewModel) {
                             Color(0xFFFCD8C4)
                         )
                     ),
-                    shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
                 )
                 .padding(horizontal = 20.dp, vertical = 24.dp)
         ) {
-            Column {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.End)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.WbSunny,
-                        contentDescription = "Morning Icon",
-                        tint = Color.Black
-                    )
                     Image(
                         painter = painterResource(id = R.drawable.forgot),
                         contentDescription = "Profile",
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(52.dp)
                             .clip(CircleShape)
                     )
                 }
+                Icon(
+                    imageVector = Icons.Default.WbSunny,
+                    contentDescription = "Morning Icon",
+                    tint = Color.Black
+                )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
                     text = "Halo, $userName",
@@ -172,10 +128,11 @@ fun HomeContent(userName: String = "Asep", viewModel: HomeViewModel) {
                 .fillMaxSize()
                 .padding(top = 240.dp)
         ) {
-            BookSection(viewModel = viewModel)
+            BookSection(viewModel = viewModel, navController = navController)
         }
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -188,6 +145,9 @@ fun SearchBarHome() {
         modifier = Modifier
             .padding(horizontal = 20.dp)
             .offset(y = 170.dp),
+        colors = SearchBarDefaults.colors(
+            containerColor = Color.White
+        ),
         query = query,
         onQueryChange = { query = it },
         onSearch = {
@@ -197,7 +157,7 @@ fun SearchBarHome() {
         active = active,
         onActiveChange = { active = it },
         placeholder = {
-            Text(text = "Cari buku...")
+            Text(text = "Search", color = Color.Gray)
         },
         leadingIcon = {
             Icon(imageVector = Icons.Default.Search, contentDescription = "Search Icon")
@@ -214,7 +174,7 @@ fun SearchBarHome() {
             }
         },
         tonalElevation = 4.dp,
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(25.dp)
     ) {
         Column(modifier = Modifier.padding(8.dp)) {
             searchHistory.takeLast(3).forEach { item ->
@@ -239,64 +199,13 @@ fun SearchBarHome() {
 }
 
 @Composable
-private fun GradientBackgroundBrush(
-    isVerticalGradient: Boolean,
-    colors: List<Color>
-): Brush {
-    val endOffset = if (isVerticalGradient) {
-        Offset(0f, Float.POSITIVE_INFINITY)
-    } else {
-        Offset(Float.POSITIVE_INFINITY, 0f)
-    }
-
-    return Brush.linearGradient(
-        colors = colors,
-        start = Offset.Zero,
-        end = endOffset
-    )
-}
-
-@Composable
-fun BottomSheetContent(navController: NavController) {
-    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-        Text(
-            text = "Tambahkan buku Anda ke koleksi",
-            style = MaterialTheme.typography.titleSmall
-        )
-        Text(text = "Scan QR Code", style = BodyBottomSheet)
-        BottomSheetCard(
-            icon = Icons.Default.QrCodeScanner,
-            bgColor = PrimaryOrange,
-            title = "Scan Barcode ISBN",
-            description = "Scan Barcode ISBN Buku Anda untuk pencarian cepat",
-            onClick = {
-                navController.navigate("scan")
-            }
-        )
-        BottomSheetCard(
-            icon = Icons.Default.Search,
-            bgColor = Color(0xFF96ADD6),
-            title = "Cari berdasarkan Judul",
-            description = "Cari berdasarkan judul jika tidak memiliki ISBN",
-            onClick = {}
-        )
-        BottomSheetCard(
-            icon = Icons.Default.AddBox,
-            bgColor = Color(0xFFE5A22D),
-            title = "Tambahkan buku Anda",
-            description = "Tambahkan buku Anda secara manual",
-            onClick = {
-                navController.navigate("add-new-book")
-            }
-        )
-    }
-}
-@Composable
 fun BookSection(
     userBooks: List<BookWithGenresAndAuthors> = emptyList(),
-    viewModel: HomeViewModel
+    viewModel: HomeViewModel,
+    navController: NavController
 ) {
-    val books by viewModel.books.collectAsState(initial = userBooks)
+    val yourBooks by viewModel.yourBooks.collectAsState(initial = userBooks)
+    val yourCurrentlyReadingBooks by viewModel.currentlyReading.collectAsState()
 
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
         Row(
@@ -309,27 +218,55 @@ fun BookSection(
             )
             Text(
                 text = "Lainnya",
-                style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
+                style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
+                modifier = Modifier.clickable { /* Handle "Lainnya" click */ }
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
+        if (yourBooks.isNotEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+            ) {
+                    Row(
+                        modifier = Modifier.width(174.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        yourBooks.take(5).forEach { bookWithDetails ->
+                            val book = bookWithDetails.book
+                            val authorNames = bookWithDetails.authors.joinToString(", ") { it.name }
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-        ) {
-            books.take(5).forEach { bookWithDetails ->
-                val book = bookWithDetails.book
-                val authorNames = bookWithDetails.authors.joinToString(", ") { it.name }
-
-                BookItem(
-                    title = book.title,
-                    author = authorNames,
-                    imageUrl = book.imageUrl
+                            BookItem(
+                                title = book.title,
+                                author = authorNames,
+                                imageUrl = book.imageUrl,
+                                onClick = {
+                                    navController.navigate("detail/${book.id}")
+                                }
+                            )
+                        }
+                    }
+            }
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color.White)
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.book),
+                    contentDescription = "Bookshelf",
+                    modifier = Modifier
+                        .height(140.dp)
+                        .padding(10.dp)
                 )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(text = "Belum ada buku yang ditambahkan ke koleksi", color = Color.Gray)
             }
         }
 
@@ -337,13 +274,13 @@ fun BookSection(
 
         Text(
             text = "Currently Reading",
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        if (books.isNotEmpty()) {
-            val currentBook = books.first()
+        if (yourCurrentlyReadingBooks.isNotEmpty()) {
+            val currentBook = yourCurrentlyReadingBooks.first()
             val authorNames = currentBook.authors.joinToString(", ") { it.name }
 
             CurrentReadingItem(
@@ -352,6 +289,24 @@ fun BookSection(
                 progress = 0.5f,
                 imageUrl = currentBook.book.imageUrl
             )
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color.White)
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.bookshelf),
+                    contentDescription = "Bookshelf",
+                    modifier = Modifier
+                        .height(140.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "Belum ada buku yang sedang dibaca", color = Color.Gray)
+            }
         }
     }
 }
@@ -360,26 +315,51 @@ fun BookSection(
 fun BookItem(
     title: String,
     author: String,
-    imageUrl: String?
+    imageUrl: String?,
+    onClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
-            .clip(RoundedCornerShape(24.dp))
-            .background(Color(0xFFEAE9F3))
-            .padding(12.dp),
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color(0xFF96ADD6).copy(alpha = 0.76f))
+            .padding(12.dp)
+            .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        AsyncImage(
-            model = imageUrl ?: R.drawable.bookshelf, // Fallback ke gambar lokal
-            contentDescription = title,
-            modifier = Modifier
-                .height(140.dp)
-                .clip(RoundedCornerShape(8.dp)),
-            contentScale = ContentScale.Crop
-        )
+        if (imageUrl != "") {
+            AsyncImage(
+                model = imageUrl ?: R.drawable.bookshelf,
+                contentDescription = title,
+                modifier = Modifier
+                    .height(160.dp)
+                    .width(120.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(
+                modifier = Modifier.height(160.dp)
+                    .width(120.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Default.Image, contentDescription = null, tint = Color.Gray)
+                    Text(
+                        "Add Cover",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = title,
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center,
             fontWeight = FontWeight.Bold,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
@@ -387,7 +367,7 @@ fun BookItem(
         Text(
             text = author,
             style = MaterialTheme.typography.bodySmall,
-            color = Color.Gray,
+            color = Color.Black,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -410,7 +390,7 @@ fun CurrentReadingItem(
             .padding(16.dp)
     ) {
         AsyncImage(
-            model = imageUrl ?: R.drawable.bookshelf, // Fallback ke gambar lokal
+            model = imageUrl ?: R.drawable.bookshelf,
             contentDescription = title,
             modifier = Modifier
                 .height(120.dp)

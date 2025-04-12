@@ -54,5 +54,37 @@ data class BookWithGenresAndAuthors(
             entityColumn = "genreId"
         )
     )
-    val genres: List<GenreEntity>
+    val genres: List<GenreEntity>,
+)
+
+data class FullBookDataWithUserInfo(
+    @Embedded val book: BookEntity,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "id",
+        associateBy = Junction(
+            value = BookAuthorCrossRef::class,
+            parentColumn = "bookId",
+            entityColumn = "authorId"
+        )
+    )
+    val authors: List<AuthorEntity>,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "id",
+        associateBy = Junction(
+            value = BookGenreCrossRef::class,
+            parentColumn = "bookId",
+            entityColumn = "genreId"
+        )
+    )
+    val genres: List<GenreEntity>,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "bookId"
+    )
+    val userBookCrossRefs: List<UserBookCrossRef>
 )

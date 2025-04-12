@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -66,7 +67,7 @@ fun EntryBookScreen(
     val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { viewModel.coverUrl = uri.toString() }
     }
-    
+
     // Mengisi field ISBN dengan hasil scan
     LaunchedEffect(scannedIsbn) {
         scannedIsbn?.let {
@@ -75,7 +76,7 @@ fun EntryBookScreen(
             savedStateHandle.remove<String>("isbn_result")
         }
     }
-    
+
     AnimatedVisibility(
         visible = true,
         enter = fadeIn(animationSpec = tween(500)),
@@ -109,7 +110,11 @@ fun EntryBookScreen(
             Box(
                 contentAlignment = Alignment.BottomEnd,
                 modifier = Modifier
-                    .shadow(elevation = 4.dp, spotColor = Color(0x40000000), ambientColor = Color(0x40000000))
+                    .shadow(
+                        elevation = 4.dp,
+                        spotColor = Color(0x40000000),
+                        ambientColor = Color(0x40000000)
+                    )
                     .align(Alignment.CenterHorizontally)
                     .size(width = 140.dp, height = 200.dp)
                     .clip(RoundedCornerShape(15.dp))
@@ -132,7 +137,11 @@ fun EntryBookScreen(
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Default.Image, contentDescription = null, tint = Color.Gray)
-                            Text("Add Cover", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                            Text(
+                                "Add Cover",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.Gray
+                            )
                         }
                     }
                 }
@@ -313,7 +322,8 @@ fun EntryBookScreen(
                     if (viewModel.isValid()) {
                         showConfirmDialog = true
                     } else {
-                        Toast.makeText(context, "Mohon lengkapi semua data.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Mohon lengkapi semua data.", Toast.LENGTH_SHORT)
+                            .show()
                     }
                 },
                 modifier = Modifier
@@ -331,7 +341,12 @@ fun EntryBookScreen(
             AlertDialog(
                 onDismissRequest = { showConfirmDialog = false },
                 title = { Text("Konfirmasi", style = AppTypography.titleMedium) },
-                text = { Text("Apakah kamu yakin ingin menyimpan perubahan?", style = AppTypography.bodyMedium) },
+                text = {
+                    Text(
+                        "Apakah kamu yakin ingin menyimpan perubahan?",
+                        style = AppTypography.bodyMedium
+                    )
+                },
                 confirmButton = {
                     TextButton(onClick = {
                         viewModel.addBookToDatabase(
@@ -364,7 +379,7 @@ fun EntryBookScreen(
             )
         }
 
-}
+    }
 
     if (showDatePicker) {
         DatePickerDialog(
@@ -387,52 +402,6 @@ fun EntryBookScreen(
             }
         ) {
             DatePicker(state = datePickerState)
-        }
-    }
-}
-
-
-@Composable
-fun AddBookTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    modifier: Modifier = Modifier,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    trailingIcon: @Composable() (() -> Unit)? = null,
-    singleLine: Boolean = false,
-    maxLines: Int = 1,
-    errorMessage: String? = null
-) {
-    Column {
-        TextField(
-            value = value,
-            onValueChange = onValueChange,
-            label = { Text(label, style = MaterialTheme.typography.bodyMedium) },
-            modifier = modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = keyboardType),
-            trailingIcon = trailingIcon,
-            singleLine = singleLine,
-            maxLines = maxLines,
-            colors = TextFieldDefaults.colors(
-                unfocusedTextColor = DarkIndigo,
-                focusedTextColor = DarkIndigo.copy(alpha = 0.5f),
-                cursorColor = DarkIndigo,
-                focusedContainerColor = Color.LightGray,
-                unfocusedContainerColor = Color.White,
-                focusedIndicatorColor = if (errorMessage != null) Color.Red else Color.Transparent,
-                unfocusedIndicatorColor = if (errorMessage != null) Color.Red else Color.Transparent,
-            ),
-            shape = RoundedCornerShape(20.dp),
-            isError = errorMessage != null
-        )
-        if (errorMessage != null) {
-            Text(
-                text = errorMessage,
-                color = Color.Red,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
-            )
         }
     }
 }

@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.bookphoria.R
 import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.viewmodel.BookViewModel
@@ -73,13 +74,13 @@ fun DetailBookScreen(
             }
 
             Row(modifier = Modifier.fillMaxWidth()) {
-                Image(
-                    painter = painterResource(R.drawable.bookshelf),
-                    contentDescription = "Sampul Buku",
+                AsyncImage(
+                    model = book.book.imageUrl ?: R.drawable.bookshelf,
+                    contentDescription = book.book.title,
                     modifier = Modifier
+                        .height(160.dp)
                         .width(120.dp)
-                        .height(180.dp)
-                        .clip(RoundedCornerShape(8.dp)),
+                        .clip(MaterialTheme.shapes.small),
                     contentScale = ContentScale.Crop
                 )
 

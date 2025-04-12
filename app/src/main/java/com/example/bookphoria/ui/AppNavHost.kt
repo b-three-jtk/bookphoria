@@ -23,7 +23,7 @@ import com.example.bookphoria.ui.book.EditBookScreen
 import com.example.bookphoria.ui.book.EntryBookScreen
 import com.example.bookphoria.ui.book.ScanCodeScreen
 import com.example.bookphoria.ui.book.SearchScreen
-import com.example.bookphoria.ui.home.HomeScreen
+import com.example.bookphoria.ui.home.MainScreen
 import com.example.bookphoria.ui.onboarding.OnboardingScreen
 import com.example.bookphoria.ui.profile.ProfileScreen
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
@@ -87,7 +87,7 @@ fun AppNavHost(
                 ResetpassScreen(viewModel = authViewModel, navController = navController)
             }
             composable("home") {
-                HomeScreen(navController = navController, viewModel = homeViewModel)
+                MainScreen(navController = navController, viewModel = homeViewModel)
             }
             composable("search") {
                 SearchScreen(navController = navController)
