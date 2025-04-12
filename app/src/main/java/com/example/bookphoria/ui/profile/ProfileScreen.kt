@@ -1,5 +1,6 @@
 package com.example.bookphoria.ui.profile
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -18,6 +19,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bookphoria.ui.theme.PrimaryOrange
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.example.bookphoria.R
 
 @Composable
 fun ProfileScreen() {
@@ -54,7 +59,16 @@ fun ProfileScreen() {
                     .size(96.dp)
                     .background(Color.LightGray, CircleShape)
                     .border(1.dp, Color.Gray, CircleShape)
-            )
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.flynn),
+                    contentDescription = "Profile Image",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
