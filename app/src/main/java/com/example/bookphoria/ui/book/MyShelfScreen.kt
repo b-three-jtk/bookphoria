@@ -1,12 +1,19 @@
 package com.example.bookphoria.ui.book
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.material3.AlertDialogDefaults.shape
 import androidx.compose.runtime.Composable
@@ -24,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
+import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
 import com.example.bookphoria.ui.theme.*
 
@@ -95,76 +103,108 @@ fun CreateCollectionDialog(
 ){
     var collectionName by remember { mutableStateOf("") }
     var collectionDescription by remember { mutableStateOf("") }
+    val imageUri = remember { mutableStateOf<Uri?>(null) }
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        imageUri.value = uri
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = Color.White,
+            shape = RoundedCornerShape(20.dp),
+            color = SoftCream,
             modifier = Modifier.fillMaxWidth()
-        ){
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.add),
-                    contentDescription = "Shelves Image",
-                    contentScale = ContentScale.Crop,
+        ) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Column(
                     modifier = Modifier
-                        .size(72.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+                        .padding(start = 24.dp, end = 24.dp, top = 24.dp)
+                        .align(Alignment.TopCenter),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (imageUri.value != null) {
+                        Image(
+                            painter = rememberAsyncImagePainter(imageUri.value),
+                            contentDescription = "Selected Image",
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .border(BorderStroke(1.dp, Color.Gray))
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .border(BorderStroke(1.dp, Color.Gray))
+                                .clickable { launcher.launch("image/*") },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "Select Image"
+                            )
+                        }
+                    }
 
-                Text(
-                    text = "Give your shelf a name",
-                    style = AppTypography.titleMedium,
-                    textAlign = TextAlign.Center
-                )
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                TextField(
-                    value = collectionName,
-                    onValueChange = { collectionName = it },
-                    label = { Text("") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedLabelColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Gray,
-                        unfocusedIndicatorColor = Color.Gray
-                    ),
-                    singleLine = true
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "Give your shelf description",
-                    style = AppTypography.titleMedium,
-                    textAlign = TextAlign.Center
-                )
-
-                TextField(
-                    value = collectionDescription,
-                    onValueChange = { collectionDescription = it },
-                    label = { Text("") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(100.dp)
-                        .padding(vertical = 8.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedLabelColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Gray,
-                        unfocusedIndicatorColor = Color.Gray
+                    Text(
+                        text = "Give your shelf a name",
+                        style = AppTypography.headlineSmall,
+                        textAlign = TextAlign.Left
                     )
-                )
-                Spacer(modifier = Modifier.height(24.dp))
 
+                    TextField(
+                        value = collectionName,
+                        onValueChange = { collectionName = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = SoftCream,
+                            unfocusedContainerColor = SoftCream,
+                            focusedIndicatorColor = Color.Black,
+                            unfocusedIndicatorColor = Color.Black,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black
+                        ),
+                        singleLine = true
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Give your shelf description",
+                        style = AppTypography.headlineSmall,
+                        textAlign = TextAlign.Left
+                    )
+
+                    TextField(
+                        value = collectionDescription,
+                        onValueChange = { collectionDescription = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp)
+                            .padding(vertical = 8.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = SoftCream,
+                            unfocusedContainerColor = SoftCream,
+                            focusedIndicatorColor = Color.Black,
+                            unfocusedIndicatorColor = Color.Black,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(72.dp))
+                }
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter),
+                    horizontalArrangement = Arrangement.spacedBy(0.dp)
                 ) {
                     Button(
                         onClick = onDismiss,
@@ -173,7 +213,7 @@ fun CreateCollectionDialog(
                             containerColor = Color.Gray,
                             contentColor = Color.White
                         ),
-                        shape = RoundedCornerShape(0.dp)
+                        shape = RoundedCornerShape(bottomStart = 20.dp)
                     ) {
                         Text("Batal")
                     }
@@ -182,10 +222,10 @@ fun CreateCollectionDialog(
                         onClick = { onSave(collectionName, collectionDescription) },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFFF6347), // Orange-red color from image
+                            containerColor = Color(0xFFFF6347),
                             contentColor = Color.White
                         ),
-                        shape = RoundedCornerShape(0.dp)
+                        shape = RoundedCornerShape(bottomEnd = 20.dp)
                     ) {
                         Text("Simpan")
                     }
