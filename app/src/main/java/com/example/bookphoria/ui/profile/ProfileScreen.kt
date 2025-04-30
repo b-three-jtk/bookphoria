@@ -60,7 +60,7 @@ fun ProfileScreen() {
 
             // Name
             Text(
-                text = "John Doe",
+                text = "Dhira",
                 style = TextStyle(
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
@@ -74,8 +74,8 @@ fun ProfileScreen() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatColumn("2", "List Bacaan")
-                StatColumn("2", "Teman")
+                StatColumn("0", "List Bacaan")
+                StatColumn("0", "Teman")
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -89,13 +89,13 @@ fun ProfileScreen() {
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    ProfileInfoRow("Username", "johndoe1")
+                    ProfileInfoRow("Username", "Dhira")
                     Divider(modifier = Modifier.padding(vertical = 8.dp))
-                    ProfileInfoRow("Nama Lengkap", "John Doe")
+                    ProfileInfoRow("Nama Lengkap", "Dhira")
                     Divider(modifier = Modifier.padding(vertical = 8.dp))
-                    ProfileInfoRow("Email", "johndoe@gmail.com")
+                    ProfileInfoRow("Email", "dhira.ramadini.tif23@polban.ac.id")
                     Divider(modifier = Modifier.padding(vertical = 8.dp))
-                    ProfileInfoRow("Gender", "Pria")
+                    ProfileInfoRow("Gender", "Wanita")
                     Divider(modifier = Modifier.padding(vertical = 8.dp))
 
                     Spacer(modifier = Modifier.height(16.dp))

@@ -136,7 +136,7 @@ class BookRepository @Inject constructor(
         return Pager(
             config = PagingConfig(pageSize = 10, enablePlaceholders = false),
             pagingSourceFactory = {
-                BookSearchPagingSource(apiService, query, token)
+                BookSearchPagingSource(apiService, query, token, bookRepository = this)
             }
         ).flow
     }

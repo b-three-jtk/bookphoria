@@ -119,17 +119,17 @@ fun EditBookScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            BookTextField(label = "Judul Buku", value = viewModel.title, onValueChange = {
+            BookTextField(label = "Judul Buku", modifier = Modifier.padding(top = 16.dp), value = viewModel.title, onValueChange = {
                 viewModel.title = it
             })
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            BookTextField(label = "Penerbit", value = viewModel.publisher, onValueChange = {
+            BookTextField(label = "Penerbit", modifier = Modifier.padding(top = 16.dp), value = viewModel.publisher, onValueChange = {
                 viewModel.publisher = it
             })
 
-            Row(modifier = Modifier.fillMaxWidth().padding()) {
+            Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
                 BookTextField(
                     label = "Tanggal Terbit",
                     value = viewModel.publishedDate,
@@ -149,12 +149,12 @@ fun EditBookScreen(
                     label = "Jumlah Halaman",
                     value = viewModel.pages,
                     onValueChange = { viewModel.pages = it },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).padding(top = 16.dp),
                     keyboardType = KeyboardType.Number
                 )
             }
 
-            BookTextField(label = "ISBN", value = viewModel.isbn, onValueChange = {
+            BookTextField(label = "ISBN", modifier = Modifier.padding(top = 16.dp), value = viewModel.isbn, onValueChange = {
                 viewModel.isbn = it
             })
 
@@ -163,12 +163,12 @@ fun EditBookScreen(
                 value = viewModel.synopsis,
                 onValueChange = { viewModel.synopsis = it },
                 maxLines = 6,
-                modifier = Modifier.height(120.dp)
+                modifier = Modifier.height(120.dp).padding(top = 16.dp)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text("Penulis", style = AppTypography.bodyMedium)
+            Text("Penulis", style = AppTypography.bodyMedium,  modifier = Modifier.padding(top = 16.dp),)
             FlowRow {
                 viewModel.allAuthors.forEach { author ->
                     val isSelected = author.id in viewModel.selectedAuthorIds
@@ -186,7 +186,7 @@ fun EditBookScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text("Genre", style = AppTypography.bodyMedium)
+            Text("Genre", style = AppTypography.bodyMedium,  modifier = Modifier.padding(top = 16.dp),)
             FlowRow {
                 viewModel.allGenres.forEach { genre ->
                     val isSelected = genre.id in viewModel.selectedGenreIds

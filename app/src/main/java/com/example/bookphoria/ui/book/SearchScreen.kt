@@ -92,9 +92,6 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel(), navController: Na
                                 title = book.title,
                                 author = book.authors?.joinToString(", ") { it.name } ?: "No Author",
                                 imageUrl = book.cover,
-                                onClick = {
-                                    navController.navigate("detail/${book.id}")
-                                }
                             )
                         }
                     }
@@ -150,7 +147,6 @@ fun BookSearchItem(
     author: String,
     imageUrl: String?,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit
 ) {
     Row(
         modifier = modifier
@@ -162,8 +158,7 @@ fun BookSearchItem(
                 color = MaterialTheme.colorScheme.outlineVariant,
                 shape = MaterialTheme.shapes.medium
             )
-            .padding(16.dp)
-            .clickable(onClick = onClick),
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AsyncImage(
