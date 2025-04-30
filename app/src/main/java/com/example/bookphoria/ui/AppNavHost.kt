@@ -25,6 +25,7 @@ import com.example.bookphoria.ui.book.ScanCodeScreen
 import com.example.bookphoria.ui.book.SearchScreen
 import com.example.bookphoria.ui.home.MainScreen
 import com.example.bookphoria.ui.onboarding.OnboardingScreen
+import com.example.bookphoria.ui.profile.ProfileFriendScreen
 import com.example.bookphoria.ui.profile.ProfileScreen
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
 import com.example.bookphoria.ui.viewmodel.BookViewModel
@@ -111,6 +112,11 @@ fun AppNavHost(
             composable("profile") {
                 ProfileScreen()
             }
+
+            composable("user-profile") {
+                ProfileFriendScreen(navController = navController)
+            }
+
             composable(
                 "reset?token={token}&email={email}",
                 arguments = listOf(
