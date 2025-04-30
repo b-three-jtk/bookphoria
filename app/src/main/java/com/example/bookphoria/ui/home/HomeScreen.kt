@@ -117,6 +117,7 @@ fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
                     text = "Baca buku apa hari ini?",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray
+
                 )
             }
         }

@@ -13,7 +13,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -38,7 +37,6 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.bookphoria.ui.components.BookTextField
 import com.example.bookphoria.ui.theme.AppTypography
-import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.theme.LightBlue
 import com.example.bookphoria.ui.theme.PrimaryOrange
 import com.example.bookphoria.ui.viewmodel.EntryBookViewModel
