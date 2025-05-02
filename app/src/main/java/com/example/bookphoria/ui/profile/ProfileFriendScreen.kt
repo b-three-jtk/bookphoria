@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,6 +34,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -190,20 +192,26 @@ fun ProfileFriendScreen(
                 }
             }
 
+            val pagerState = rememberPagerState(
+                pageCount = { 3 }
+            )
 
-            Row(
+            TabRow(
+                selectedTabIndex = pagerState.currentPage,
                 modifier = Modifier
                     .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Text(
+                Row(
                     modifier = Modifier
                         .background(Color(0xFFE0E0E0), RoundedCornerShape(50))
                         .padding(horizontal = 16.dp, vertical = 4.dp),
-                    text = "Collection",
-                    style = TitleExtraSmall,
-                    color = Color.Black
-                )
+                ) {
+                    Text(
+                        text = "Collection",
+                        style = TitleExtraSmall,
+                        color = Color.Black
+                    )
+                }
 
                 Spacer(modifier = Modifier.width(20.dp))
 

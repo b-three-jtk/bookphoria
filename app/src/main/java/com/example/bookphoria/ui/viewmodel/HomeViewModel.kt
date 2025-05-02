@@ -3,16 +3,13 @@ package com.example.bookphoria.ui.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
-import com.example.bookphoria.data.local.entities.FullBookDataWithUserInfo
+import com.example.bookphoria.data.local.entities.BookData
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.repository.AuthRepository
 import com.example.bookphoria.data.repository.BookRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,10 +20,10 @@ class HomeViewModel @Inject constructor(
     private val userRepository: AuthRepository,
 ) : ViewModel() {
 
-    private val _currentlyReading = MutableStateFlow<List<FullBookDataWithUserInfo>>(emptyList())
-    val currentlyReading: StateFlow<List<FullBookDataWithUserInfo>> = _currentlyReading
-    private val _yourBooks = MutableStateFlow<List<BookWithGenresAndAuthors>>(emptyList())
-    val yourBooks: StateFlow<List<BookWithGenresAndAuthors>> = _yourBooks
+    private val _currentlyReading = MutableStateFlow<List<BookData>>(emptyList())
+    val currentlyReading: StateFlow<List<BookData>> = _currentlyReading
+    private val _yourBooks = MutableStateFlow<List<BookData>>(emptyList())
+    val yourBooks: StateFlow<List<BookData>> = _yourBooks
 
     private val _userName = MutableStateFlow("...")
     val userName: StateFlow<String> = _userName

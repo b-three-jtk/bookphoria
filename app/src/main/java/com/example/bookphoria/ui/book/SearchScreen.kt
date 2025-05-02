@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -86,12 +85,15 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel(), navController: Na
             ) {
                 if (query.isNotEmpty()) {
                     items(results.itemCount) { index ->
-                        val book = results[index]
-                        if (book != null) {
+                        val data = results[index]
+                        if (data != null) {
                             BookSearchItem(
-                                title = book.title,
-                                author = book.authors?.joinToString(", ") { it.name } ?: "No Author",
-                                imageUrl = book.cover,
+                                title = data.book.title,
+                                author = data.authors.joinToString(", ") { it.name },
+                                imageUrl = data.book.imageUrl,
+                                onClick = {
+                                    navController.navigate("detail/${data.book.id}")
+                                }
                             )
                         }
                     }
@@ -147,10 +149,12 @@ fun BookSearchItem(
     author: String,
     imageUrl: String?,
     modifier: Modifier = Modifier,
-) {
+    onClick: () -> Unit
+    ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surface)
             .border(

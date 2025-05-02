@@ -8,8 +8,7 @@ import com.example.bookphoria.data.local.dao.BookDao
 import com.example.bookphoria.data.local.entities.AuthorEntity
 import com.example.bookphoria.data.local.entities.BookAuthorCrossRef
 import com.example.bookphoria.data.local.entities.BookGenreCrossRef
-import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
-import com.example.bookphoria.data.local.entities.FullBookDataWithUserInfo
+import com.example.bookphoria.data.local.entities.BookData
 import com.example.bookphoria.data.local.entities.GenreEntity
 import com.example.bookphoria.data.local.entities.UserBookCrossRef
 import com.example.bookphoria.data.local.entities.toBookEntity
@@ -110,13 +109,13 @@ class BookRepository @Inject constructor(
         }
     }
 
-    suspend fun getBookById(bookId: Int): BookWithGenresAndAuthors? {
+    suspend fun getBookById(bookId: Int): BookData? {
         return bookDao.getBookById(bookId)
     }
 
     fun getYourBooks(
         userId: Int
-    ): Flow<List<BookWithGenresAndAuthors>> {
+    ): Flow<List<BookData>> {
         return bookDao.getYourBooks(
             userId
         )
@@ -125,19 +124,23 @@ class BookRepository @Inject constructor(
     fun getYourCurrentlyReadingBooks(
         userId: Int,
         status: String
-    ): Flow<List<FullBookDataWithUserInfo>> {
+    ): Flow<List<BookData>> {
         return bookDao.getYourCurrentlyReadingBooks(
             userId,
             status
         )
     }
 
-    fun searchBook(query: String, token: String): Flow<PagingData<BookNetworkModel>> {
+    fun searchBook(query: String, token: String): Flow<PagingData<BookData>> {
         return Pager(
             config = PagingConfig(pageSize = 10, enablePlaceholders = false),
             pagingSourceFactory = {
                 BookSearchPagingSource(apiService, query, token, bookRepository = this)
             }
         ).flow
+    }
+
+    suspend fun getBooksByQuery(query: String, pageSize: Int, offset: Int): List<BookData> {
+        return bookDao.getBooksByQuery(query, pageSize, offset)
     }
 }

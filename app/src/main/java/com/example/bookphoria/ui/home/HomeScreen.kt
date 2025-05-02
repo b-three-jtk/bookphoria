@@ -25,7 +25,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.Button
@@ -53,13 +52,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.bookphoria.R
-import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
+import com.example.bookphoria.data.local.entities.BookData
+import com.example.bookphoria.ui.components.BookItemCard
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.viewmodel.HomeViewModel
 
@@ -201,7 +199,7 @@ fun SearchBarHome() {
 
 @Composable
 fun BookSection(
-    userBooks: List<BookWithGenresAndAuthors> = emptyList(),
+    userBooks: List<BookData> = emptyList(),
     viewModel: HomeViewModel,
     navController: NavController
 ) {
@@ -235,16 +233,14 @@ fun BookSection(
                         modifier = Modifier.width(174.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        yourBooks.take(5).forEach { bookWithDetails ->
-                            val book = bookWithDetails.book
-                            val authorNames = bookWithDetails.authors.joinToString(", ") { it.name }
+                        yourBooks.take(5).forEach { data ->
 
-                            BookItem(
-                                title = book.title,
-                                author = authorNames,
-                                imageUrl = book.imageUrl,
+                            BookItemCard(
+                                title = data.book.title,
+                                author = data.authors.joinToString(", ") { it.name },
+                                imageUrl = data.book.imageUrl,
                                 onClick = {
-                                    navController.navigate("detail/${book.id}")
+                                    navController.navigate("detail/${data.book.id}")
                                 }
                             )
                         }
@@ -309,69 +305,6 @@ fun BookSection(
                 Text(text = "Belum ada buku yang sedang dibaca", color = Color.Gray)
             }
         }
-    }
-}
-
-@Composable
-fun BookItem(
-    title: String,
-    author: String,
-    imageUrl: String?,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFF96ADD6).copy(alpha = 0.76f))
-            .padding(12.dp)
-            .clickable(onClick = onClick),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (imageUrl != "") {
-            AsyncImage(
-                model = imageUrl ?: R.drawable.bookshelf,
-                contentDescription = title,
-                modifier = Modifier
-                    .height(160.dp)
-                    .width(120.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Box(
-                modifier = Modifier.height(160.dp)
-                    .width(120.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.White),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Image, contentDescription = null, tint = Color.Gray)
-                    Text(
-                        "Add Cover",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodySmall,
-            textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-        Text(
-            text = author,
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.Black,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }
 

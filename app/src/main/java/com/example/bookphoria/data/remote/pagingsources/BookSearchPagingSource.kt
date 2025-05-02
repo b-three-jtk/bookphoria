@@ -3,8 +3,8 @@ package com.example.bookphoria.data.remote.pagingsources
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.example.bookphoria.data.local.entities.BookData
 import com.example.bookphoria.data.remote.api.BookApiService
-import com.example.bookphoria.data.remote.responses.BookNetworkModel
 import com.example.bookphoria.data.repository.BookRepository
 
 class BookSearchPagingSource(
@@ -12,24 +12,35 @@ class BookSearchPagingSource(
     private val query: String,
     private val token: String,
     private val bookRepository: BookRepository
-) : PagingSource<Int, BookNetworkModel>() {
+) : PagingSource<Int, BookData>() {
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, BookNetworkModel> {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, BookData> {
         return try {
             val page = params.key ?: 1
             val pageSize = params.loadSize
-            val response = apiService.getBooksByQuery("Bearer $token", query, pageSize, page)
-            val books = response.data
+            val offset = (page - 1) * pageSize
 
-            // Simpan setiap buku ke database lokal
-            books.forEach { book ->
-                try {
-                    bookRepository.insertBook(book)
-                    Log.d("Paging","Book saved to local: ${book.title}")
-                } catch (e: Exception) {
-                    Log.e("Paging","Failed to save book ${book.title} to local database")
-                }
+            val books = try {
+                bookRepository.getBooksByQuery(query, pageSize, offset)
+            } catch (e: Exception) {
+                Log.e("Paging", "Error fetching books from API: ${e.message}")
+                emptyList()
             }
+
+                try {
+                    val response = apiService.getBooksByQuery("Bearer $token", query, pageSize, page)
+                    val apiBooks = response.data
+                    apiBooks.forEach { book ->
+                        try {
+                            bookRepository.insertBook(book)
+                            Log.d("Paging", "Book saved to local: ${book.title}")
+                        } catch (e: Exception) {
+                            Log.e("Paging", "Failed to save book ${book.title} to local database")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("Paging", "Failed to fetch books from API: ${e.message}")
+                }
 
             LoadResult.Page(
                 data = books,
@@ -42,7 +53,7 @@ class BookSearchPagingSource(
         }
     }
 
-    override fun getRefreshKey(state: PagingState<Int, BookNetworkModel>): Int? {
+    override fun getRefreshKey(state: PagingState<Int, BookData>): Int? {
         return state.anchorPosition?.let { anchor ->
             state.closestPageToPosition(anchor)?.prevKey?.plus(1)
                 ?: state.closestPageToPosition(anchor)?.nextKey?.minus(1)
