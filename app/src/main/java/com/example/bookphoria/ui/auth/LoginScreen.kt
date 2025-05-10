@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,6 +58,9 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
     var rememberMe by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
 
+    val emailError by viewModel.emailError.collectAsState()
+    val passwordError by viewModel.passwordError.collectAsState()
+
     LaunchedEffect(Unit) {
         val (savedEmail, savedPassword) = viewModel.getSavedCredentials()
         savedEmail?.let { email = it }
@@ -71,8 +75,7 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
                 .fillMaxSize()
                 .background(SoftCream)
                 .verticalScroll(scrollState)
-                .padding(24.dp)
-            ,
+                .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
@@ -106,7 +109,9 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
                 text = "Selamat datang kembali di Bookphoria!",
                 style = AppTypography.headlineMedium,
                 color = Color.Gray,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
                 textAlign = TextAlign.End
             )
 
@@ -116,7 +121,8 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
                 label = "Email",
                 leadingIcon = Icons.Default.Email,
                 contentDescription = "Email Icon",
-                modifier = Modifier.padding(top = 16.dp)
+                modifier = Modifier.padding(top = 16.dp),
+                errorMessage = emailError
             )
 
             AuthTextField(
@@ -126,11 +132,14 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
                 leadingIcon = Icons.Default.Lock,
                 contentDescription = "Password Icon",
                 isPassword = true,
-                modifier = Modifier.padding(top = 16.dp)
+                modifier = Modifier.padding(top = 16.dp),
+                errorMessage = passwordError
             )
 
             Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -167,12 +176,8 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
                             ).show()
                             navController.navigate("home")
                         },
-                        onError = {
-                            Toast.makeText(
-                                context,
-                                "Terjadi kesalahan saat login! Coba beberapa saat lagi.",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                        onError = { errorMsg ->
+                            Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
                         }
                     )
                 }
@@ -191,7 +196,9 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
             )
 
             Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {

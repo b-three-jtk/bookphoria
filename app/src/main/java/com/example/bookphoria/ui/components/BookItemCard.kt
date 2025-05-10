@@ -36,6 +36,7 @@ fun BookItemCard(
 ) {
     Column(
         modifier = Modifier
+            .width(174.dp)
             .clip(RoundedCornerShape(20.dp))
             .background(Color(0xFF96ADD6).copy(alpha = 0.76f))
             .padding(12.dp)

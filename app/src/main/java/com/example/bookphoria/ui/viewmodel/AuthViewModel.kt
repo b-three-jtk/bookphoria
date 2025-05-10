@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bookphoria.data.repository.AuthRepository
+import com.example.bookphoria.ui.helper.InputValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,10 @@ class AuthViewModel @Inject constructor(
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
     val resetPasswordState: StateFlow<Result<String>?> = _resetPasswordState.asStateFlow()
     val forgotPasswordState: StateFlow<Result<String>?> = _forgotPasswordState.asStateFlow()
+    private val _emailError = MutableStateFlow<String?>(null)
+    val emailError: StateFlow<String?> = _emailError
+    private val _passwordError = MutableStateFlow<String?>(null)
+    val passwordError: StateFlow<String?> = _passwordError
 
     fun login(
         email: String,
@@ -32,6 +37,8 @@ class AuthViewModel @Inject constructor(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
+        validateLoginInput(email, password)
+
         viewModelScope.launch {
             try {
                 Log.d("Login", "Login attempt with email: $email")
@@ -48,11 +55,11 @@ class AuthViewModel @Inject constructor(
                     onSuccess()
                 } else {
                     Log.e("LoginError", "Login failed with message: ${result.exceptionOrNull()?.message}")
-                    onError(result.exceptionOrNull()?.message ?: "Login failed")
+                    onError(result.exceptionOrNull()?.message ?: "Login gagal")
                 }
             } catch (e: Exception) {
                 Log.e("LoginError", "Error during login: ${e.message}")
-                onError(e.message ?: "Login failed")
+                onError(e.message ?: "Login gagal")
             }
         }
     }
@@ -137,4 +144,12 @@ class AuthViewModel @Inject constructor(
             sharedPref.getString("saved_password", null)
         )
     }
+
+    private fun validateLoginInput(email: String, password: String) {
+        val emailError = InputValidator.validateEmail(email)
+        val passwordError = InputValidator.validatePassword(password)
+        _emailError.value = emailError
+        _passwordError.value = passwordError
+    }
+
 }

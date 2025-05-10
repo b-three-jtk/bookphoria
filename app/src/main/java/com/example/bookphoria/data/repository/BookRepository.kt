@@ -1,5 +1,6 @@
 package com.example.bookphoria.data.repository
 
+import android.net.Uri
 import android.util.Log
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -19,6 +20,10 @@ import com.example.bookphoria.data.remote.responses.AddBookRequest
 import com.example.bookphoria.data.remote.responses.BookNetworkModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
 import javax.inject.Inject
 
 class BookRepository @Inject constructor(
@@ -90,6 +95,7 @@ class BookRepository @Inject constructor(
         }
     }
 
+
     suspend fun addToUserBooks(bookId: Int, status: String = "Belum dibaca") {
         val userId = userPreferences.getUserId().first()
 
@@ -111,6 +117,10 @@ class BookRepository @Inject constructor(
 
     suspend fun getBookById(bookId: Int): BookData? {
         return bookDao.getBookById(bookId)
+    }
+
+    suspend fun deleteUserBook(userId: Int, bookId: Int) {
+        bookDao.deleteUserBook(userId, bookId)
     }
 
     fun getYourBooks(

@@ -1,5 +1,7 @@
 package com.example.bookphoria.data.repository
 
+import android.util.Log
+import retrofit2.HttpException
 import com.example.bookphoria.data.local.dao.UserDao
 import com.example.bookphoria.data.local.entities.UserEntity
 import com.example.bookphoria.data.local.preferences.UserPreferences
@@ -8,6 +10,8 @@ import com.example.bookphoria.data.remote.api.ForgotPasswordRequest
 import com.example.bookphoria.data.remote.api.LoginRequest
 import com.example.bookphoria.data.remote.api.RegisterRequest
 import com.example.bookphoria.data.remote.api.ResetPasswordRequest
+import com.google.gson.Gson
+import okhttp3.ResponseBody
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,8 +36,11 @@ class AuthRepository @Inject constructor(
             userDao.insertUser(userEntity)
 
             Result.success(Unit)
+        } catch (e: HttpException) {
+            val errorMessages = parseErrorMessage(e.response()?.errorBody())
+            Result.failure(Exception(errorMessages))
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception("Terjadi kesalahan"))
         }
     }
 
@@ -93,4 +100,47 @@ class AuthRepository @Inject constructor(
     suspend fun getUserNameById(userId: Int): String {
         return userDao.getUserById(userId)?.name ?: "Pengguna"
     }
+
+    private fun parseErrorMessage(errorBody: ResponseBody?): String {
+        if (errorBody == null) return "Terjadi kesalahan."
+
+        val raw = try {
+            errorBody.string()
+        } catch (e: Exception) {
+            return "Terjadi kesalahan membaca respons."
+        }
+
+        return try {
+            val gson = Gson()
+            val errorResponse = gson.fromJson(raw, LaravelErrorResponse::class.java)
+
+            val rawMessage = errorResponse.errors?.values?.firstOrNull()?.firstOrNull()
+                ?: errorResponse.message
+                ?: "Terjadi kesalahan."
+
+            translateErrorMessage(rawMessage)
+        } catch (e: Exception) {
+            Log.e("ParseError", "JSON parse failed: ${e.message}")
+            raw.removeSurrounding("\"")
+        }
+    }
+
+
+    private fun translateErrorMessage(message: String): String {
+        val translations = mapOf(
+            "Invalid credentials" to "Email atau password salah.",
+            "The given data was invalid." to "Data yang diberikan tidak valid.",
+            "The email field is required." to "Email wajib diisi.",
+            "The password field is required." to "Password wajib diisi.",
+            "The password must be at least 8 characters." to "Password minimal 8 karakter.",
+            "The email must be a valid email address." to "Format email tidak valid."
+        )
+        return translations[message] ?: message // fallback ke original kalau gak ada terjemahan
+    }
+
+
+    data class LaravelErrorResponse(
+        val message: String?,
+        val errors: Map<String, List<String>>?
+    )
 }

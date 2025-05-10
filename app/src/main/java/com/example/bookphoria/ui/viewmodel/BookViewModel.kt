@@ -1,11 +1,8 @@
 package com.example.bookphoria.ui.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bookphoria.data.local.entities.BookEntity
-import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
-import com.example.bookphoria.data.remote.responses.AddBookRequest
 import com.example.bookphoria.data.repository.BookRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,20 +20,32 @@ class BookViewModel @Inject constructor(
 
     fun getBookById(bookId: Int) {
         viewModelScope.launch {
-            val bookWithRelations = bookRepository.getBookById(bookId)
-            if (bookWithRelations != null) {
+            val book = bookRepository.getBookById(bookId)
+            if (book != null) {
                 _selectedBook.value = BookDetailUIState(
-                    book = bookWithRelations.book,
-                    author = bookWithRelations.authors.joinToString(", ") { it.name },
-                    genres = bookWithRelations.genres.map { it.name }
+                    book = book.book,
+                    author = book.authors.joinToString(", ") { it.name },
+                    genres = book.genres.map { it.name },
+                    status = book.userBookCrossRefs.firstOrNull()?.status ?: ""
                 )
             }
+        }
+    }
+
+    fun deleteBook() {
+        val book = _selectedBook.value?.book
+        if (book != null) {
+            viewModelScope.launch {
+                bookRepository.deleteUserBook(3,book.id)
+            }
+            _selectedBook.value = null
         }
     }
 
     data class BookDetailUIState(
         val book: BookEntity,
         val author: String,
-        val genres: List<String>
+        val genres: List<String>,
+        val status: String
     )
 }

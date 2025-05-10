@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -37,7 +36,7 @@ class EntryBookViewModel @Inject constructor(
 
     fun addBookToDatabase(
         onSuccess: (Int) -> Unit,
-        onError: () -> Unit
+        onError: (Throwable) -> Unit
     ) {
         viewModelScope.launch {
             try {
@@ -62,7 +61,7 @@ class EntryBookViewModel @Inject constructor(
                 onSuccess(newBookId)
             } catch (e: Exception) {
                 _errorMessage.value = "Gagal menambahkan buku: ${e.message}"
-                onError()
+                onError(e)
             }
         }
     }

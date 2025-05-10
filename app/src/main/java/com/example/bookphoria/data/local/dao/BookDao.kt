@@ -38,7 +38,12 @@ interface BookDao {
     @Query("SELECT * FROM books WHERE id = :bookId LIMIT 1")
     suspend fun getBookById(bookId: Int): BookData?
 
-    @Query("SELECT * FROM books WHERE title LIKE '%' || :query || '%' LIMIT :pageSize OFFSET :offset")
+    @Query("""
+        SELECT * FROM books 
+        WHERE title LIKE '%' || :query || '%' 
+           OR isbn LIKE '%' || :query || '%' 
+        LIMIT :pageSize OFFSET :offset
+    """)
     suspend fun getBooksByQuery(query: String, pageSize: Int, offset: Int): List<BookData>
 
     @Transaction

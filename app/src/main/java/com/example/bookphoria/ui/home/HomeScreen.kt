@@ -230,7 +230,7 @@ fun BookSection(
                     .horizontalScroll(rememberScrollState())
             ) {
                     Row(
-                        modifier = Modifier.width(174.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         yourBooks.take(5).forEach { data ->

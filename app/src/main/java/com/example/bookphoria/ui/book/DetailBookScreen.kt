@@ -3,6 +3,8 @@ package com.example.bookphoria.ui.book
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -15,11 +17,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,8 +32,10 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.bookphoria.R
 import com.example.bookphoria.ui.theme.DarkIndigo
+import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.viewmodel.BookViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailBookScreen(
     navController: NavController,
@@ -37,9 +44,29 @@ fun DetailBookScreen(
 ) {
     val selectedBookState = bookViewModel.selectedBook.collectAsState()
     val book = selectedBookState.value
+    val showSheet = remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val status = remember { mutableStateOf("Action") }
 
     LaunchedEffect(bookId) {
         bookViewModel.getBookById(bookId)
+    }
+
+    if (showSheet.value) {
+        ModalBottomSheet(
+            onDismissRequest = { showSheet.value = false },
+            sheetState = sheetState,
+            containerColor = SoftCream
+        ) {
+            StatusSheet(
+                selectedStatus = status.value,
+                onStatusSelected = {
+                    status.value = it
+                    showSheet.value = false
+                },
+                bookViewModel
+            )
+        }
     }
 
     if (book == null) {
@@ -88,14 +115,15 @@ fun DetailBookScreen(
                     Text(book.book.title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Text("by ${book.author}", fontSize = 14.sp, color = Color.Gray)
                     Spacer(modifier = Modifier.height(8.dp))
+
                     Row {
                         Button(
-                            onClick = { /* TODO: Toggle owned/bookmarked */ },
+                            onClick = { showSheet.value = true },
                             shape = RoundedCornerShape(20.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE45758)),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
                         ) {
-                            Text("Owned", color = Color.White)
+                            Text(status.value, color = Color.White)
                         }
                         IconButton(
                             onClick = {
@@ -210,5 +238,68 @@ fun ReviewSection(
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(start = 44.dp)
         )
+    }
+}
+
+@Composable
+fun StatusSheet(
+    selectedStatus: String,
+    onStatusSelected: (String) -> Unit,
+    bookViewModel: BookViewModel
+) {
+    val radioOptions = listOf("Read", "Owned", "Borrowed")
+
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxWidth()
+    ) {
+        Text(
+            text = "Pilih status buku",
+            style = MaterialTheme.typography.titleSmall
+        )
+
+        Column(Modifier.selectableGroup()) {
+            radioOptions.forEach { text ->
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .selectable(
+                            selected = (text == selectedStatus),
+                            onClick = { onStatusSelected(text) },
+                            role = Role.RadioButton
+                        )
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = (text == selectedStatus),
+                        onClick = null
+                    )
+                    Text(
+                        text = text,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(start = 16.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = {},
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent
+                )
+            ) {
+                Text(
+                    text = "Hapus Buku dari Koleksi",
+                    color = Color.Red,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
     }
 }
