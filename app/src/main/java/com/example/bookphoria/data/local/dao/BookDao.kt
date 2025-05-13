@@ -95,5 +95,4 @@ interface BookDao {
     @Transaction
     @Query("SELECT * FROM books WHERE id IN ( SELECT bookId FROM userbookcrossref WHERE userId = :userId AND status = :status )")
     fun getYourCurrentlyReadingBooks(userId: Int, status: String): Flow<List<FullBookDataWithUserInfo>>
-
 }
