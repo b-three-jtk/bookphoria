@@ -1,6 +1,7 @@
 package com.example.bookphoria.ui.book
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.material3.AlertDialogDefaults.shape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,15 +30,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
 import com.example.bookphoria.ui.theme.*
+import com.example.bookphoria.ui.viewmodel.ShelfViewModel
 
 @Composable
 fun MyShelfScreen(
+    viewModel: ShelfViewModel = viewModel(),
     onCreateCollectionClick: () -> Unit = {}
 ) {
     val dummyCollections = listOf(
@@ -98,8 +104,9 @@ fun MyShelfScreen(
 
 @Composable
 fun CreateCollectionDialog(
-    onDismiss : () -> Unit,
-    onSave : (name: String, description: String) -> Unit
+    viewModel: ShelfViewModel = hiltViewModel(),
+    onDismiss: () -> Unit,
+    onSaveSuccess: () -> Unit
 ){
     var collectionName by remember { mutableStateOf("") }
     var collectionDescription by remember { mutableStateOf("") }
@@ -109,6 +116,7 @@ fun CreateCollectionDialog(
     ) { uri: Uri? ->
         imageUri.value = uri
     }
+    val context = LocalContext.current
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -219,13 +227,23 @@ fun CreateCollectionDialog(
                     }
 
                     Button(
-                        onClick = { onSave(collectionName, collectionDescription) },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFFF6347),
-                            contentColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(bottomEnd = 20.dp)
+                        onClick = {
+                            if (collectionName.isNotBlank()) {
+                                viewModel.createShelf(
+                                    name = collectionName,
+                                    description = collectionDescription.takeIf { it?.isNotBlank() == true },
+                                    imageUri = imageUri.value,
+                                    onSuccess = {
+                                        onSaveSuccess()
+                                        onDismiss()
+                                    },
+                                    onError = { error ->
+                                        Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                            }
+                        },
+                        enabled = collectionName.isNotBlank()
                     ) {
                         Text("Simpan")
                     }
