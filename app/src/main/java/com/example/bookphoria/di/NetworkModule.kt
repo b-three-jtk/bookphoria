@@ -2,6 +2,7 @@ package com.example.bookphoria.di
 
 import com.example.bookphoria.data.remote.api.AuthApiService
 import com.example.bookphoria.data.remote.api.BookApiService
+import com.example.bookphoria.data.remote.api.ShelfApiServices
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -42,7 +43,7 @@ object NetworkModule {
             .create()
 
         return Retrofit.Builder()
-            .baseUrl("https://715c-103-209-131-66.ngrok-free.app/api/")
+            .baseUrl("https://3b3d-2404-c0-2810-00-250b-c58c.ngrok-free.app/api/")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
@@ -59,4 +60,11 @@ object NetworkModule {
     fun provideBookApiService(retrofit: Retrofit): BookApiService {
         return retrofit.create(BookApiService::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideShelfApiService(retrofit: Retrofit): ShelfApiServices {
+        return retrofit.create(ShelfApiServices::class.java)
+    }
+
 }
