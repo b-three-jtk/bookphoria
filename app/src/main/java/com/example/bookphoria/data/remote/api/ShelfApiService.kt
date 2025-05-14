@@ -1,5 +1,6 @@
 package com.example.bookphoria.data.remote.api
 
+import com.google.gson.JsonObject
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Response
@@ -12,5 +13,5 @@ interface ShelfApiServices {
         @Part("name") name: RequestBody,
         @Part("desc") description: RequestBody?,
         @Part image: MultipartBody.Part?
-    ): Response<Unit>
+    ): Response<JsonObject>
 }

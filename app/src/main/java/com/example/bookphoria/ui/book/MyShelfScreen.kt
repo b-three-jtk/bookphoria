@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.AlertDialogDefaults.shape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
@@ -35,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -42,6 +45,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
 import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.ui.theme.*
+import com.example.bookphoria.ui.viewmodel.ShelfUiState
 import com.example.bookphoria.ui.viewmodel.ShelfViewModel
 
 @Composable
@@ -142,16 +146,35 @@ fun CreateCollectionDialog(
     viewModel: ShelfViewModel = hiltViewModel(),
     onDismiss: () -> Unit,
     onSaveSuccess: () -> Unit
-){
+) {
     var collectionName by remember { mutableStateOf("") }
     var collectionDescription by remember { mutableStateOf("") }
     val imageUri = remember { mutableStateOf<Uri?>(null) }
+    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         imageUri.value = uri
     }
-    val context = LocalContext.current
+
+    // Handle UI state changes
+    LaunchedEffect(uiState) {
+        when (uiState) {
+            is ShelfUiState.Success -> {
+                onSaveSuccess()
+                onDismiss()
+                viewModel.resetState()
+            }
+            is ShelfUiState.Error -> {
+                val errorState = uiState as ShelfUiState.Error
+                Toast.makeText(context, errorState.message, Toast.LENGTH_SHORT).show()
+                viewModel.resetState()
+            }
+            else -> {}
+        }
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -160,10 +183,19 @@ fun CreateCollectionDialog(
             modifier = Modifier.fillMaxWidth()
         ) {
             Box(modifier = Modifier.fillMaxWidth()) {
+                if (uiState is ShelfUiState.Loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .zIndex(1f)
+                    )
+                }
+
                 Column(
                     modifier = Modifier
                         .padding(start = 24.dp, end = 24.dp, top = 24.dp)
-                        .align(Alignment.TopCenter),
+                        .align(Alignment.TopCenter)
+                        .alpha(if (uiState is ShelfUiState.Loading) 0.5f else 1f),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     if (imageUri.value != null) {
@@ -213,7 +245,8 @@ fun CreateCollectionDialog(
                             focusedTextColor = Color.Black,
                             unfocusedTextColor = Color.Black
                         ),
-                        singleLine = true
+                        singleLine = true,
+                        enabled = uiState !is ShelfUiState.Loading
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -238,11 +271,13 @@ fun CreateCollectionDialog(
                             unfocusedIndicatorColor = Color.Black,
                             focusedTextColor = Color.Black,
                             unfocusedTextColor = Color.Black
-                        )
+                        ),
+                        enabled = uiState !is ShelfUiState.Loading
                     )
 
                     Spacer(modifier = Modifier.height(72.dp))
                 }
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -256,7 +291,8 @@ fun CreateCollectionDialog(
                             containerColor = Color.Gray,
                             contentColor = Color.White
                         ),
-                        shape = RoundedCornerShape(bottomStart = 20.dp)
+                        shape = RoundedCornerShape(bottomStart = 20.dp),
+                        enabled = uiState !is ShelfUiState.Loading
                     ) {
                         Text("Batal")
                     }
@@ -266,19 +302,12 @@ fun CreateCollectionDialog(
                             if (collectionName.isNotBlank()) {
                                 viewModel.createShelf(
                                     name = collectionName,
-                                    description = collectionDescription.takeIf { it?.isNotBlank() == true },
-                                    imageUri = imageUri.value,
-                                    onSuccess = {
-                                        onSaveSuccess()
-                                        onDismiss()
-                                    },
-                                    onError = { error ->
-                                        Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                                    }
+                                    desc = collectionDescription.takeIf { it?.isNotBlank() == true },
+                                    imageUri = imageUri.value
                                 )
                             }
                         },
-                        enabled = collectionName.isNotBlank()
+                        enabled = collectionName.isNotBlank() && uiState !is ShelfUiState.Loading
                     ) {
                         Text("Simpan")
                     }
