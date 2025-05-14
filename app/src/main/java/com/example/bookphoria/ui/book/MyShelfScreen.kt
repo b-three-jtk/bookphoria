@@ -46,7 +46,6 @@ import com.example.bookphoria.ui.viewmodel.ShelfViewModel
 
 @Composable
 fun MyShelfScreen(
-    viewModel: ShelfViewModel = hiltViewModel(),
     onCreateCollectionClick: () -> Unit = {}
 ) {
     val dummyCollections = listOf(
