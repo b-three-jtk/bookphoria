@@ -8,35 +8,51 @@ import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.ShelfApiServices
 import com.example.bookphoria.data.repository.ShelfRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class ShelfViewModel @Inject constructor(
-    private val shelfRepository: ShelfRepository
+    private val repository: ShelfRepository
 ) : ViewModel() {
 
-    fun createShelf(
-        name: String,
-        description: String?,
-        imageUri: Uri?,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit
-    ) {
+    private val _uiState = MutableStateFlow<ShelfUiState>(ShelfUiState.Idle)
+    val uiState: StateFlow<ShelfUiState> = _uiState
+
+    fun createShelf(name: String, desc: String?, imageUri: Uri?) {
+        _uiState.value = ShelfUiState.Loading
+
         viewModelScope.launch {
-            try {
-                shelfRepository.createShelf(
-                    name = name,
-                    description = description,
-                    imageUri = imageUri
-                )
-                onSuccess()
-            } catch (e: Exception) {
-                onError(e.message ?: "Error tidak diketahui")
-            }
+            repository.createShelf(name, desc, imageUri)
+                .onSuccess {
+                    _uiState.value = ShelfUiState.Success
+                }
+                .onFailure { e ->
+                    _uiState.value = ShelfUiState.Error(
+                        message = when {
+                            e.message?.contains("Network error") == true ->
+                                "No internet connection"
+
+                            e.message?.contains("Server error") == true ->
+                                "Server problem: ${e.message?.substringAfter("Server error: ")}"
+
+                            else -> "Failed to save: ${e.message}"
+                        }
+                    )
+                }
         }
     }
+
+    fun resetState() {
+        _uiState.value = ShelfUiState.Idle
+    }
+}
+
+sealed class ShelfUiState {
+    object Idle : ShelfUiState()
+    object Loading : ShelfUiState()
+    object Success : ShelfUiState()
+    data class Error(val message: String) : ShelfUiState()
 }
