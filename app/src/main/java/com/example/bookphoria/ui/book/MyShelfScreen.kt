@@ -42,7 +42,7 @@ import com.example.bookphoria.ui.viewmodel.ShelfViewModel
 
 @Composable
 fun MyShelfScreen(
-    viewModel: ShelfViewModel = viewModel(),
+    viewModel: ShelfViewModel = hiltViewModel(),
     onCreateCollectionClick: () -> Unit = {}
 ) {
     val dummyCollections = listOf(
@@ -95,7 +95,7 @@ fun MyShelfScreen(
     if (showCreateDialog) {
         CreateCollectionDialog(
             onDismiss = { showCreateDialog = false },
-            onSave = {name, description ->
+            onSaveSuccess = {
                 showCreateDialog = false
             }
         )
@@ -298,6 +298,6 @@ fun MyShelfScreenPreview() {
 fun CreateCollectionDialogPreview() {
     CreateCollectionDialog(
         onDismiss = {},
-        onSave = { _, _ -> }
+        onSaveSuccess = {}
     )
 }
