@@ -15,39 +15,36 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.material3.AlertDialogDefaults.shape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
+import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.ui.theme.*
 
 @Composable
 fun MyShelfScreen(
+    viewModel: MyShelfViewModel = hiltViewModel(),
+    navController: NavController,
     onCreateCollectionClick: () -> Unit = {}
 ) {
-    val dummyCollections = listOf(
-        "Books to make you smile",
-        "Current favs",
-        "In the feels",
-        "Crying in the prettiest places",
-        "<3 <3 <3"
-    )
-
     var showCreateDialog by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        viewModel.loadUserBooks()
+    }
+
+    val booksWithAuthors by viewModel.booksWithAuthors.collectAsState()
 
     Column(
         modifier = Modifier
@@ -73,23 +70,56 @@ fun MyShelfScreen(
                     contentColor = LocalContentColor.current
                 )
             ) {
-                Text("Buat koleksi baru",
-                    style = AppTypography.bodyMedium)
+                Text("Buat koleksi baru", style = AppTypography.bodyMedium)
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        LazyColumn {
-            items(dummyCollections) { title ->
-                ShelfItem(title = title)
+        if (booksWithAuthors.isNotEmpty()) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+                    .clickable {
+                        navController.navigate("your_books")
+                    },
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = LightBlue)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.book),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .padding(end = 16.dp)
+                    )
+
+                    Column {
+                        Text(
+                            text = "Your Books",
+                            style = TitleExtraSmall
+                        )
+                        Text(
+                            text = "${booksWithAuthors.size} Books",
+                            style = AppTypography.bodyMedium.copy(color = DeepBlue)
+                        )
+                    }
+                }
             }
         }
     }
+
     if (showCreateDialog) {
         CreateCollectionDialog(
             onDismiss = { showCreateDialog = false },
-            onSave = {name, description ->
+            onSave = { name, description ->
                 showCreateDialog = false
             }
         )
@@ -98,9 +128,9 @@ fun MyShelfScreen(
 
 @Composable
 fun CreateCollectionDialog(
-    onDismiss : () -> Unit,
-    onSave : (name: String, description: String) -> Unit
-){
+    onDismiss: () -> Unit,
+    onSave: (name: String, description: String) -> Unit
+) {
     var collectionName by remember { mutableStateOf("") }
     var collectionDescription by remember { mutableStateOf("") }
     val imageUri = remember { mutableStateOf<Uri?>(null) }
@@ -235,45 +265,11 @@ fun CreateCollectionDialog(
     }
 }
 
-@Composable
-fun ShelfItem(title: String) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(id = R.drawable.sample_koleksi),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(RoundedCornerShape(12.dp))
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(
-                    title,
-                    style = AppTypography.bodyLarge
-                )
-                Text(
-                    "3 Books",
-                    style = AppTypography.bodyMedium.copy(color = Color.Gray)
-                )
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true)
+/*@Preview(showBackground = true)
 @Composable
 fun MyShelfScreenPreview() {
     MyShelfScreen()
-}
+}*/
 
 @Preview
 @Composable

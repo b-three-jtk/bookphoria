@@ -4,7 +4,10 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
+import com.example.bookphoria.data.local.entities.BookWithAuthors
 import com.example.bookphoria.data.local.entities.UserEntity
+import com.example.bookphoria.data.local.entities.UserWithBooks
 
 @Dao
 interface UserDao {
@@ -17,4 +20,13 @@ interface UserDao {
 
     @Query("DELETE FROM users")
     suspend fun clearUsers()
+
+    @Transaction
+    @Query("""
+    SELECT * FROM books 
+    INNER JOIN userbookcrossref ON books.id = userbookcrossref.bookId 
+    WHERE userbookcrossref.userId = :userId"""
+    )
+    suspend fun getBooksWithAuthorsByUser(userId: Int): List<BookWithAuthors>
+
 }
