@@ -30,17 +30,17 @@ class ShelfViewModel @Inject constructor(
                     _uiState.value = ShelfUiState.Success
                 }
                 .onFailure { e ->
-                    _uiState.value = ShelfUiState.Error(
-                        message = when {
-                            e.message?.contains("Network error") == true ->
-                                "No internet connection"
-
-                            e.message?.contains("Server error") == true ->
-                                "Server problem: ${e.message?.substringAfter("Server error: ")}"
-
-                            else -> "Failed to save: ${e.message}"
-                        }
-                    )
+                    _uiState.value = when {
+                        e.message?.contains("Tidak dapat", ignoreCase = true) == true ->
+                            ShelfUiState.Error(e.message ?: "Gambar tidak valid")
+                        e.message?.contains("Izin", ignoreCase = true) == true ->
+                            ShelfUiState.Error("Izin akses gambar diperlukan")
+                        e.message?.contains("Network error", ignoreCase = true) == true ->
+                            ShelfUiState.Error("Koneksi internet bermasalah")
+                        e.message?.contains("Authentication", ignoreCase = true) == true ->
+                            ShelfUiState.Error("Silakan login kembali")
+                        else -> ShelfUiState.Error("Gagal membuat shelf: ${e.message ?: "Error tidak diketahui"}")
+                    }
                 }
         }
     }

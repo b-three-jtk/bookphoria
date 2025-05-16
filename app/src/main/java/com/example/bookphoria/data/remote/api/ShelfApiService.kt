@@ -10,6 +10,7 @@ interface ShelfApiServices {
     @Multipart
     @POST("shelves")
     suspend fun createShelf(
+        @Header("Authorization") token: String,
         @Part("name") name: RequestBody,
         @Part("desc") description: RequestBody?,
         @Part image: MultipartBody.Part?

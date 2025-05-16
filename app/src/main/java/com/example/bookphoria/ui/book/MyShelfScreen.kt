@@ -163,13 +163,18 @@ fun CreateCollectionDialog(
     LaunchedEffect(uiState) {
         when (uiState) {
             is ShelfUiState.Success -> {
+                Toast.makeText(
+                    context,
+                    "Shelf berhasil dibuat!",
+                    Toast.LENGTH_SHORT
+                ).show()
                 onSaveSuccess()
                 onDismiss()
                 viewModel.resetState()
             }
             is ShelfUiState.Error -> {
                 val errorState = uiState as ShelfUiState.Error
-                Toast.makeText(context, errorState.message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, errorState.message, Toast.LENGTH_LONG).show()
                 viewModel.resetState()
             }
             else -> {}
@@ -262,7 +267,6 @@ fun CreateCollectionDialog(
                         onValueChange = { collectionDescription = it },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(100.dp)
                             .padding(vertical = 8.dp),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = SoftCream,
@@ -307,6 +311,12 @@ fun CreateCollectionDialog(
                                 )
                             }
                         },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PrimaryOrange,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(bottomEnd = 20.dp),
                         enabled = collectionName.isNotBlank() && uiState !is ShelfUiState.Loading
                     ) {
                         Text("Simpan")

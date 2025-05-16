@@ -5,23 +5,23 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
+import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.ShelfApiServices
-import com.google.android.gms.common.api.Response
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.first
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.ResponseBody
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import javax.inject.Inject
-import kotlin.math.max
-import kotlin.math.sqrt
 
 class ShelfRepository @Inject constructor(
     private val api: ShelfApiServices,
+    private val userPreferences: UserPreferences,
     @ApplicationContext private val context: Context
 ) {
     companion object {
@@ -38,6 +38,12 @@ class ShelfRepository @Inject constructor(
         imageUri: Uri?
     ): Result<Unit> {
         return try {
+            // Get the token first
+            val token = userPreferences.getAccessToken().first()
+            if (token.isNullOrEmpty()) {
+                return Result.failure(Exception("Authentication required"))
+            }
+
             val imagePart = imageUri?.let { uri ->
                 try {
                     val compressedFile = uri.compressImage(DEFAULT_MAX_SIZE_KB)
@@ -51,12 +57,15 @@ class ShelfRepository @Inject constructor(
 
             val response = try {
                 api.createShelf(
+                    token = "Bearer $token",  // Add Bearer prefix
                     name = name.toRequestBody("text/plain".toMediaType()),
                     description = desc?.toRequestBody("text/plain".toMediaType()),
                     image = imagePart
                 )
             } catch (e: IOException) {
                 return Result.failure(Exception("Network error: ${e.message}"))
+            } catch (e: Exception) {
+                return Result.failure(Exception("API error: ${e.message}"))
             }
 
             handleApiResponse(response, DEFAULT_MAX_SIZE_KB)
@@ -66,26 +75,62 @@ class ShelfRepository @Inject constructor(
     }
 
     private fun Uri.compressImage(maxFileSizeKB: Int): File {
-        val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        // First verify we can open the URI
+        val inputStream = try {
+            context.contentResolver.openInputStream(this)
+                ?: throw Exception("Tidak dapat membuka file gambar")
+        } catch (e: SecurityException) {
+            throw Exception("Izin akses gambar ditolak")
+        } catch (e: FileNotFoundException) {
+            throw Exception("File gambar tidak ditemukan")
+        }
 
-        context.contentResolver.openInputStream(this)?.use { stream ->
-            BitmapFactory.decodeStream(stream, null, options)
-        } ?: throw Exception("Cannot read image")
+        // Read image dimensions
+        val options = BitmapFactory.Options().apply {
+            inJustDecodeBounds = true
+        }
 
+        try {
+            BitmapFactory.decodeStream(inputStream, null, options)
+            inputStream.close()
+        } catch (e: Exception) {
+            inputStream.close()
+            throw Exception("Format gambar tidak didukung")
+        }
+
+        // Verify we got valid dimensions
+        if (options.outWidth <= 0 || options.outHeight <= 0) {
+            throw Exception("File bukan gambar yang valid")
+        }
+
+        // Calculate sampling
         options.inSampleSize = calculateInSampleSize(
             options.outWidth,
             options.outHeight,
             MAX_IMAGE_DIMENSION
         )
+        options.inJustDecodeBounds = false
 
+        // Load the bitmap with sampling
         val bitmap = try {
-            context.contentResolver.openInputStream(this)?.use { stream ->
-                BitmapFactory.decodeStream(stream, null, options)
-            } ?: throw Exception("Failed to load image")
+            val sampledInputStream = context.contentResolver.openInputStream(this)
+                ?: throw Exception("Tidak dapat membaca ulang gambar")
+
+            try {
+                BitmapFactory.decodeStream(sampledInputStream, null, options)?.also {
+                    sampledInputStream.close()
+                } ?: throw Exception("Gagal memproses gambar")
+            } catch (e: Exception) {
+                sampledInputStream.close()
+                throw e
+            }
         } catch (e: OutOfMemoryError) {
-            throw Exception("Not enough memory to process image")
+            throw Exception("Gambar terlalu besar")
+        } catch (e: Exception) {
+            throw Exception("Gagal memuat gambar: ${e.message ?: "Unknown error"}")
         }
 
+        // Prepare output file
         val outputFile = createTempFile(context)
         var quality = MAX_COMPRESS_QUALITY
         var outputSize: Long
@@ -93,7 +138,9 @@ class ShelfRepository @Inject constructor(
         return try {
             do {
                 FileOutputStream(outputFile).use { fos ->
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, quality, fos)
+                    if (!bitmap.compress(Bitmap.CompressFormat.JPEG, quality, fos)) {
+                        throw Exception("Gagal mengkompres gambar")
+                    }
                 }
                 outputSize = outputFile.length() / 1024
 
@@ -102,10 +149,13 @@ class ShelfRepository @Inject constructor(
             } while (quality >= MIN_COMPRESS_QUALITY)
 
             if (outputSize > maxFileSizeKB) {
-                throw Exception("Failed to compress below $maxFileSizeKB KB")
+                throw Exception("Gambar terlalu besar setelah kompresi")
             }
 
             outputFile
+        } catch (e: Exception) {
+            outputFile.delete() // Clean up
+            throw e
         } finally {
             bitmap.recycle()
         }
