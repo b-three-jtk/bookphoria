@@ -1,5 +1,6 @@
 package com.example.bookphoria.ui.book
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -20,13 +21,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bookphoria.R
+import com.example.bookphoria.ui.theme.SoftCream
 
 @Composable
 fun ShelfDetailScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
+            .background(SoftCream)
     ) {
         // Title and Book Count
         ShelfHeader()
@@ -42,15 +44,9 @@ fun ShelfHeader() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(20.dp)
     ) {
-        // Detail shelf text
-        Text(
-            text = "Detail shelf",
-            fontSize = 18.sp,
-            color = Color.Gray,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+        Spacer(modifier = Modifier.height(50.dp))
 
         // Books Collection Card
         Card(
@@ -58,7 +54,7 @@ fun ShelfHeader() {
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
             shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFAF9F6))
+            colors = CardDefaults.cardColors(containerColor = SoftCream)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)
@@ -66,26 +62,28 @@ fun ShelfHeader() {
                 // Shelf Image
                 Box(
                     modifier = Modifier
-                        .size(60.dp)
+                        .size(150.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(Color.LightGray)
                         .align(Alignment.CenterHorizontally)
                 ) {
                     // This would be your shelf image
                     Image(
-                        painter = painterResource(id = android.R.drawable.ic_menu_gallery),
+                        painter = painterResource(id = R.drawable.sample_koleksi),
                         contentDescription = "Shelf Image",
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .size(150.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 // Book count
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    modifier = Modifier
+                        .align(Alignment.Start)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Add,
@@ -108,7 +106,7 @@ fun ShelfHeader() {
                     text = "Books to make you smile",
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    modifier = Modifier.align(Alignment.Start)
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -149,6 +147,16 @@ fun BookCollection() {
             author = "Antoine de Saint-Exupéry",
             isFinished = false
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Book 2: The Little Prince
+        BookItem(
+            coverResId = android.R.drawable.ic_menu_gallery,
+            title = "The Little Prince",
+            author = "Antoine de Saint-Exupéry",
+            isFinished = false
+        )
     }
 }
 
@@ -162,16 +170,18 @@ fun BookItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(100.dp),
-        shape = RoundedCornerShape(12.dp),
+            .height(150.dp),
+        border = BorderStroke(1.dp, color = Color.Gray),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
+
     ) {
         Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
+                .fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Spacer(modifier = Modifier.width(50.dp))
             // Book Cover
             Card(
                 shape = RoundedCornerShape(6.dp),
@@ -202,21 +212,20 @@ fun BookItem(
                     fontSize = 14.sp,
                     color = Color.Gray
                 )
-            }
 
-            // Status Chip
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (isFinished) Color(0xFFD7F9D7) else Color(0xFFF9E2E2)
-                )
-            ) {
-                Text(
-                    text = if (isFinished) "Finished" else "Unfinished",
-                    fontSize = 12.sp,
-                    color = if (isFinished) Color(0xFF2E7D32) else Color(0xFFB71C1C),
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                )
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isFinished) Color(0xFFD7F9D7) else Color(0xFFF9E2E2)
+                    )
+                ) {
+                    Text(
+                        text = if (isFinished) "Finished" else "Unfinished",
+                        fontSize = 12.sp,
+                        color = if (isFinished) Color(0xFF2E7D32) else Color(0xFFB71C1C),
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
+                }
             }
         }
     }
