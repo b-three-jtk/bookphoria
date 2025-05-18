@@ -236,7 +236,7 @@ fun CreateCollectionDialog(
                         textAlign = TextAlign.Left
                     )
 
-                    TextField(
+                    OutlinedTextField(
                         value = collectionName,
                         onValueChange = { collectionName = it },
                         modifier = Modifier
@@ -262,7 +262,7 @@ fun CreateCollectionDialog(
                         textAlign = TextAlign.Left
                     )
 
-                    TextField(
+                    OutlinedTextField(
                         value = collectionDescription,
                         onValueChange = { collectionDescription = it },
                         modifier = Modifier
