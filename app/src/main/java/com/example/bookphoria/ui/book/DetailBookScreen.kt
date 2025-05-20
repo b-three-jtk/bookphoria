@@ -57,11 +57,13 @@ fun DetailBookScreen(
     bookViewModel: BookViewModel
 ) {
     val selectedBookState = bookViewModel.selectedBook.collectAsState()
+    val readingProgressState = bookViewModel.readingProgress.collectAsState()
     val book = selectedBookState.value
     var showCreateDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(bookId) {
         bookViewModel.getBookById(bookId)
+        bookViewModel.getReadingProgress(bookId)
     }
 
     if (book == null) {
@@ -147,19 +149,16 @@ fun DetailBookScreen(
                 }
             }
 
-            if (showCreateDialog) {
+            if (showCreateDialog && book != null) {
                 CreateProgressDialog(
                     onDismiss = { showCreateDialog = false },
                     onSave = { pagesRead ->
-                        // Panggil ViewModel untuk menyimpan progress
-                        bookViewModel.updateReadingProgress(
-                            bookId = book.book.id,
-                            pagesRead = pagesRead
-                        )
+                        bookViewModel.updateReadingProgress(book.book.id, pagesRead)
                         showCreateDialog = false
                     },
-                    totalPages = book.book.pages,  // Gunakan total halaman dari buku
-                    currentProgress = 0  // Atau ambil dari database jika ada progress sebelumnya
+                    totalPages = book.book.pages,
+                    currentProgress = readingProgressState.value ?: 0,
+                    previousProgress = readingProgressState.value
                 )
             }
 
@@ -266,11 +265,10 @@ fun CreateProgressDialog(
     onDismiss: () -> Unit,
     onSave: (pagesRead: Int) -> Unit,
     totalPages : Int,
-    currentProgress: Int = 0
+    currentProgress: Int = 0,
+    previousProgress: Int? = null
 ) {
     var currentPage by remember { mutableStateOf(currentProgress.toString())}
-    var currentProgress by remember { mutableStateOf("") }
-    var totalProgress by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -296,6 +294,30 @@ fun CreateProgressDialog(
                     modifier = Modifier.padding(horizontal = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+
+                    previousProgress?.let { progress ->
+                        if (progress > 0) {
+                            Column(
+                                modifier = Modifier.padding(horizontal = 24.dp)
+                            ) {
+                                Text(
+                                    text = "Sebelumnya: $progress/$totalPages halaman",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                LinearProgressIndicator(
+                                    progress = { progress.toFloat() / totalPages.toFloat() },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(8.dp),
+                                    color = PrimaryOrange,
+                                    trackColor = Color.LightGray
+                                )
+                            }
+                        }
+                    }
+
                     Text("Halaman", style = MaterialTheme.typography.bodyMedium)
 
                     OutlinedTextField(
@@ -379,9 +401,10 @@ fun CreateProgressDialogPreview() {
     MaterialTheme {
         CreateProgressDialog(
             onDismiss = {},
-            onSave = { /* pagesRead -> */ },  // Sesuaikan dengan signature baru
-            totalPages = 300,  // Tambahkan parameter totalPages
-            currentProgress = 50  // Tambahkan currentProgress (opsional)
+            onSave = { /* pagesRead -> */ },
+            totalPages = 300,
+            currentProgress = 50,
+            previousProgress = 100
         )
     }
 }
