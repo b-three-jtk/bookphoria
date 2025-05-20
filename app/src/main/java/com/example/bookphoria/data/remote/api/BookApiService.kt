@@ -10,12 +10,6 @@ import retrofit2.http.POST
 import retrofit2.http.Query
 
 interface BookApiService {
-//    @GET("books")
-//    suspend fun getBooks(): List<BookNetworkModel>
-
-//    @GET("books/search")
-//    suspend fun getBookByIsbn(@Body request: val isbn: String): BookResponse
-//
     @GET("books/search")
     suspend fun getBooksByQuery(@Header("Authorization") authorization: String, @Query("q") query: String, @Query("per_page") perPage: Int,@Query("page") page: Int): BookSearchResponse
 

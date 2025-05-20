@@ -56,13 +56,14 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
+    val savedCredentials by viewModel.getSavedCredentials().collectAsState(initial = Pair(null, null))
     val scrollState = rememberScrollState()
 
     val emailError by viewModel.emailError.collectAsState()
     val passwordError by viewModel.passwordError.collectAsState()
 
     LaunchedEffect(Unit) {
-        val (savedEmail, savedPassword) = viewModel.getSavedCredentials()
+        val (savedEmail, savedPassword) = savedCredentials
         savedEmail?.let { email = it }
         savedPassword?.let { password = it }
         if (savedEmail != null && savedPassword != null) {

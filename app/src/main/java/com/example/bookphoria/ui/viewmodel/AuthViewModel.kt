@@ -1,13 +1,13 @@
 package com.example.bookphoria.ui.viewmodel
 
-import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.repository.AuthRepository
 import com.example.bookphoria.ui.helper.InputValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +17,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    @ApplicationContext private val context: Context
+    private val userPreferences: UserPreferences
 ) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
     private val _resetPasswordState = MutableStateFlow<Result<String>?>(null)
@@ -29,6 +29,11 @@ class AuthViewModel @Inject constructor(
     val emailError: StateFlow<String?> = _emailError
     private val _passwordError = MutableStateFlow<String?>(null)
     val passwordError: StateFlow<String?> = _passwordError
+    val isLoggedIn: Flow<Boolean> = userPreferences.isLoggedIn()
+
+    fun isUserLoggedIn(): Flow<Boolean> {
+        return userPreferences.isLoggedIn()
+    }
 
     fun login(
         email: String,
@@ -41,24 +46,19 @@ class AuthViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                Log.d("Login", "Login attempt with email: $email")
                 val result = authRepository.login(email, password)
-
-                Log.d("Login", "Result: $result")
 
                 if (result.isSuccess) {
                     if (rememberMe) {
-                        saveCredentials(email, password)
+                        userPreferences.saveCredentials(email, password)
                     } else {
-                        clearSavedCredentials()
+                        userPreferences.clearCredentials()
                     }
                     onSuccess()
                 } else {
-                    Log.e("LoginError", "Login failed with message: ${result.exceptionOrNull()?.message}")
                     onError(result.exceptionOrNull()?.message ?: "Login gagal")
                 }
             } catch (e: Exception) {
-                Log.e("LoginError", "Error during login: ${e.message}")
                 onError(e.message ?: "Login gagal")
             }
         }
@@ -119,30 +119,8 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    private fun saveCredentials(email: String, password: String) {
-        val sharedPref = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
-        with(sharedPref.edit()) {
-            putString("saved_email", email)
-            putString("saved_password", password)
-            apply()
-        }
-    }
-
-    private fun clearSavedCredentials() {
-        val sharedPref = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
-        with(sharedPref.edit()) {
-            remove("saved_email")
-            remove("saved_password")
-            apply()
-        }
-    }
-
-    fun getSavedCredentials(): Pair<String?, String?> {
-        val sharedPref = context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
-        return Pair(
-            sharedPref.getString("saved_email", null),
-            sharedPref.getString("saved_password", null)
-        )
+    fun getSavedCredentials(): Flow<Pair<String?, String?>> {
+        return userPreferences.getSavedCredentials()
     }
 
     private fun validateLoginInput(email: String, password: String) {

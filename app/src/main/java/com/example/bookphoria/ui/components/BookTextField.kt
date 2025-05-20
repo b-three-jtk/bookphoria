@@ -1,8 +1,10 @@
 package com.example.bookphoria.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -22,6 +24,7 @@ fun BookTextField(
     maxLines: Int = 1,
     readOnly: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text,
+    errorMessage: String? = null,
     trailingIcon: @Composable (() -> Unit)? = null
 ) {
     TextField(
@@ -33,6 +36,7 @@ fun BookTextField(
         readOnly = readOnly,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         trailingIcon = trailingIcon,
+        isError = errorMessage != null,
         colors = TextFieldDefaults.colors(
             unfocusedTextColor = DarkIndigo,
             focusedTextColor = DarkIndigo.copy(alpha = 0.5f),
@@ -41,8 +45,17 @@ fun BookTextField(
             unfocusedContainerColor = Color.White,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent
+            disabledIndicatorColor = Color.Transparent,
+            errorIndicatorColor = Color.Transparent
         ),
         shape = RoundedCornerShape(20.dp),
     )
+    if (errorMessage != null) {
+        Text(
+            text = errorMessage,
+            color = Color.Red,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
 }

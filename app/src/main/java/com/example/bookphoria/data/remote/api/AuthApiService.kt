@@ -1,8 +1,11 @@
 package com.example.bookphoria.data.remote.api
 
+import com.example.bookphoria.data.local.entities.UserEntity
 import com.example.bookphoria.data.remote.responses.AuthResponse
 import retrofit2.http.Body
+import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface AuthApiService {
 

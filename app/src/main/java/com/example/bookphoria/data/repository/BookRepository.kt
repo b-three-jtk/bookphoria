@@ -1,6 +1,5 @@
 package com.example.bookphoria.data.repository
 
-import android.net.Uri
 import android.util.Log
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -20,10 +19,6 @@ import com.example.bookphoria.data.remote.responses.AddBookRequest
 import com.example.bookphoria.data.remote.responses.BookNetworkModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import java.io.File
 import javax.inject.Inject
 
 class BookRepository @Inject constructor(
@@ -37,11 +32,14 @@ class BookRepository @Inject constructor(
         Log.d("BookRepository", "Book added: ${bookNetworkModel.title}")
         val bookEntity = bookNetworkModel.toBookEntity()
 
-        // Insert dan dapatkan ID buku lokal (ISBN unik assumed)
-        bookDao.insertBook(bookEntity)
+        try {
+            bookDao.insertBook(bookEntity)
+        } catch (e: Exception) {
+            throw Exception("Terjadi kesalahan saat menambahkan buku: ${e.message}")
+            Log.d("BookRepository", "Book failed: ${e}")
+        }
         val localBookId = bookDao.getBookIdByIsbn(bookEntity.isbn)
 
-        // Insert authors
         bookNetworkModel.authors.forEach { authorNetwork ->
             val existingId = bookDao.getAuthorIdByName(authorNetwork.name)
             val authorId = existingId ?: bookDao.insertAuthor(

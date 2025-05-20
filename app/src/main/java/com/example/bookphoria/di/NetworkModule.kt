@@ -2,6 +2,7 @@ package com.example.bookphoria.di
 
 import com.example.bookphoria.data.remote.api.AuthApiService
 import com.example.bookphoria.data.remote.api.BookApiService
+import com.example.bookphoria.data.remote.api.FriendApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -36,13 +37,12 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideRetrofit(client: OkHttpClient): Retrofit {
-        // Buat Gson dengan setLenient untuk mengatasi JSON yang tidak valid
         val gson = GsonBuilder()
             .setLenient()
             .create()
 
         return Retrofit.Builder()
-            .baseUrl("https://c928-2001-448a-3044-892d-f040-b8a7-ddd9-a514.ngrok-free.app/api/")
+            .baseUrl("https://a10e-2001-448a-3045-8b7b-14fb-3300-d0a1-7f4e.ngrok-free.app/api/")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
@@ -58,5 +58,11 @@ object NetworkModule {
     @Singleton
     fun provideBookApiService(retrofit: Retrofit): BookApiService {
         return retrofit.create(BookApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserApiService(retrofit: Retrofit): FriendApiService {
+        return retrofit.create(FriendApiService::class.java)
     }
 }

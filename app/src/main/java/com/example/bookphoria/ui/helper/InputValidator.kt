@@ -27,10 +27,10 @@ object InputValidator {
             name.any { !it.isLetterOrDigit() && it != '_' } -> "Username hanya boleh mengandung huruf, angka, dan underscore."
             name.first().isDigit() -> "Username tidak boleh dimulai dengan angka."
             name.contains(" ") -> "Username tidak boleh mengandung spasi."
-            name.any { it.isWhitespace() } -> "Username tidak boleh mengandung spasi."
             name.any { it.isUpperCase() } -> "Username tidak boleh mengandung huruf kapital."
             else -> null
         }
     }
+
 
 }

@@ -25,18 +25,21 @@ import com.example.bookphoria.ui.book.ScanCodeScreen
 import com.example.bookphoria.ui.book.SearchScreen
 import com.example.bookphoria.ui.home.MainScreen
 import com.example.bookphoria.ui.onboarding.OnboardingScreen
+import com.example.bookphoria.ui.profile.FriendScreen
 import com.example.bookphoria.ui.profile.ProfileFriendScreen
 import com.example.bookphoria.ui.profile.ProfileScreen
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
 import com.example.bookphoria.ui.viewmodel.BookViewModel
 import com.example.bookphoria.ui.viewmodel.EditBookViewModel
 import com.example.bookphoria.ui.viewmodel.EntryBookViewModel
+import com.example.bookphoria.ui.viewmodel.FriendViewModel
 import com.example.bookphoria.ui.viewmodel.HomeViewModel
 import com.example.bookphoria.ui.viewmodel.OnboardingViewModel
 
 @OptIn(ExperimentalGetImage::class)
 @Composable
 fun AppNavHost(
+    startDestination: String,
     onDeepLinkTriggered: (NavController) -> Unit = {},
     onboardingViewModel: OnboardingViewModel = hiltViewModel()
 ) {
@@ -44,6 +47,8 @@ fun AppNavHost(
     val authViewModel: AuthViewModel = hiltViewModel()
     val bookViewModel: BookViewModel = hiltViewModel()
     val homeViewModel: HomeViewModel = hiltViewModel()
+    val friendViewModel: FriendViewModel = hiltViewModel()
+
     val isOnboardingCompleteState = onboardingViewModel
         .isOnboardingComplete
         .collectAsState(initial = null)
@@ -57,7 +62,12 @@ fun AppNavHost(
     // Memastikan tidak ada yang muncul sebelum onboarding tersedia
     if (isOnboardingComplete == null) return
 
-    val startDestination = if (isOnboardingComplete) "register" else "onboarding"
+    val startDestination = when {
+        !isOnboardingComplete -> "onboarding"
+        startDestination == "home" -> "home"
+        startDestination == "login" -> "login"
+        else -> "register"
+    }
 
     Scaffold { innerPadding ->
         NavHost(
@@ -93,6 +103,9 @@ fun AppNavHost(
             composable("search") {
                 SearchScreen(navController = navController)
             }
+            composable("friend-list") {
+                FriendScreen(viewModel = friendViewModel, navController = navController)
+            }
 
             composable(
                 route = "edit_book/{bookId}",
@@ -110,11 +123,14 @@ fun AppNavHost(
             }
 
             composable("profile") {
-                ProfileScreen()
+                ProfileScreen(navController = navController)
             }
 
-            composable("user-profile") {
-                ProfileFriendScreen(navController = navController)
+            composable(route = "user-profile/{userId}",
+                arguments = listOf(navArgument("userId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val userId = backStackEntry.arguments?.getInt("userId") ?: 0
+                ProfileFriendScreen(userId = userId, viewModel = friendViewModel, navController = navController)
             }
 
             composable(

@@ -88,3 +88,9 @@ val TitleExtraSmall = TextStyle(
     fontWeight = FontWeight.Bold,
     fontSize = 18.sp
 )
+
+val SubTitleExtraSmall = TextStyle(
+    fontFamily = Manrope,
+    fontWeight = FontWeight.Bold,
+    fontSize = 14.sp
+)

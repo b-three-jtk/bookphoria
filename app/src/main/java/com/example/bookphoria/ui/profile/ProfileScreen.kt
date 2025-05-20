@@ -2,6 +2,7 @@ package com.example.bookphoria.ui.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,9 +19,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bookphoria.ui.theme.PrimaryOrange
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.constraintlayout.motion.widget.MotionScene.Transition.TransitionOnClick
+import androidx.navigation.NavController
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(
+    navController: NavController
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -74,8 +79,8 @@ fun ProfileScreen() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StatColumn("0", "List Bacaan")
-                StatColumn("0", "Teman")
+                StatColumn("0", "List Bacaan", onClick = {})
+                StatColumn("0", "Teman", onClick = { navController.navigate("friend-list") })
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -118,6 +123,7 @@ fun ProfileScreen() {
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
+                            modifier = Modifier.clickable {  },
                             text = "Logout",
                             color = Color.White,
                             fontWeight = FontWeight.Medium
@@ -130,8 +136,9 @@ fun ProfileScreen() {
 }
 
 @Composable
-fun StatColumn(value: String, label: String) {
+fun StatColumn(value: String, label: String, onClick: () -> Unit) {
     Column(
+        modifier = Modifier.clickable { onClick.invoke() },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
