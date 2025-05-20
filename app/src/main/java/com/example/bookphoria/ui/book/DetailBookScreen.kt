@@ -1,16 +1,22 @@
 package com.example.bookphoria.ui.book
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
@@ -28,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -35,10 +42,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
 import com.example.bookphoria.ui.theme.AppTypography
 import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.theme.PrimaryOrange
+import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.viewmodel.BookViewModel
 
 @Composable
@@ -132,7 +141,7 @@ fun DetailBookScreen(
                                 containerColor = Color.White,
                                 contentColor = LocalContentColor.current)
                         ) {
-                                Text("Progress Baca", style = AppTypography.bodyMedium)
+                            Text("Progress Baca", style = AppTypography.bodyMedium)
                         }
                     }
                 }
@@ -141,9 +150,16 @@ fun DetailBookScreen(
             if (showCreateDialog) {
                 CreateProgressDialog(
                     onDismiss = { showCreateDialog = false },
-                    onSave = {name, description ->
+                    onSave = { pagesRead ->
+                        // Panggil ViewModel untuk menyimpan progress
+                        bookViewModel.updateReadingProgress(
+                            bookId = book.book.id,
+                            pagesRead = pagesRead
+                        )
                         showCreateDialog = false
-                    }
+                    },
+                    totalPages = book.book.pages,  // Gunakan total halaman dari buku
+                    currentProgress = 0  // Atau ambil dari database jika ada progress sebelumnya
                 )
             }
 
@@ -248,10 +264,14 @@ fun ReviewSection(
 @Composable
 fun CreateProgressDialog(
     onDismiss: () -> Unit,
-    onSave: (currentProgress: String, totalProgress: String) -> Unit
+    onSave: (pagesRead: Int) -> Unit,
+    totalPages : Int,
+    currentProgress: Int = 0
 ) {
+    var currentPage by remember { mutableStateOf(currentProgress.toString())}
     var currentProgress by remember { mutableStateOf("") }
     var totalProgress by remember { mutableStateOf("") }
+    var isError by remember { mutableStateOf(false) }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -277,36 +297,44 @@ fun CreateProgressDialog(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text("Halaman", style = MaterialTheme.typography.bodyMedium)
+
                     OutlinedTextField(
-                        value = currentProgress,
-                        onValueChange = { currentProgress = it },
+                        value = currentPage,
+                        onValueChange = { currentPage = it
+                            isError = it.toIntOrNull()?.let { num ->
+                                num > totalPages || num < 0
+                            } ?: false
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         shape = RoundedCornerShape(8.dp),
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White
-                        )
+                            unfocusedContainerColor = Color.White,
+                            errorIndicatorColor = Color.Red
+                        ),
+                        isError = isError,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        trailingIcon = {
+                            if (isError) {
+                                Icon(Icons.Filled.Error, "Error", tint = MaterialTheme.colorScheme.error)
+                            }
+                        }
                     )
+                    if (isError) {
+                        Text(
+                            text = "Halaman harus antara 0 dan $totalPages",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
 
-                Column(
-                    modifier = Modifier.padding(horizontal = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text("Dari", style = MaterialTheme.typography.bodyMedium)
-                    OutlinedTextField(
-                        value = totalProgress,
-                        onValueChange = { totalProgress = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        shape = RoundedCornerShape(8.dp),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White
-                        )
-                    )
-                }
+                Text(
+                    text = "Dari $totalPages halaman",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                )
 
                 Row(modifier = Modifier.fillMaxWidth()) {
                     OutlinedButton(
@@ -322,13 +350,20 @@ fun CreateProgressDialog(
                     }
 
                     Button(
-                        onClick = { onSave(currentProgress, totalProgress) },
+                        onClick = {
+                            if (!isError) {
+                                currentPage.toIntOrNull()?.let { pages ->
+                                    onSave(pages)
+                                }
+                            }
+                        },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = PrimaryOrange,
                             contentColor = Color.White
                         ),
-                        shape = RoundedCornerShape(bottomEnd = 20.dp)
+                        shape = RoundedCornerShape(bottomEnd = 20.dp),
+                        enabled = !isError && currentPage.isNotEmpty()
                     ) {
                         Text("Simpan")
                     }
@@ -344,7 +379,9 @@ fun CreateProgressDialogPreview() {
     MaterialTheme {
         CreateProgressDialog(
             onDismiss = {},
-            onSave = { _, _ -> }
+            onSave = { /* pagesRead -> */ },  // Sesuaikan dengan signature baru
+            totalPages = 300,  // Tambahkan parameter totalPages
+            currentProgress = 50  // Tambahkan currentProgress (opsional)
         )
     }
 }

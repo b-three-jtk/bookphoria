@@ -140,4 +140,8 @@ class BookRepository @Inject constructor(
             }
         ).flow
     }
+
+    suspend fun updateReadingProgress(crossRef: UserBookCrossRef) {
+        bookDao.insertUserBookCrossRef(crossRef)
+    }
 }
