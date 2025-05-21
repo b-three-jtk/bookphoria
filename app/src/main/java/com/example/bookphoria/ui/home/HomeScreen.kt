@@ -63,7 +63,6 @@ import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.viewmodel.HomeViewModel
 
-
 @Composable
 fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
     val userName by viewModel.userName.collectAsState()
@@ -92,11 +91,12 @@ fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
                         .align(Alignment.End)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.forgot),
+                        painter = painterResource(id = R.drawable.user),
                         contentDescription = "Profile",
                         modifier = Modifier
                             .size(52.dp)
                             .clip(CircleShape)
+                            .border(1.dp, Color.LightGray, CircleShape)
                     )
                 }
                 Icon(
@@ -140,7 +140,7 @@ fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
 fun SearchBarHome() {
     var query by remember { mutableStateOf("") }
     var active by remember { mutableStateOf(false) }
-    val searchHistory = listOf("Buku A", "Buku B", "Buku C")
+    val searchHistory = listOf("")
 
     DockedSearchBar(
         modifier = Modifier

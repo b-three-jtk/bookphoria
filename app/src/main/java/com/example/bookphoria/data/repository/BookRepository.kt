@@ -33,11 +33,14 @@ class BookRepository @Inject constructor(
         Log.d("BookRepository", "Book added: ${bookNetworkModel.title}")
         val bookEntity = bookNetworkModel.toBookEntity()
 
-        // Insert dan dapatkan ID buku lokal (ISBN unik assumed)
-        bookDao.insertBook(bookEntity)
+        try {
+            bookDao.insertBook(bookEntity)
+        } catch (e: Exception) {
+            throw Exception("Terjadi kesalahan saat menambahkan buku: ${e.message}")
+            Log.d("BookRepository", "Book failed: ${e}")
+        }
         val localBookId = bookDao.getBookIdByIsbn(bookEntity.isbn)
 
-        // Insert authors
         bookNetworkModel.authors.forEach { authorNetwork ->
             val existingId = bookDao.getAuthorIdByName(authorNetwork.name)
             val authorId = existingId ?: bookDao.insertAuthor(

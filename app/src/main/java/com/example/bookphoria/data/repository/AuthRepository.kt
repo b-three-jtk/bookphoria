@@ -21,12 +21,16 @@ class AuthRepository @Inject constructor(
         return try {
             val response = apiService.login(LoginRequest(email, password))
 
-            userPreferences.saveAccessToken(response.accessToken)
-            userPreferences.saveUserId(response.user.id)
+            if (response.accessToken.isNullOrEmpty()) {
+                return Result.failure(Exception("Access token dari server kosong atau null"))
+            }
+            Log.d("AuthRepository", "Saving token: ${response.accessToken}")
+
+            userPreferences.saveLoginData(token = response.accessToken, userId = response.user.id)
 
             val userEntity = UserEntity(
                 id = response.user.id,
-                name = response.user.name,
+                username = response.user.username,
                 email = response.user.email
             )
             userDao.insertUser(userEntity)
@@ -44,11 +48,11 @@ class AuthRepository @Inject constructor(
             }
 
             val response = apiService.register(RegisterRequest(username, email, password))
-            userPreferences.saveAccessToken(response.accessToken)
+            userPreferences.saveLoginData(response.accessToken, response.user.id)
 
             val userEntity = UserEntity(
                 id = response.user.id,
-                name = response.user.name,
+                username = response.user.username,
                 email = response.user.email
             )
             userDao.insertUser(userEntity)
@@ -82,7 +86,7 @@ class AuthRepository @Inject constructor(
 
     suspend fun logout(): Result<Unit> {
         return try {
-            userPreferences.clearAccessToken()
+            userPreferences.clearLoginData()
             userDao.clearUsers()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -91,6 +95,6 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun getUserNameById(userId: Int): String {
-        return userDao.getUserById(userId)?.name ?: "Pengguna"
+        return userDao.getUserById(userId)?.username ?: "Reader"
     }
 }

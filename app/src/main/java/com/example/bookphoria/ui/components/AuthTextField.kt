@@ -41,6 +41,7 @@ fun AuthTextField(
     TextField(
         value = value,
         onValueChange = onValueChange,
+        singleLine = true,
         modifier = modifier.fillMaxWidth(),
         label = { Text(label, color = DarkIndigo, style = MaterialTheme.typography.bodyLarge) },
         leadingIcon = {

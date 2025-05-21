@@ -48,7 +48,7 @@ class EntryBookViewModel @Inject constructor(
                     synopsis = synopsis,
                     isbn = isbn,
                     pages = pageCount.toInt(),
-                    cover = coverUrl ?: "", // Handle null case
+                    cover = coverUrl ?: "",
                     authors = authors.toList(),
                     genres = genres.toList(),
                     userStatus = "owned",

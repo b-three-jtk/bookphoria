@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -86,12 +87,15 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel(), navController: Na
             ) {
                 if (query.isNotEmpty()) {
                     items(results.itemCount) { index ->
-                        val book = results[index]
-                        if (book != null) {
+                        val data = results[index]
+                        if (data != null) {
                             BookSearchItem(
-                                title = book.title,
-                                author = book.authors?.joinToString(", ") { it.name } ?: "No Author",
-                                imageUrl = book.cover,
+                                title = data.book.title,
+                                author = data.authors.joinToString(", ") { it.name },
+                                imageUrl = data.book.imageUrl,
+                                onClick = {
+                                    navController.navigate("detail/${data.book.id}")
+                                }
                             )
                         }
                     }
@@ -147,10 +151,12 @@ fun BookSearchItem(
     author: String,
     imageUrl: String?,
     modifier: Modifier = Modifier,
-) {
+    onClick: () -> Unit
+    ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surface)
             .border(
@@ -221,6 +227,10 @@ fun SearchBarCustom(
             active = active,
             onActiveChange = { active = it },
             placeholder = { Text("Search") },
+            colors = SearchBarDefaults.colors(
+                containerColor = Color.White,
+                dividerColor = Color.Transparent
+            ),
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
             trailingIcon = if (active) {
                 {

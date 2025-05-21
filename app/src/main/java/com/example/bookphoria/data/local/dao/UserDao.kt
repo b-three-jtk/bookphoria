@@ -7,6 +7,8 @@ import androidx.room.Query
 import androidx.room.Transaction
 import com.example.bookphoria.data.local.entities.BookWithAuthors
 import com.example.bookphoria.data.local.entities.UserEntity
+import com.example.bookphoria.data.local.entities.UserFriendCrossRef
+import com.example.bookphoria.data.local.entities.UserWithFriends
 import com.example.bookphoria.data.local.entities.UserWithBooks
 
 @Dao
@@ -20,6 +22,13 @@ interface UserDao {
 
     @Query("DELETE FROM users")
     suspend fun clearUsers()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertFriend(crossRef: UserFriendCrossRef)
+
+    @Transaction
+    @Query("SELECT * FROM users WHERE id = :userId")
+    suspend fun getUserWithFriends(userId: Int): UserWithFriends
 
     @Transaction
     @Query("""

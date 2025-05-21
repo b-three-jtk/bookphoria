@@ -1,5 +1,6 @@
 package com.example.bookphoria.ui.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -77,15 +78,26 @@ fun MainScreen(navController: NavController, viewModel: HomeViewModel) {
             )
         }
     ) { innerPadding ->
-        NavHost(
-            navController = childNavController,
-            startDestination = "home-tab",
-            modifier = Modifier.padding(innerPadding)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(SoftCream)
         ) {
-            composable("home-tab") { HomeScreen(viewModel = viewModel, navController = navController) }
-            composable("search-tab") { SearchScreen(navController = navController) }
-            composable("shelf-tab") { MyShelfScreen(navController = navController) }
-            composable("profile-tab") { ProfileScreen() }
+            NavHost(
+                navController = childNavController,
+                startDestination = "home-tab",
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                composable("home-tab") {
+                    HomeScreen(
+                        viewModel = viewModel,
+                        navController = navController
+                    )
+                }
+                composable("search-tab") { SearchScreen(navController = navController) }
+                composable("shelf-tab") { MyShelfScreen() }
+                composable("profile-tab") { ProfileScreen(navController = navController) }
+            }
         }
     }
 }

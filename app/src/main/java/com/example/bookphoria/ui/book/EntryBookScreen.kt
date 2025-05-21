@@ -52,27 +52,12 @@ fun EntryBookScreen(
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-
-    // Untuk mengambil hasil scan dari savedStateHandle (jika ada)
-    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
-    val scannedIsbn = savedStateHandle?.get<String>("isbn_result")
-
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
-
     val datePickerState = rememberDatePickerState()
 
     val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { viewModel.coverUrl = uri.toString() }
-    }
-
-    // Mengisi field ISBN dengan hasil scan
-    LaunchedEffect(scannedIsbn) {
-        scannedIsbn?.let {
-            viewModel.isbn = it
-            // Bersihkan data setelah digunakan untuk menghindari pengisian ulang
-            savedStateHandle.remove<String>("isbn_result")
-        }
     }
 
     AnimatedVisibility(
