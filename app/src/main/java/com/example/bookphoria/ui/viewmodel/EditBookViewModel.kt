@@ -8,9 +8,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.bookphoria.data.local.dao.BookDao
 import com.example.bookphoria.data.local.entities.AuthorEntity
 import com.example.bookphoria.data.local.entities.BookAuthorCrossRef
-import com.example.bookphoria.data.local.entities.BookData
 import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.BookGenreCrossRef
+import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.data.local.entities.GenreEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -21,7 +21,7 @@ class EditBookViewModel @Inject constructor(
     private val bookDao: BookDao
 ) : ViewModel() {
 
-    var book by mutableStateOf<BookData?>(null)
+    var book by mutableStateOf<BookWithGenresAndAuthors?>(null)
         private set
 
     var allAuthors by mutableStateOf<List<AuthorEntity>>(emptyList())
@@ -42,6 +42,7 @@ class EditBookViewModel @Inject constructor(
     var imageUrl by mutableStateOf("")
     var serverId by mutableStateOf("")
 
+    var isLoading by mutableStateOf(false)
 
     fun loadBook(bookId: Int) {
         viewModelScope.launch {

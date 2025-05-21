@@ -1,41 +1,55 @@
 package com.example.bookphoria.ui.book
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
+import com.example.bookphoria.ui.theme.AppTypography
 import com.example.bookphoria.ui.theme.DarkIndigo
+import com.example.bookphoria.ui.theme.PrimaryOrange
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.viewmodel.BookViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailBookScreen(
     navController: NavController,
@@ -43,30 +57,13 @@ fun DetailBookScreen(
     bookViewModel: BookViewModel
 ) {
     val selectedBookState = bookViewModel.selectedBook.collectAsState()
+    val readingProgressState = bookViewModel.readingProgress.collectAsState()
     val book = selectedBookState.value
-    val showSheet = remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val status = remember { mutableStateOf("Action") }
+    var showCreateDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(bookId) {
         bookViewModel.getBookById(bookId)
-    }
-
-    if (showSheet.value) {
-        ModalBottomSheet(
-            onDismissRequest = { showSheet.value = false },
-            sheetState = sheetState,
-            containerColor = SoftCream
-        ) {
-            StatusSheet(
-                selectedStatus = status.value,
-                onStatusSelected = {
-                    status.value = it
-                    showSheet.value = false
-                },
-                bookViewModel
-            )
-        }
+        bookViewModel.getReadingProgress(bookId)
     }
 
     if (book == null) {
@@ -115,15 +112,14 @@ fun DetailBookScreen(
                     Text(book.book.title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Text("by ${book.author}", fontSize = 14.sp, color = Color.Gray)
                     Spacer(modifier = Modifier.height(8.dp))
-
                     Row {
                         Button(
-                            onClick = { showSheet.value = true },
+                            onClick = { /* TODO: Toggle owned/bookmarked */ },
                             shape = RoundedCornerShape(20.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE45758)),
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
                         ) {
-                            Text(status.value, color = Color.White)
+                            Text("Owned", color = Color.White)
                         }
                         IconButton(
                             onClick = {
@@ -137,10 +133,33 @@ fun DetailBookScreen(
                                 modifier = Modifier.size(16.dp)
                             )
                         }
-
                     }
-
+                    Row {
+                        OutlinedButton(
+                            onClick = { showCreateDialog = true },
+                            shape = RoundedCornerShape(24.dp),
+                            border = BorderStroke(1.dp, color = Color.Gray),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = Color.White,
+                                contentColor = LocalContentColor.current)
+                        ) {
+                            Text("Progress Baca", style = AppTypography.bodyMedium)
+                        }
+                    }
                 }
+            }
+
+            if (showCreateDialog && book != null) {
+                CreateProgressDialog(
+                    onDismiss = { showCreateDialog = false },
+                    onSave = { pagesRead ->
+                        bookViewModel.updateReadingProgress(book.book.id, pagesRead)
+                        showCreateDialog = false
+                    },
+                    totalPages = book.book.pages,
+                    currentProgress = readingProgressState.value ?: 0,
+                    previousProgress = readingProgressState.value
+                )
             }
 
             Text(
@@ -242,64 +261,150 @@ fun ReviewSection(
 }
 
 @Composable
-fun StatusSheet(
-    selectedStatus: String,
-    onStatusSelected: (String) -> Unit,
-    bookViewModel: BookViewModel
+fun CreateProgressDialog(
+    onDismiss: () -> Unit,
+    onSave: (pagesRead: Int) -> Unit,
+    totalPages : Int,
+    currentProgress: Int = 0,
+    previousProgress: Int? = null
 ) {
-    val radioOptions = listOf("Read", "Owned", "Borrowed")
+    var currentPage by remember { mutableStateOf(currentProgress.toString())}
+    var isError by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .padding(16.dp)
-            .fillMaxWidth()
-    ) {
-        Text(
-            text = "Pilih status buku",
-            style = MaterialTheme.typography.titleSmall
-        )
-
-        Column(Modifier.selectableGroup()) {
-            radioOptions.forEach { text ->
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .selectable(
-                            selected = (text == selectedStatus),
-                            onClick = { onStatusSelected(text) },
-                            role = Role.RadioButton
-                        )
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = (text == selectedStatus),
-                        onClick = null
-                    )
-                    Text(
-                        text = text,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(start = 16.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = {},
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent
-                )
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = Color.White,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 Text(
-                    text = "Hapus Buku dari Koleksi",
-                    color = Color.Red,
-                    style = MaterialTheme.typography.bodySmall
+                    text = "Update Progress Baccan",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 24.dp),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold
                 )
+
+                Column(
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+
+                    previousProgress?.let { progress ->
+                        if (progress > 0) {
+                            Column(
+                                modifier = Modifier.padding(horizontal = 24.dp)
+                            ) {
+                                Text(
+                                    text = "Sebelumnya: $progress/$totalPages halaman",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                LinearProgressIndicator(
+                                    progress = { progress.toFloat() / totalPages.toFloat() },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(8.dp),
+                                    color = PrimaryOrange,
+                                    trackColor = Color.LightGray
+                                )
+                            }
+                        }
+                    }
+
+                    Text("Halaman", style = MaterialTheme.typography.bodyMedium)
+
+                    OutlinedTextField(
+                        value = currentPage,
+                        onValueChange = { currentPage = it
+                            isError = it.toIntOrNull()?.let { num ->
+                                num > totalPages || num < 0
+                            } ?: false
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        shape = RoundedCornerShape(8.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            errorIndicatorColor = Color.Red
+                        ),
+                        isError = isError,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        trailingIcon = {
+                            if (isError) {
+                                Icon(Icons.Filled.Error, "Error", tint = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    )
+                    if (isError) {
+                        Text(
+                            text = "Halaman harus antara 0 dan $totalPages",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+
+                Text(
+                    text = "Dari $totalPages halaman",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                )
+
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Gray,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(bottomStart = 20.dp)
+                    ) {
+                        Text("Batal")
+                    }
+
+                    Button(
+                        onClick = {
+                            if (!isError) {
+                                currentPage.toIntOrNull()?.let { pages ->
+                                    onSave(pages)
+                                }
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PrimaryOrange,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(bottomEnd = 20.dp),
+                        enabled = !isError && currentPage.isNotEmpty()
+                    ) {
+                        Text("Simpan")
+                    }
+                }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CreateProgressDialogPreview() {
+    MaterialTheme {
+        CreateProgressDialog(
+            onDismiss = {},
+            onSave = { /* pagesRead -> */ },
+            totalPages = 300,
+            currentProgress = 50,
+            previousProgress = 100
+        )
     }
 }

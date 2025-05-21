@@ -56,9 +56,11 @@ class AuthViewModel @Inject constructor(
                     }
                     onSuccess()
                 } else {
+                    Log.e("LoginError", "Login failed with message: ${result.exceptionOrNull()?.message}")
                     onError(result.exceptionOrNull()?.message ?: "Login gagal")
                 }
             } catch (e: Exception) {
+                Log.e("LoginError", "Error during login: ${e.message}")
                 onError(e.message ?: "Login gagal")
             }
         }

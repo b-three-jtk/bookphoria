@@ -128,9 +128,7 @@ fun BottomSheetContent(navController: NavController) {
             bgColor = Color(0xFF96ADD6),
             title = "Cari berdasarkan Judul",
             description = "Cari berdasarkan judul jika tidak memiliki ISBN",
-            onClick = {
-                navController.navigate("search")
-            }
+            onClick = {}
         )
         BottomSheetCard(
             icon = Icons.Default.AddBox,

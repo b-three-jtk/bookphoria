@@ -34,7 +34,6 @@ fun AuthTextField(
     leadingIcon: ImageVector,
     contentDescription: String,
     isPassword: Boolean = false,
-    errorMessage: String? = null,
     modifier: Modifier = Modifier
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
@@ -66,7 +65,6 @@ fun AuthTextField(
             }
         },
         visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None,
-        isError = errorMessage != null,
         colors = TextFieldDefaults.colors(
             unfocusedTextColor = DarkIndigo,
             focusedTextColor = DarkIndigo.copy(alpha = 0.5f),
@@ -75,16 +73,7 @@ fun AuthTextField(
             unfocusedContainerColor = Color.White,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
-            errorIndicatorColor = Color.Transparent
         ),
         shape = RoundedCornerShape(20.dp),
     )
-    if (errorMessage != null) {
-        Text(
-            text = errorMessage,
-            color = Color.Red,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(top = 4.dp)
-        )
-    }
 }

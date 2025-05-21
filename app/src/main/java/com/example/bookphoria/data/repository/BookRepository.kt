@@ -8,7 +8,8 @@ import com.example.bookphoria.data.local.dao.BookDao
 import com.example.bookphoria.data.local.entities.AuthorEntity
 import com.example.bookphoria.data.local.entities.BookAuthorCrossRef
 import com.example.bookphoria.data.local.entities.BookGenreCrossRef
-import com.example.bookphoria.data.local.entities.BookData
+import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
+import com.example.bookphoria.data.local.entities.FullBookDataWithUserInfo
 import com.example.bookphoria.data.local.entities.GenreEntity
 import com.example.bookphoria.data.local.entities.UserBookCrossRef
 import com.example.bookphoria.data.local.entities.toBookEntity
@@ -93,7 +94,6 @@ class BookRepository @Inject constructor(
         }
     }
 
-
     suspend fun addToUserBooks(bookId: Int, status: String = "Belum dibaca") {
         val userId = userPreferences.getUserId().first()
 
@@ -113,17 +113,13 @@ class BookRepository @Inject constructor(
         }
     }
 
-    suspend fun getBookById(bookId: Int): BookData? {
+    suspend fun getBookById(bookId: Int): BookWithGenresAndAuthors? {
         return bookDao.getBookById(bookId)
-    }
-
-    suspend fun deleteUserBook(userId: Int, bookId: Int) {
-        bookDao.deleteUserBook(userId, bookId)
     }
 
     fun getYourBooks(
         userId: Int
-    ): Flow<List<BookData>> {
+    ): Flow<List<BookWithGenresAndAuthors>> {
         return bookDao.getYourBooks(
             userId
         )
@@ -132,14 +128,14 @@ class BookRepository @Inject constructor(
     fun getYourCurrentlyReadingBooks(
         userId: Int,
         status: String
-    ): Flow<List<BookData>> {
+    ): Flow<List<FullBookDataWithUserInfo>> {
         return bookDao.getYourCurrentlyReadingBooks(
             userId,
             status
         )
     }
 
-    fun searchBook(query: String, token: String): Flow<PagingData<BookData>> {
+    fun searchBook(query: String, token: String): Flow<PagingData<BookNetworkModel>> {
         return Pager(
             config = PagingConfig(pageSize = 10, enablePlaceholders = false),
             pagingSourceFactory = {
@@ -148,7 +144,12 @@ class BookRepository @Inject constructor(
         ).flow
     }
 
-    suspend fun getBooksByQuery(query: String, pageSize: Int, offset: Int): List<BookData> {
-        return bookDao.getBooksByQuery(query, pageSize, offset)
+
+    suspend fun updateReadingProgress(crossRef: UserBookCrossRef) {
+        bookDao.insertUserBookCrossRef(crossRef)
+    }
+
+    suspend fun getReadingProgress(userId: Int, bookId: Int): Int? {
+        return bookDao.getReadingProgress(userId, bookId)
     }
 }

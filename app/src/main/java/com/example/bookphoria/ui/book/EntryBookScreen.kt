@@ -341,11 +341,11 @@ fun EntryBookScreen(
                                 ).show()
                                 navController.navigate("detail/$newBookId")
                             },
-                            onError = { error ->
+                            onError = {
                                 Toast.makeText(
                                     context,
-                                    "Gagal: ${error ?: "Terjadi kesalahan."}",
-                                    Toast.LENGTH_LONG
+                                    "Terjadi kesalahan saat menambahkan buku!",
+                                    Toast.LENGTH_SHORT
                                 ).show()
                             }
                         )

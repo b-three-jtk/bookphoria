@@ -31,7 +31,33 @@ fun BookNetworkModel.toBookEntity(): BookEntity = BookEntity(
     imageUrl = this.cover
 )
 
-data class BookData(
+data class BookWithGenresAndAuthors(
+    @Embedded val book: BookEntity,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "id",
+        associateBy = Junction(
+            value = BookAuthorCrossRef::class,
+            parentColumn = "bookId",
+            entityColumn = "authorId"
+        )
+    )
+    val authors: List<AuthorEntity>,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "id",
+        associateBy = Junction(
+            value = BookGenreCrossRef::class,
+            parentColumn = "bookId",
+            entityColumn = "genreId"
+        )
+    )
+    val genres: List<GenreEntity>,
+)
+
+data class FullBookDataWithUserInfo(
     @Embedded val book: BookEntity,
 
     @Relation(

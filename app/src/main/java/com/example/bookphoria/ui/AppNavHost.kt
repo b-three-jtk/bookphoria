@@ -21,8 +21,10 @@ import com.example.bookphoria.ui.auth.ResetpassScreen
 import com.example.bookphoria.ui.book.DetailBookScreen
 import com.example.bookphoria.ui.book.EditBookScreen
 import com.example.bookphoria.ui.book.EntryBookScreen
+import com.example.bookphoria.ui.book.MyShelfScreen
 import com.example.bookphoria.ui.book.ScanCodeScreen
 import com.example.bookphoria.ui.book.SearchScreen
+import com.example.bookphoria.ui.book.YourBooksScreen
 import com.example.bookphoria.ui.home.MainScreen
 import com.example.bookphoria.ui.onboarding.OnboardingScreen
 import com.example.bookphoria.ui.profile.FriendScreen
@@ -176,6 +178,14 @@ fun AppNavHost(
                     }
                 )
             }
+
+            composable("myshelf") {
+                MyShelfScreen(navController = navController)
+            }
+            composable("your_books") {
+                YourBooksScreen(navController = navController)
+            }
         }
     }
 }
+
