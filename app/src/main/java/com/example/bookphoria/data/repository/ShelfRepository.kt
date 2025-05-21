@@ -7,11 +7,13 @@ import android.net.Uri
 import android.util.Log
 import com.example.bookphoria.data.local.AppDatabase
 import com.example.bookphoria.data.local.entities.ShelfEntity
+import com.example.bookphoria.data.local.entities.ShelfWithBooks
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.ShelfApiServices
 import com.google.gson.JsonObject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -237,8 +239,11 @@ class ShelfRepository @Inject constructor(
                 ?.get("id")
                 ?.asString
 
+            val userId = userPreferences.getUserId().first() ?: throw IllegalStateException("User ID is null")
+
             database.ShelfDao().insert(
                 ShelfEntity(
+                    userId = userId,
                     serverId = serverId,
                     name = name,
                     description = desc,
@@ -275,5 +280,9 @@ class ShelfRepository @Inject constructor(
                 inputStream.close()
             }
         }
+    }
+
+    fun getShelvesWithBooks(userId: Int): Flow<List<ShelfWithBooks>> {
+        return database.ShelfDao().getShelvesWithBooks(userId)
     }
 }

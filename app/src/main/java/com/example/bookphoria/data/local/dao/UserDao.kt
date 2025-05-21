@@ -9,7 +9,6 @@ import com.example.bookphoria.data.local.entities.BookWithAuthors
 import com.example.bookphoria.data.local.entities.UserEntity
 import com.example.bookphoria.data.local.entities.UserFriendCrossRef
 import com.example.bookphoria.data.local.entities.UserWithFriends
-import com.example.bookphoria.data.local.entities.UserWithBooks
 
 @Dao
 interface UserDao {
@@ -37,5 +36,4 @@ interface UserDao {
     WHERE userbookcrossref.userId = :userId"""
     )
     suspend fun getBooksWithAuthorsByUser(userId: Int): List<BookWithAuthors>
-
 }

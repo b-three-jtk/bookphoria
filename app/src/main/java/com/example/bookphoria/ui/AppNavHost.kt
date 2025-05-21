@@ -24,6 +24,7 @@ import com.example.bookphoria.ui.book.EntryBookScreen
 import com.example.bookphoria.ui.book.MyShelfScreen
 import com.example.bookphoria.ui.book.ScanCodeScreen
 import com.example.bookphoria.ui.book.SearchScreen
+import com.example.bookphoria.ui.book.ShelfDetailScreen
 import com.example.bookphoria.ui.book.YourBooksScreen
 import com.example.bookphoria.ui.home.MainScreen
 import com.example.bookphoria.ui.onboarding.OnboardingScreen
@@ -184,6 +185,9 @@ fun AppNavHost(
             }
             composable("your_books") {
                 YourBooksScreen(navController = navController)
+            }
+            composable("detail_shelf") {
+                ShelfDetailScreen(navController = navController)
             }
         }
     }

@@ -60,6 +60,9 @@ fun MyShelfScreen(
     }
 
     val booksWithAuthors by viewModel.booksWithAuthors.collectAsState()
+    val shelvesWithBooks by viewModel.shelvesWithBooks.collectAsState()
+    //Ini di pakai ketika friend ingin melihat shelf user lain
+    //val userWithShelves by viewModel.userWithShelves.collectAsState()
 
     Column(
         modifier = Modifier
@@ -129,6 +132,47 @@ fun MyShelfScreen(
                 }
             }
         }
+
+        LazyColumn {
+            items(shelvesWithBooks) { shelfWithBooks ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp)
+                        .clickable {
+                            navController.navigate("detail_shelf")
+                        },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Image(
+                            painter = rememberAsyncImagePainter(shelfWithBooks.shelf.imagePath),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .padding(end = 16.dp)
+                        )
+                        Column {
+                            Text(
+                                text = shelfWithBooks.shelf.name,
+                                style = TitleExtraSmall
+                            )
+                            Text(
+                                text = "${shelfWithBooks.books.size} Books",
+                                style = AppTypography.bodyMedium.copy(color = DeepBlue)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
     }
 
     if (showCreateDialog) {

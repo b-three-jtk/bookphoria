@@ -14,6 +14,7 @@ import com.example.bookphoria.data.local.entities.BookAuthorCrossRef
 import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.BookGenreCrossRef
 import com.example.bookphoria.data.local.entities.GenreEntity
+import com.example.bookphoria.data.local.entities.ShelfBookCrossRef
 import com.example.bookphoria.data.local.entities.ShelfEntity
 import com.example.bookphoria.data.local.entities.UserBookCrossRef
 import com.example.bookphoria.data.local.entities.UserEntity
@@ -28,7 +29,9 @@ import kotlinx.coroutines.CoroutineScope
     ShelfEntity::class,
     BookAuthorCrossRef::class,
     BookGenreCrossRef::class,
-    UserBookCrossRef::class], version = 3,
+    UserFriendCrossRef::class,
+    ShelfBookCrossRef::class,
+    UserBookCrossRef::class], version = 4,
     exportSchema = false
 )
 
