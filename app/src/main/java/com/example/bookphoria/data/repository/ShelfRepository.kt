@@ -5,10 +5,15 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
+import com.example.bookphoria.data.local.AppDatabase
+import com.example.bookphoria.data.local.entities.ShelfEntity
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.ShelfApiServices
+import com.google.gson.JsonObject
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -22,7 +27,8 @@ import javax.inject.Inject
 class ShelfRepository @Inject constructor(
     private val api: ShelfApiServices,
     private val userPreferences: UserPreferences,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val database: AppDatabase
 ) {
     companion object {
         private const val MAX_COMPRESS_QUALITY = 90
@@ -66,6 +72,11 @@ class ShelfRepository @Inject constructor(
                 return Result.failure(Exception("Network error: ${e.message}"))
             } catch (e: Exception) {
                 return Result.failure(Exception("API error: ${e.message}"))
+            }
+
+            if (response.isSuccessful) {
+                // Simpan ke database lokal
+                saveToLocalDatabase(name, desc, imageUri, response.body())
             }
 
             handleApiResponse(response, DEFAULT_MAX_SIZE_KB)
@@ -210,4 +221,59 @@ class ShelfRepository @Inject constructor(
     }
 
     private fun File.sizeInKB() = length() / 1024
+
+    private suspend fun saveToLocalDatabase(
+        name: String,
+        desc: String?,
+        imageUri: Uri?,
+        response: JsonObject?
+    ) {
+        try {
+            val localImagePath = imageUri?.let { uri ->
+                saveImageToInternalStorage(uri)
+            }
+            val serverId = response
+                ?.getAsJsonObject("data")
+                ?.get("id")
+                ?.asString
+
+            database.ShelfDao().insert(
+                ShelfEntity(
+                    serverId = serverId,
+                    name = name,
+                    description = desc,
+                    imagePath = localImagePath
+                )
+            )
+        } catch (e: Exception) {
+            Log.e("LocalSave", "Failed to save shelf locally", e)
+            throw e
+        }
+    }
+
+    private suspend fun saveImageToInternalStorage(uri: Uri): String {
+        return withContext(Dispatchers.IO) {
+            val inputStream = context.contentResolver.openInputStream(uri)
+                ?: throw Exception("Cannot open image stream")
+
+            val directory = File(context.filesDir, "shelf_images")
+            if (!directory.exists()) {
+                directory.mkdirs()
+            }
+
+            val fileName = "shelf_${System.currentTimeMillis()}.jpg"
+            val file = File(directory, fileName)
+
+            try {
+                FileOutputStream(file).use { output ->
+                    inputStream.copyTo(output)
+                }
+                file.absolutePath
+            } catch (e: Exception) {
+                throw Exception("Failed to save image: ${e.message}")
+            } finally {
+                inputStream.close()
+            }
+        }
+    }
 }

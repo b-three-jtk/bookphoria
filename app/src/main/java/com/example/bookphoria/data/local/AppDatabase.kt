@@ -5,12 +5,14 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.example.bookphoria.data.local.dao.BookDao
+import com.example.bookphoria.data.local.dao.ShelfDao
 import com.example.bookphoria.data.local.dao.UserDao
 import com.example.bookphoria.data.local.entities.AuthorEntity
 import com.example.bookphoria.data.local.entities.BookAuthorCrossRef
 import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.BookGenreCrossRef
 import com.example.bookphoria.data.local.entities.GenreEntity
+import com.example.bookphoria.data.local.entities.ShelfEntity
 import com.example.bookphoria.data.local.entities.UserBookCrossRef
 import com.example.bookphoria.data.local.entities.UserEntity
 import kotlinx.coroutines.CoroutineScope
@@ -20,13 +22,17 @@ import kotlinx.coroutines.CoroutineScope
     BookEntity::class,
     AuthorEntity::class,
     GenreEntity::class,
+    ShelfEntity::class,
     BookAuthorCrossRef::class,
     BookGenreCrossRef::class,
     UserBookCrossRef::class], version = 3,
-    exportSchema = false)
+    exportSchema = false
+)
+
 abstract class AppDatabase: RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun bookDao(): BookDao
+    abstract fun ShelfDao(): ShelfDao
 
     companion object {
         @Volatile
