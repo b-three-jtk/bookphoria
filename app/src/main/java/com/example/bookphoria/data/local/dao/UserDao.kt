@@ -36,4 +36,7 @@ interface UserDao {
     WHERE userbookcrossref.userId = :userId"""
     )
     suspend fun getBooksWithAuthorsByUser(userId: Int): List<BookWithAuthors>
+
+    @Query("UPDATE users SET username = :username, firstName = :firstName, lastName = :lastName, email = :email, profilePicture = :imageUrl WHERE id = :userId")
+    suspend fun updateUser(userId: Int, username: String, firstName: String, lastName: String, email: String, imageUrl: String)
 }

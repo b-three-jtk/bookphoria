@@ -47,7 +47,9 @@ fun ProfileScreen(
                     imageVector = Icons.Default.Edit,
                     contentDescription = "Edit Profile",
                     tint = Color.Black,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(24.dp).clickable {
+                        navController.navigate("edit-profile")
+                    }
                 )
             }
 

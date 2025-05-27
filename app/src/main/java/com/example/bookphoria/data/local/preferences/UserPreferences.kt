@@ -30,10 +30,12 @@ class UserPreferences @Inject constructor(@ApplicationContext context: Context) 
         }
     }
 
-    suspend fun saveCredentials(email: String, password: String) {
+    suspend fun saveCredentials(email: String, password: String?) {
         dataStore.edit { preferences ->
             preferences[SAVED_EMAIL_KEY] = email
-            preferences[SAVED_PASSWORD_KEY] = password
+            if (password != null) {
+                preferences[SAVED_PASSWORD_KEY] = password
+            }
         }
     }
 
