@@ -30,6 +30,8 @@ class HomeViewModel @Inject constructor(
 
     private val _userName = MutableStateFlow("...")
     val userName: StateFlow<String> = _userName
+    private val _avatar = MutableStateFlow("...")
+    val avatar: StateFlow<String> = _avatar
 
     init {
         loadUserData()
@@ -38,11 +40,15 @@ class HomeViewModel @Inject constructor(
     private fun loadUserData() {
         viewModelScope.launch {
             userPreferences.getUserId().collect { userId ->
-                Log.d("HomeViewModel", "User ID: $userId")
                 if (userId != null) {
-                    val name = userRepository.getUserNameById(userId)
-                    Log.d("HomeViewModel", "User name: $name")
-                    _userName.value = name
+                    val user = userRepository.getUserById(userId)
+                    val name = if (!user?.firstName.isNullOrBlank()) user?.firstName else user?.username
+                    if (name != null) {
+                        _userName.value = name
+                    }
+                    if (user != null) {
+                        _avatar.value = user.profilePicture ?: ""
+                    }
 
                     launch {
                         repository.getYourCurrentlyReadingBooks(userId, "reading").collect { book ->

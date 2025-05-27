@@ -1,13 +1,16 @@
 package com.example.bookphoria.data.remote.api
 
-import com.example.bookphoria.data.local.entities.UserEntity
 import com.example.bookphoria.data.remote.responses.AuthResponse
-import com.google.android.gms.common.api.Response
+import com.example.bookphoria.data.remote.responses.EditProfileResponse
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Multipart
 import retrofit2.http.POST
-import retrofit2.http.Path
+import retrofit2.http.Part
 
 
 interface AuthApiService {
@@ -23,6 +26,17 @@ interface AuthApiService {
 
     @POST("reset-password")
     suspend fun resetPassword(@Body request: ResetPasswordRequest): MessageResponse
+
+    @Multipart
+    @POST("user/profile")
+    suspend fun updateProfile(
+        @Header("Authorization") token: String,
+        @Part("username") username: RequestBody,
+        @Part("first_name") firstName: RequestBody,
+        @Part("last_name") lastName: RequestBody,
+        @Part("email") email: RequestBody,
+        @Part avatar: MultipartBody.Part?,
+    ): Response<EditProfileResponse>
 
     @GET("user")
     suspend fun getCurrentUser(): retrofit2.Response<UserStatsResponse>

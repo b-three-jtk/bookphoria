@@ -1,5 +1,6 @@
 package com.example.bookphoria.ui.book
 
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -317,7 +318,6 @@ fun EntryBookScreen(
             ) {
                 Text("SIMPAN", style = AppTypography.bodyLarge, color = Color.White)
             }
-
         }
 
         if (showConfirmDialog) {
@@ -347,7 +347,8 @@ fun EntryBookScreen(
                                     "Terjadi kesalahan saat menambahkan buku!",
                                     Toast.LENGTH_SHORT
                                 ).show()
-                            }
+                            },
+                            context = context
                         )
                         showConfirmDialog = false
                     }) {

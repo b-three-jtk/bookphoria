@@ -14,12 +14,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val userRepository: UserRepository // Add UserRepository
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _userData = MutableStateFlow<UserEntity?>(null)
@@ -67,6 +68,33 @@ class ProfileViewModel @Inject constructor(
 
     fun clearError() {
         _error.value = null
+    }
+
+    fun getProfile(onSuccess: (UserEntity) -> Unit, onError: (Throwable) -> Unit) {
+        viewModelScope.launch {
+            val result = userRepository.getProfile()
+            result?.let {
+                onSuccess(it)
+            } ?: onError(Exception("Profile not found"))
+        }
+    }
+
+    fun editProfile(
+        username: String,
+        firstName: String,
+        lastName: String,
+        email: String,
+        avatar: File?,
+        onSuccess: () -> Unit,
+        onError: (Throwable) -> Unit
+    ) {
+        viewModelScope.launch {
+            userRepository.editProfile(username, firstName, lastName, email, avatar)
+                .collect { result ->
+                    result.onSuccess { onSuccess() }
+                        .onFailure { onError(it) }
+                }
+        }
     }
 
     fun logout(onSuccess: () -> Unit) {

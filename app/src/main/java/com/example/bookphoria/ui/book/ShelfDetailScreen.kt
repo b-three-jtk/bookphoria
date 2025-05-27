@@ -20,11 +20,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.bookphoria.R
 import com.example.bookphoria.ui.theme.SoftCream
 
 @Composable
-fun ShelfDetailScreen() {
+fun ShelfDetailScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -231,8 +232,8 @@ fun BookItem(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun ShelfDetailScreenPreview() {
-    ShelfDetailScreen()
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun ShelfDetailScreenPreview() {
+//    ShelfDetailScreen()
+//}

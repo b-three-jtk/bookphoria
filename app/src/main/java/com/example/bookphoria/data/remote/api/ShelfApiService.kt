@@ -15,4 +15,24 @@ interface ShelfApiServices {
         @Part("desc") description: RequestBody?,
         @Part image: MultipartBody.Part?
     ): Response<JsonObject>
+
+    @POST("shelves/{shelf_id}/books")
+    suspend fun addBookToShelf(
+        @Header("Authorization") token: String,
+        @Path("shelf_id") shelfId: String,
+        @Body bookData: JsonObject
+    ): Response<JsonObject>
+
+    @DELETE("shelves/{shelf_id}/books/{book_id}")
+    suspend fun deleteBookFromShelf(
+        @Header("Authorization") token: String,
+        @Path("shelf_id") shelfId: String,
+        @Path("book_id") bookId: String
+    ): Response<JsonObject>
+
+    @DELETE("shelves/{shelf_id}")
+    suspend fun deleteShelf(
+        @Header("Authorization") token: String,
+        @Path("shelf_id") shelfId: String
+    ): Response<JsonObject>
 }

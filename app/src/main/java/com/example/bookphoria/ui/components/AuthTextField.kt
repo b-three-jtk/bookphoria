@@ -31,7 +31,7 @@ fun AuthTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
-    leadingIcon: ImageVector,
+    leadingIcon: ImageVector?,
     contentDescription: String,
     isPassword: Boolean = false,
     modifier: Modifier = Modifier
@@ -45,12 +45,15 @@ fun AuthTextField(
         modifier = modifier.fillMaxWidth(),
         label = { Text(label, color = DarkIndigo, style = MaterialTheme.typography.bodyLarge) },
         leadingIcon = {
-            Icon(
-                imageVector = leadingIcon,
-                contentDescription = contentDescription,
-                tint = DarkIndigo,
-                modifier = Modifier.padding(start = 16.dp, end = 10.dp)
-            )
+            leadingIcon?.let {
+                val iconPadding = Modifier.padding(start = 16.dp, end = 10.dp)
+                Icon(
+                    imageVector = it,
+                    contentDescription = contentDescription,
+                    tint = DarkIndigo,
+                    modifier = iconPadding
+                )
+            }
         },
         trailingIcon = {
             if (isPassword) {
