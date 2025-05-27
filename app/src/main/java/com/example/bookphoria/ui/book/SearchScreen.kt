@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -90,11 +91,11 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel(), navController: Na
                         val data = results[index]
                         if (data != null) {
                             BookSearchItem(
-                                title = data.book.title,
+                                title = data.title,
                                 author = data.authors.joinToString(", ") { it.name },
-                                imageUrl = data.book.imageUrl,
+                                imageUrl = data.cover,
                                 onClick = {
-                                    navController.navigate("detail/${data.book.id}")
+                                    navController.navigate("detail/${data.id}")
                                 }
                             )
                         }
@@ -152,7 +153,7 @@ fun BookSearchItem(
     imageUrl: String?,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
-    ) {
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()

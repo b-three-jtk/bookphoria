@@ -9,7 +9,13 @@ import com.example.bookphoria.data.remote.api.LoginRequest
 import com.example.bookphoria.data.remote.api.RegisterRequest
 import com.example.bookphoria.data.remote.api.ResetPasswordRequest
 import javax.inject.Inject
+import android.util.Log
+import com.example.bookphoria.data.remote.api.UserStatsResponse
+import com.google.android.gms.common.api.Response
+import kotlinx.coroutines.flow.first
 import javax.inject.Singleton
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 @Singleton
 class AuthRepository @Inject constructor(
@@ -20,6 +26,7 @@ class AuthRepository @Inject constructor(
     suspend fun login(email: String, password: String): Result<Unit> {
         return try {
             val response = apiService.login(LoginRequest(email, password))
+            Log.d("AuthRepo", "API User Data - id: ${response.user.id}, username: ${response.user.username}, email: ${response.user.email}")
 
             if (response.accessToken.isNullOrEmpty()) {
                 return Result.failure(Exception("Access token dari server kosong atau null"))
@@ -96,5 +103,32 @@ class AuthRepository @Inject constructor(
 
     suspend fun getUserNameById(userId: Int): String {
         return userDao.getUserById(userId)?.username ?: "Reader"
+    }
+
+    suspend fun getCurrentUserId(): Int? {
+        return userPreferences.getUserId().first()
+    }
+
+    suspend fun getCurrentUser(): Result<UserStatsResponse> {
+        return try {
+            val response = apiService.getCurrentUser()
+            if (response.isSuccessful) {
+                response.body()?.let { userStats ->
+                    // Update local database
+                    userDao.insertUser(
+                        UserEntity(
+                            id = userStats.id,
+                            username = userStats.username,
+                            email = userStats.email
+                        )
+                    )
+                    Result.success(userStats)
+                } ?: Result.failure(Exception("Response body is null"))
+            } else {
+                Result.failure(Exception("API error: ${response.code()} - ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

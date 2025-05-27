@@ -28,6 +28,7 @@ import kotlinx.coroutines.CoroutineScope
     ShelfEntity::class,
     BookAuthorCrossRef::class,
     BookGenreCrossRef::class,
+    UserFriendCrossRef::class,
     UserBookCrossRef::class], version = 3,
     exportSchema = false
 )

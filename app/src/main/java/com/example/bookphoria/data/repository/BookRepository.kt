@@ -152,4 +152,8 @@ class BookRepository @Inject constructor(
     suspend fun getReadingProgress(userId: Int, bookId: Int): Int? {
         return bookDao.getReadingProgress(userId, bookId)
     }
+
+    suspend fun getUserBooksCount(userId: Int): Int {
+        return getYourBooks(userId).first().size
+    }
 }

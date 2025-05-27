@@ -1,5 +1,7 @@
 package com.example.bookphoria.ui.profile
 
+import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,140 +21,187 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bookphoria.ui.theme.PrimaryOrange
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.constraintlayout.motion.widget.MotionScene.Transition.TransitionOnClick
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import com.example.bookphoria.R
+import com.example.bookphoria.ui.theme.SoftCream
+import com.example.bookphoria.ui.viewmodel.ProfileViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(
-    navController: NavController
+    navController: NavController,
+    viewModel: ProfileViewModel = hiltViewModel()
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF8F5F1))
-    ) {
-        Column(
+    val userData by viewModel.userData.collectAsState()
+    val loading by viewModel.loading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val bookCount by viewModel.bookCount.collectAsState()
+    val readingListCount by viewModel.readingListCount.collectAsState()
+    val friendCount by viewModel.friendCount.collectAsState()
+
+    // Handle error with a snackbar
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(error) {
+        error?.let { errorMessage ->
+            scope.launch {
+                snackbarHostState.showSnackbar(errorMessage)
+                viewModel.clearError()
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        Log.d("ProfileScreen", "Rendering: userData=$userData, bookCount=$bookCount, readingListCount=$readingListCount, friendCount=$friendCount, loading=$loading, error=$error")
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(padding)
+                .background(SoftCream)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(end = 8.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit Profile",
-                    tint = Color.Black,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Profile Image
-            Box(
-                modifier = Modifier
-                    .size(96.dp)
-                    .background(Color.LightGray, CircleShape)
-                    .border(1.dp, Color.Gray, CircleShape)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Name
-            Text(
-                text = "Dhira",
-                style = TextStyle(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Stats Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                StatColumn("0", "List Bacaan", onClick = {})
-                StatColumn("0", "Teman", onClick = { navController.navigate("friend-list") })
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Profile Info Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    ProfileInfoRow("Username", "Dhira")
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
-                    ProfileInfoRow("Nama Lengkap", "Dhira")
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
-                    ProfileInfoRow("Email", "dhira.ramadini.tif23@polban.ac.id")
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
-                    ProfileInfoRow("Gender", "Wanita")
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Button(
-                        onClick = { /* Handle logout */ },
+            if (loading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Edit Profile Button
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp),
-                        colors = ButtonDefaults.buttonColors(Color.Gray),
-                        shape = RoundedCornerShape(8.dp),
-                        border = ButtonDefaults.outlinedButtonBorder
+                            .padding(end = 8.dp),
+                        horizontalArrangement = Arrangement.End
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Key,
-                            contentDescription = "Password Icon",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Change Password",
-                            color = Color.White,
-                            fontWeight = FontWeight.Medium
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit Profile",
+                            tint = Color.Black,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clickable { navController.navigate("edit-profile") }
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                    // Logout Button
-                    Button(
-                        onClick = { /* Handle logout */ },
+                    // Profile Picture
+                    Image(
+                        painter = painterResource(R.drawable.user),
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Username
+                    Text(
+                        text = userData?.username ?: "Guest",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Stats Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        StatColumn(
+                            value = bookCount.toString(),
+                            label = "Total Buku",
+                            onClick = { navController.navigate("book-list") }
+                        )
+                        StatColumn(
+                            value = readingListCount.toString(),
+                            label = "List Bacaan",
+                            onClick = { navController.navigate("shelves") }
+                        )
+                        StatColumn(
+                            value = friendCount.toString(),
+                            label = "Teman",
+                            onClick = { navController.navigate("friend-list") }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Profile Info Card
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange),
-                        shape = RoundedCornerShape(8.dp),
-                        border = ButtonDefaults.outlinedButtonBorder
+                            .padding(horizontal = 8.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.ExitToApp,
-                            contentDescription = "Logout Icon",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            modifier = Modifier.clickable {  },
-                            text = "Logout",
-                            color = Color.White,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            ProfileInfoRow("Username", userData?.username ?: "-")
+                            Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+                            // Nama lengkap sengaja dikosongkan
+                            ProfileInfoRow("Nama Lengkap", "-")
+                            Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+                            ProfileInfoRow("Email", userData?.email ?: "-")
+                            Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Change Password Button
+                            Button(
+                                onClick = { navController.navigate("change-password") },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                colors = ButtonDefaults.buttonColors(Color.Gray),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Key,
+                                    contentDescription = "Password Icon",
+                                    tint = Color.White
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Change Password", color = Color.White)
+                            }
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            // Logout Button
+                            Button(
+                                onClick = { viewModel.logout { navController.navigate("login") } },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp),
+                                colors = ButtonDefaults.buttonColors(PrimaryOrange)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ExitToApp,
+                                    contentDescription = "Logout Icon",
+                                    tint = Color.White
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Logout", color = Color.White)
+                            }
+                        }
                     }
                 }
             }
@@ -163,20 +212,18 @@ fun ProfileScreen(
 @Composable
 fun StatColumn(value: String, label: String, onClick: () -> Unit) {
     Column(
-        modifier = Modifier.clickable { onClick.invoke() },
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable(onClick = onClick)
     ) {
         Text(
             text = value,
-            style = TextStyle(
-                fontSize = 18.sp,
+            style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold
             )
         )
         Text(
             text = label,
-            style = TextStyle(
-                fontSize = 14.sp,
+            style = MaterialTheme.typography.bodySmall.copy(
                 color = Color.Gray
             )
         )
@@ -188,15 +235,13 @@ fun ProfileInfoRow(label: String, value: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = label,
-            style = TextStyle(
-                fontSize = 12.sp,
+            style = MaterialTheme.typography.labelSmall.copy(
                 color = Color.Gray
             )
         )
         Text(
             text = value,
-            style = TextStyle(
-                fontSize = 16.sp,
+            style = MaterialTheme.typography.bodyMedium.copy(
                 fontWeight = FontWeight.Medium
             )
         )
