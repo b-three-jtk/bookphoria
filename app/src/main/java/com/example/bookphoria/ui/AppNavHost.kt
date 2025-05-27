@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.bookphoria.ui.auth.ChangePasswordScreen
 import com.example.bookphoria.ui.auth.ForgotpassScreen
 import com.example.bookphoria.ui.auth.LoginScreen
 import com.example.bookphoria.ui.auth.RegisterScreen
@@ -196,6 +197,9 @@ fun AppNavHost(
             }
             composable("detail_shelf") {
                 ShelfDetailScreen(navController = navController)
+            }
+            composable("change") {
+                ChangePasswordScreen(viewModel = authViewModel, navController = navController)
             }
         }
     }

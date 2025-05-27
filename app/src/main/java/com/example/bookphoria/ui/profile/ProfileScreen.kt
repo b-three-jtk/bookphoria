@@ -167,7 +167,7 @@ fun ProfileScreen(
 
                             // Change Password Button
                             Button(
-                                onClick = { navController.navigate("change-password") },
+                                onClick = { navController.navigate("change") },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(48.dp),
@@ -180,7 +180,7 @@ fun ProfileScreen(
                                     tint = Color.White
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Change Password", color = Color.White)
+                                Text("Reset Password", color = Color.White)
                             }
 
                             Spacer(modifier = Modifier.height(10.dp))
@@ -191,7 +191,8 @@ fun ProfileScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(48.dp),
-                                colors = ButtonDefaults.buttonColors(PrimaryOrange)
+                                colors = ButtonDefaults.buttonColors(PrimaryOrange),
+                                shape = RoundedCornerShape(8.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.ExitToApp,
