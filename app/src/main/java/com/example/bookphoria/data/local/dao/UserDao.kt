@@ -9,8 +9,6 @@ import com.example.bookphoria.data.local.entities.BookWithAuthors
 import com.example.bookphoria.data.local.entities.UserEntity
 import com.example.bookphoria.data.local.entities.UserFriendCrossRef
 import com.example.bookphoria.data.local.entities.UserWithFriends
-import com.example.bookphoria.data.local.entities.UserWithBooks
-import retrofit2.http.GET
 
 @Dao
 interface UserDao {
