@@ -15,4 +15,11 @@ interface ShelfApiServices {
         @Part("desc") description: RequestBody?,
         @Part image: MultipartBody.Part?
     ): Response<JsonObject>
+
+    @POST("shelves/{shelf_id}/books")
+    suspend fun addBookToShelf(
+        @Header("Authorization") token: String,
+        @Path("shelf_id") shelfId: String,
+        @Body bookData: JsonObject
+    ): Response<JsonObject>
 }
