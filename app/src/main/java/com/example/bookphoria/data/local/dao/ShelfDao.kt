@@ -30,7 +30,4 @@ interface ShelfDao {
 
     @Delete
     suspend fun removeBookFromShelf(crossRef: ShelfBookCrossRef)
-
-    @Query("DELETE FROM shelfbookcrossref WHERE shelfId = :shelfId AND bookId = :bookId")
-    suspend fun removeBookFromShelf(shelfId: Int, bookId: Int)
 }
