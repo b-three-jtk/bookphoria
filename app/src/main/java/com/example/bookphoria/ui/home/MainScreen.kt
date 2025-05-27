@@ -95,7 +95,7 @@ fun MainScreen(navController: NavController, viewModel: HomeViewModel) {
                     )
                 }
                 composable("search-tab") { SearchScreen(navController = navController) }
-                composable("shelf-tab") { MyShelfScreen() }
+                composable("shelf-tab") { MyShelfScreen(navController = navController) }
                 composable("profile-tab") { ProfileScreen(navController = navController) }
             }
         }

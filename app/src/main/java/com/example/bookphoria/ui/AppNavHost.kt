@@ -27,6 +27,7 @@ import com.example.bookphoria.ui.book.SearchScreen
 import com.example.bookphoria.ui.book.YourBooksScreen
 import com.example.bookphoria.ui.home.MainScreen
 import com.example.bookphoria.ui.onboarding.OnboardingScreen
+import com.example.bookphoria.ui.profile.EditProfileScreen
 import com.example.bookphoria.ui.profile.FriendScreen
 import com.example.bookphoria.ui.profile.ProfileFriendScreen
 import com.example.bookphoria.ui.profile.ProfileScreen
@@ -37,6 +38,7 @@ import com.example.bookphoria.ui.viewmodel.EntryBookViewModel
 import com.example.bookphoria.ui.viewmodel.FriendViewModel
 import com.example.bookphoria.ui.viewmodel.HomeViewModel
 import com.example.bookphoria.ui.viewmodel.OnboardingViewModel
+import com.example.bookphoria.ui.viewmodel.ProfileViewModel
 
 @OptIn(ExperimentalGetImage::class)
 @Composable
@@ -50,6 +52,7 @@ fun AppNavHost(
     val bookViewModel: BookViewModel = hiltViewModel()
     val homeViewModel: HomeViewModel = hiltViewModel()
     val friendViewModel: FriendViewModel = hiltViewModel()
+    val profilViewModel: ProfileViewModel = hiltViewModel()
 
     val isOnboardingCompleteState = onboardingViewModel
         .isOnboardingComplete
@@ -122,6 +125,11 @@ fun AppNavHost(
                     viewModel = viewModel,
                     navController = navController
                 )
+            }
+
+            // edit profile
+            composable("edit-profile") {
+                EditProfileScreen(profilViewModel, navController)
             }
 
             composable("profile") {

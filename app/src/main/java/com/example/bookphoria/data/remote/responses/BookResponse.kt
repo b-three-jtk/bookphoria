@@ -24,7 +24,9 @@ data class BookNetworkModel(
 
 data class AddBookResponse(
     @SerializedName("message") val message: String,
-    @SerializedName("book") val book: BookNetworkModel
+    @SerializedName("book") val book: BookNetworkModel,
+    @SerializedName("authors") val authors: List<AuthorNetworkModel> = emptyList(),
+    @SerializedName("genres") val genres: List<GenreNetworkModel> = emptyList()
 )
 
 data class AddBookRequest(

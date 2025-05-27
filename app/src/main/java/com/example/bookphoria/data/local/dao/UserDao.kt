@@ -10,6 +10,7 @@ import com.example.bookphoria.data.local.entities.UserEntity
 import com.example.bookphoria.data.local.entities.UserFriendCrossRef
 import com.example.bookphoria.data.local.entities.UserWithFriends
 import com.example.bookphoria.data.local.entities.UserWithBooks
+import retrofit2.http.GET
 
 @Dao
 interface UserDao {
@@ -38,4 +39,6 @@ interface UserDao {
     )
     suspend fun getBooksWithAuthorsByUser(userId: Int): List<BookWithAuthors>
 
+    @Query("UPDATE users SET username = :username, firstName = :firstName, lastName = :lastName, email = :email, profilePicture = :imageUrl WHERE id = :userId")
+    suspend fun updateUser(userId: Int, username: String, firstName: String, lastName: String, email: String, imageUrl: String)
 }

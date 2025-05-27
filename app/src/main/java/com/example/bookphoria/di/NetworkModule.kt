@@ -44,7 +44,7 @@ object NetworkModule {
             .create()
 
         return Retrofit.Builder()
-            .baseUrl("https://c928-2001-448a-3044-892d-f040-b8a7-ddd9-a514.ngrok-free.app/api/")
+            .baseUrl("http://10.0.2.2:8000/api/")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
@@ -73,5 +73,4 @@ object NetworkModule {
     fun provideShelfApiService(retrofit: Retrofit): ShelfApiServices {
         return retrofit.create(ShelfApiServices::class.java)
     }
-
 }

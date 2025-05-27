@@ -1,5 +1,6 @@
 package com.example.bookphoria.data.repository
 
+import android.util.Log
 import com.example.bookphoria.data.local.dao.UserDao
 import com.example.bookphoria.data.local.entities.UserEntity
 import com.example.bookphoria.data.local.preferences.UserPreferences
@@ -94,7 +95,7 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun getUserNameById(userId: Int): String {
-        return userDao.getUserById(userId)?.username ?: "Reader"
+    suspend fun getUserById(userId: Int): UserEntity? {
+        return userDao.getUserById(userId)
     }
 }

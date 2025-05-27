@@ -58,6 +58,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
 import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.ui.theme.SoftCream
@@ -66,6 +67,7 @@ import com.example.bookphoria.ui.viewmodel.HomeViewModel
 @Composable
 fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
     val userName by viewModel.userName.collectAsState()
+    val avatar by viewModel.avatar.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize().background(SoftCream)) {
         Box(
@@ -91,8 +93,9 @@ fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
                         .align(Alignment.End)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.user),
+                        painter = rememberAsyncImagePainter(model = avatar.ifBlank { R.drawable.user }),
                         contentDescription = "Profile",
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(52.dp)
                             .clip(CircleShape)
