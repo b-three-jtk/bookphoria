@@ -291,6 +291,6 @@ class BookRepository @Inject constructor(
     }
 
     suspend fun getUserBooksCount(userId: Int): Int {
-        return getYourBooks(userId).first().size
+        return bookDao.getYourBooks(userId).first().size
     }
 }

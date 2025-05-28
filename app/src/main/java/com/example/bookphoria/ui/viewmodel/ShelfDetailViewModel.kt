@@ -46,7 +46,8 @@ class ShelfDetailViewModel @Inject constructor(
 
     suspend fun getBookById(bookId: Int): BookWithGenresAndAuthors? {
         return try {
-            bookDao.getBookById(bookId)
+            val bookStrId = bookDao.getBookServerIdById(bookId)
+            bookDao.getBookById(bookStrId)
         } catch (e: Exception) {
             Log.e("ShelfDetailVM", "Error getting book by id", e)
             null
@@ -56,7 +57,8 @@ class ShelfDetailViewModel @Inject constructor(
     suspend fun getReadingProgress(userId: Int, bookId: Int): Boolean {
         return try {
             val pagesRead = bookDao.getReadingProgress(userId, bookId) ?: 0
-            val bookWithDetails = bookDao.getBookById(bookId)
+            val bookStrId = bookDao.getBookServerIdById(bookId)
+            val bookWithDetails = bookDao.getBookById(bookStrId)
             val totalPages = bookWithDetails?.book?.pages ?: 0
 
             // Jika total pages 0 atau tidak ada, anggap belum selesai
@@ -73,7 +75,8 @@ class ShelfDetailViewModel @Inject constructor(
 
     suspend fun getBookAuthor(bookId: Int): String {
         return try {
-            val bookWithDetails = bookDao.getBookById(bookId)
+            val bookStrId = bookDao.getBookServerIdById(bookId)
+            val bookWithDetails = bookDao.getBookById(bookStrId)
             bookWithDetails?.authors?.joinToString(", ") ?: "Unknown Author"
         } catch (e: Exception) {
             Log.e("ShelfDetailVM", "Error getting book author", e)
