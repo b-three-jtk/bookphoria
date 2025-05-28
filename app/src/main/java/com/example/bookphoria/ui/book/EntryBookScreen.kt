@@ -8,6 +8,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -36,7 +37,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.ui.components.BookTextField
+import com.example.bookphoria.ui.helper.uriToFile
 import com.example.bookphoria.ui.theme.AppTypography
 import com.example.bookphoria.ui.theme.LightBlue
 import com.example.bookphoria.ui.theme.PrimaryOrange
@@ -57,8 +60,14 @@ fun EntryBookScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
 
-    val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { viewModel.coverUrl = uri.toString() }
+    val imageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            val file = uriToFile(context, it)
+            viewModel.coverFile = file
+            viewModel.coverUrl = uri.toString()
+        }
     }
 
     AnimatedVisibility(
@@ -105,14 +114,12 @@ fun EntryBookScreen(
                     .background(LightBlue)
                     .clickable { imageLauncher.launch("image/*") }
             ) {
-                if (viewModel.coverUrl != null) {
-                    AsyncImage(
-                        model = viewModel.coverUrl,
+                if (viewModel.coverFile != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(model = viewModel.coverUrl!!.ifBlank {  }),
                         contentDescription = "Book Cover",
                         modifier = Modifier.matchParentSize(),
                         contentScale = ContentScale.Crop,
-                        placeholder = painterResource(android.R.drawable.ic_menu_gallery),
-                        error = painterResource(android.R.drawable.ic_menu_gallery)
                     )
                 } else {
                     Box(

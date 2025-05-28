@@ -8,7 +8,8 @@ import androidx.room.Index
         Index(value = ["bookId"]),
         Index(value = ["authorId"])
     ])
+
 data class BookAuthorCrossRef(
     val bookId: Int,
-    val authorId: Int
+    val authorId: String
 )

@@ -2,10 +2,16 @@ package com.example.bookphoria.data.repository
 
 import android.util.Log
 import com.example.bookphoria.data.local.dao.UserDao
+import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.BookWithAuthors
 import com.example.bookphoria.data.local.entities.UserEntity
+import com.example.bookphoria.data.local.entities.UserWithBooks
+import com.example.bookphoria.data.local.entities.toBookEntity
+import com.example.bookphoria.data.remote.api.UserApiService
+import com.example.bookphoria.data.remote.responses.BookNetworkModel
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.AuthApiService
+import com.example.bookphoria.data.remote.api.FriendApiService
 import com.example.bookphoria.data.remote.responses.EditProfileResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -19,6 +25,7 @@ import javax.inject.Inject
 
 class UserRepository @Inject constructor (
     private val userDao: UserDao,
+    private val userApiService: FriendApiService,
     private val apiService: AuthApiService,
     private val userPreferences: UserPreferences
 ) {
@@ -58,6 +65,8 @@ class UserRepository @Inject constructor (
                 avatar = avatarPart
             )
 
+            Log.d("Raw API response", response.toString())
+
             if (response.isSuccessful && response.body() != null) {
                 val body = response.body()
                 if (response.isSuccessful && body != null) {
@@ -81,4 +90,9 @@ class UserRepository @Inject constructor (
         val userId = userPreferences.getUserId().first()
         return userId?.let { userDao.getUserById(it) }
     }
+
+    suspend fun getUserById(userId: Int): UserEntity? {
+        return userDao.getUserById(userId)
+    }
+
 }

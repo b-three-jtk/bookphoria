@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,6 +62,7 @@ import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
 import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
+import com.example.bookphoria.data.remote.responses.BookNetworkModel
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.viewmodel.HomeViewModel
 
@@ -137,7 +139,6 @@ fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchBarHome() {
@@ -204,11 +205,10 @@ fun SearchBarHome() {
 
 @Composable
 fun BookSection(
-    userBooks: List<BookWithGenresAndAuthors> = emptyList(),
     viewModel: HomeViewModel,
     navController: NavController
 ) {
-    val yourBooks by viewModel.yourBooks.collectAsState(initial = userBooks)
+    val yourBooks by viewModel.yourBooks.collectAsState()
     val yourCurrentlyReadingBooks by viewModel.currentlyReading.collectAsState()
 
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
@@ -235,19 +235,17 @@ fun BookSection(
                     .horizontalScroll(rememberScrollState())
             ) {
                     Row(
-                        modifier = Modifier.width(174.dp),
+                        modifier = Modifier.wrapContentWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         yourBooks.take(5).forEach { bookWithDetails ->
-                            val book = bookWithDetails.book
                             val authorNames = bookWithDetails.authors.joinToString(", ") { it.name }
-
                             BookItem(
-                                title = book.title,
+                                title = bookWithDetails.book.title,
                                 author = authorNames,
-                                imageUrl = book.imageUrl,
+                                imageUrl = bookWithDetails.book.imageUrl,
                                 onClick = {
-                                    navController.navigate("detail/${book.id}")
+                                    navController.navigate("detail/${bookWithDetails.book.id}")
                                 }
                             )
                         }
@@ -330,9 +328,10 @@ fun BookItem(
             .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val imageModel = if (imageUrl.isNullOrEmpty()) R.drawable.bookshelf else imageUrl
         if (imageUrl != "") {
             AsyncImage(
-                model = imageUrl ?: R.drawable.bookshelf,
+                model = imageModel,
                 contentDescription = title,
                 modifier = Modifier
                     .height(160.dp)

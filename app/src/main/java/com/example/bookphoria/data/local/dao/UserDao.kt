@@ -19,6 +19,9 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE id = :userId LIMIT 1")
     suspend fun getUserById(userId: Int): UserEntity?
 
+    @Query("SELECT * FROM users WHERE username = :username LIMIT 1")
+    suspend fun getUserByUsername(username: String): UserEntity?
+
     @Query("DELETE FROM users")
     suspend fun clearUsers()
 
@@ -31,12 +34,12 @@ interface UserDao {
 
     @Transaction
     @Query("""
-    SELECT * FROM books 
-    INNER JOIN userbookcrossref ON books.id = userbookcrossref.bookId 
-    WHERE userbookcrossref.userId = :userId"""
+        SELECT * FROM books 
+        INNER JOIN userbookcrossref ON books.id = userbookcrossref.bookId 
+        WHERE userbookcrossref.userId = :userId"""
     )
     suspend fun getBooksWithAuthorsByUser(userId: Int): List<BookWithAuthors>
 
     @Query("UPDATE users SET username = :username, firstName = :firstName, lastName = :lastName, email = :email, profilePicture = :imageUrl WHERE id = :userId")
-    suspend fun updateUser(userId: Int, username: String, firstName: String, lastName: String, email: String, imageUrl: String)
+    suspend fun updateUser(userId: Int, username: String?, firstName: String?, lastName: String?, email: String?, imageUrl: String?)
 }

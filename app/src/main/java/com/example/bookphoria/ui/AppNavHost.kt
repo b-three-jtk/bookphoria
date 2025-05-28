@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.bookphoria.ui.auth.ChangePasswordScreen
 import com.example.bookphoria.ui.auth.ForgotpassScreen
 import com.example.bookphoria.ui.auth.LoginScreen
 import com.example.bookphoria.ui.auth.RegisterScreen
@@ -40,6 +41,7 @@ import com.example.bookphoria.ui.viewmodel.FriendViewModel
 import com.example.bookphoria.ui.viewmodel.HomeViewModel
 import com.example.bookphoria.ui.viewmodel.OnboardingViewModel
 import com.example.bookphoria.ui.viewmodel.ProfileViewModel
+import com.example.bookphoria.ui.viewmodel.ShelfDetailViewModel
 
 @OptIn(ExperimentalGetImage::class)
 @Composable
@@ -194,8 +196,25 @@ fun AppNavHost(
             composable("your_books") {
                 YourBooksScreen(navController = navController)
             }
-            composable("detail_shelf") {
-                ShelfDetailScreen(navController = navController)
+            composable(
+                route = "detail_shelf/{userId}/{shelfId}",
+                arguments = listOf(
+                    navArgument("userId") { type = NavType.IntType },
+                    navArgument("shelfId") { type = NavType.IntType }
+                )
+            ) { backStackEntry ->
+                val userId = backStackEntry.arguments?.getInt("userId") ?: 0
+                val shelfId = backStackEntry.arguments?.getInt("shelfId") ?: 0
+                val viewModel: ShelfDetailViewModel = hiltViewModel()
+                ShelfDetailScreen(
+                    navController = navController,
+                    userId = userId,
+                    shelfId = shelfId,
+                    viewModel = viewModel
+                )
+            }
+            composable("change") {
+                ChangePasswordScreen(viewModel = authViewModel, navController = navController)
             }
         }
     }

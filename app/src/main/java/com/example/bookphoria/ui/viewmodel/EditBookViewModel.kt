@@ -5,20 +5,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.bookphoria.data.local.dao.BookDao
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bookphoria.data.local.entities.AuthorEntity
-import com.example.bookphoria.data.local.entities.BookAuthorCrossRef
-import com.example.bookphoria.data.local.entities.BookEntity
-import com.example.bookphoria.data.local.entities.BookGenreCrossRef
 import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.data.local.entities.GenreEntity
+import com.example.bookphoria.data.remote.requests.EditBookRequest
+import com.example.bookphoria.data.repository.BookRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class EditBookViewModel @Inject constructor(
-    private val bookDao: BookDao
+    val bookRepository: BookRepository
 ) : ViewModel() {
 
     var book by mutableStateOf<BookWithGenresAndAuthors?>(null)
@@ -30,9 +30,10 @@ class EditBookViewModel @Inject constructor(
     var allGenres by mutableStateOf<List<GenreEntity>>(emptyList())
         private set
 
-    var selectedAuthorIds by mutableStateOf<List<Int>>(emptyList())
-    var selectedGenreIds by mutableStateOf<List<Int>>(emptyList())
+    var selectedAuthorIds by mutableStateOf<List<String>>(emptyList())
+    var selectedGenreIds by mutableStateOf<List<String>>(emptyList())
 
+    var bookNetworkId by mutableStateOf("")
     var title by mutableStateOf("")
     var publisher by mutableStateOf("")
     var publishedDate by mutableStateOf("")
@@ -40,21 +41,15 @@ class EditBookViewModel @Inject constructor(
     var isbn by mutableStateOf("")
     var pages by mutableStateOf("")
     var imageUrl by mutableStateOf("")
+    var imageFile by mutableStateOf<File?>(null)
     var serverId by mutableStateOf("")
-
-    var isLoading by mutableStateOf(false)
 
     fun loadBook(bookId: Int) {
         viewModelScope.launch {
-            val bookEntity = bookDao.getBookById(bookId)
-            val authors = bookDao.getAllAuthors()
-            val genres = bookDao.getAllGenres()
-
-            book = bookEntity
-            allAuthors = authors
-            allGenres = genres
+            val bookEntity = bookRepository.getBookById(bookId)
 
             bookEntity?.let {
+                bookNetworkId = it.book.serverId
                 title = it.book.title
                 serverId = it.book.serverId
                 publisher = it.book.publisher
@@ -70,33 +65,23 @@ class EditBookViewModel @Inject constructor(
         }
     }
 
-    fun updateBook(bookId: Int, onSuccess: () -> Unit) {
+    fun updateBook(bookNetworkId: String, onSuccess: () -> Unit) {
         viewModelScope.launch {
-            val updated = BookEntity(
-                id = bookId,
-                serverId = serverId,
+            val request = EditBookRequest(
+                id = bookNetworkId,
                 title = title,
                 publisher = publisher,
                 publishedDate = publishedDate,
                 synopsis = synopsis,
                 isbn = isbn,
-                pages = pages.toIntOrNull() ?: 0,
-                imageUrl = imageUrl.ifBlank { null }
+                pages = pages.toInt(),
+                cover = imageFile,
+                authors = selectedAuthorIds.toList(),
+                genres = selectedGenreIds.toList(),
             )
-            bookDao.insertBook(updated)
-
-            // Hapus relasi lama
-            bookDao.deleteBookAuthorCrossRefs(bookId)
-            bookDao.deleteBookGenreCrossRefs(bookId)
-
-            // Tambah relasi baru
-            selectedAuthorIds.forEach {
-                bookDao.insertBookAuthorCrossRef(BookAuthorCrossRef(bookId, it))
-            }
-            selectedGenreIds.forEach {
-                bookDao.insertBookGenreCrossRef(BookGenreCrossRef(bookId, it))
-            }
-
+            bookRepository.updateBook(
+                request
+            )
             onSuccess()
         }
     }

@@ -1,6 +1,7 @@
 package com.example.bookphoria.ui.profile
 
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -52,6 +53,7 @@ fun EditProfileScreen(
 
     LaunchedEffect(Unit) {
         viewModel.getProfile(
+            username,
             onSuccess = { user ->
                 username = user.username ?: ""
                 firstName = user.firstName ?: ""
@@ -63,6 +65,7 @@ fun EditProfileScreen(
                 Toast.makeText(context, "Gagal mengambil data profil", Toast.LENGTH_SHORT).show()
             }
         )
+        Log.d("Edit Profile", "Avatar URL: $avatarUrl")
     }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(

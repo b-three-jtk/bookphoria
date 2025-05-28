@@ -1,15 +1,24 @@
 package com.example.bookphoria.ui.book
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,27 +29,54 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.bookphoria.R
+import com.example.bookphoria.data.local.entities.BookEntity
+import com.example.bookphoria.data.local.entities.ShelfEntity
 import com.example.bookphoria.ui.theme.SoftCream
+import com.example.bookphoria.ui.viewmodel.ShelfDetailViewModel
+import com.example.bookphoria.ui.viewmodel.ShelfDetailViewModelFactory
 
 @Composable
-fun ShelfDetailScreen() {
+fun ShelfDetailScreen(
+    navController: NavController,
+    userId: Int,
+    shelfId: Int,
+    viewModel: ShelfDetailViewModel = hiltViewModel()
+    ) {
+
+    val shelfWithBooks by viewModel.shelfWithBooks.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadShelfWithBooks(userId, shelfId)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(SoftCream)
     ) {
-        // Title and Book Count
-        ShelfHeader()
-
-        // Book Collection
-        BookCollection()
+        shelfWithBooks?.let { shelf ->
+            ShelfHeader(shelf = shelf.shelf, bookCount = shelf.books.size)
+            BookCollection(books = shelf.books, userId = userId, viewModel = viewModel)
+        } ?: run {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .wrapContentSize(Alignment.Center)
+            ) {
+                CircularProgressIndicator()
+            }
+        }
     }
 }
 
 
 @Composable
-fun ShelfHeader() {
+fun ShelfHeader(shelf: ShelfEntity, bookCount: Int) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -48,7 +84,6 @@ fun ShelfHeader() {
     ) {
         Spacer(modifier = Modifier.height(50.dp))
 
-        // Books Collection Card
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -67,13 +102,18 @@ fun ShelfHeader() {
                         .background(Color.LightGray)
                         .align(Alignment.CenterHorizontally)
                 ) {
-                    // This would be your shelf image
-                    Image(
+                    shelf.imagePath?.let { imagePath ->
+                        AsyncImage(
+                            model = imagePath,
+                            contentDescription = "Shelf Image",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(150.dp)
+                        )
+                    } ?: Image(
                         painter = painterResource(id = R.drawable.sample_koleksi),
                         contentDescription = "Shelf Image",
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(150.dp)
+                        modifier = Modifier.size(150.dp)
                     )
                 }
 
@@ -82,8 +122,7 @@ fun ShelfHeader() {
                 // Book count
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .align(Alignment.Start)
+                    modifier = Modifier.align(Alignment.Start)
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Add,
@@ -93,7 +132,7 @@ fun ShelfHeader() {
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "3 Books",
+                        text = "$bookCount Books",
                         color = Color.Gray,
                         fontSize = 14.sp
                     )
@@ -103,7 +142,7 @@ fun ShelfHeader() {
 
                 // Shelf title
                 Text(
-                    text = "Books to make you smile",
+                    text = shelf.name,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
                     modifier = Modifier.align(Alignment.Start)
@@ -112,57 +151,75 @@ fun ShelfHeader() {
                 Spacer(modifier = Modifier.height(4.dp))
 
                 // Shelf description
-                Text(
-                    text = "Enjoy a delightful journey through laughter, love, and positivity!",
-                    fontSize = 14.sp,
-                    color = Color.DarkGray,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
+                shelf.description?.let {
+                    Text(
+                        text = it,
+                        fontSize = 14.sp,
+                        color = Color.DarkGray,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun BookCollection() {
-    Column(
+fun BookCollection(
+    books: List<BookEntity>,
+    userId: Int,
+    viewModel: ShelfDetailViewModel
+) {
+    if (books.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .wrapContentSize(Alignment.Center)
+        ) {
+            Text(
+                text = "No books in this shelf",
+                fontSize = 16.sp,
+                color = Color.Gray
+            )
+        }
+        return
+    }
+
+    LazyColumn(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Book 1: Tentang Kamu
-        BookItem(
-            coverResId = android.R.drawable.ic_menu_gallery,
-            title = "Tentang Kamu",
-            author = "Tere Liye",
-            isFinished = true
-        )
+        items(books, key = { it.id }) { book ->
+            var authorName by remember { mutableStateOf("Unknown Author") }
+            var isFinished by remember(book.id) { mutableStateOf(false) }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            LaunchedEffect(book.id) {
+                try {
+                    val bookId = book.id
+                    authorName = viewModel.getBookAuthor(bookId)
+                    isFinished = viewModel.getReadingProgress(userId, bookId)
+                } catch (e: Exception) {
+                    authorName = "Unknown Author"
+                    isFinished = false
+                    Log.e("BookCollection", "Error loading book details: ${e.message}")
+                }
+            }
 
-        // Book 2: The Little Prince
-        BookItem(
-            coverResId = android.R.drawable.ic_menu_gallery,
-            title = "The Little Prince",
-            author = "Antoine de Saint-Exupéry",
-            isFinished = false
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Book 2: The Little Prince
-        BookItem(
-            coverResId = android.R.drawable.ic_menu_gallery,
-            title = "The Little Prince",
-            author = "Antoine de Saint-Exupéry",
-            isFinished = false
-        )
+            BookItem(
+                coverUrl = book.imageUrl,
+                title = book.title,
+                author = authorName,
+                isFinished = isFinished
+            )
+        }
     }
 }
 
 @Composable
 fun BookItem(
-    coverResId: Int,
+    coverUrl: String?,
     title: String,
     author: String,
     isFinished: Boolean
@@ -174,11 +231,9 @@ fun BookItem(
         border = BorderStroke(1.dp, color = Color.Gray),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
-
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Spacer(modifier = Modifier.width(50.dp))
@@ -188,8 +243,15 @@ fun BookItem(
                 modifier = Modifier.size(80.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
-                Image(
-                    painter = painterResource(id = coverResId),
+                coverUrl?.let {
+                    AsyncImage(
+                        model = coverUrl,
+                        contentDescription = "Book Cover",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } ?: Image(
+                    painter = painterResource(id = android.R.drawable.ic_menu_gallery),
                     contentDescription = "Book Cover",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
@@ -231,8 +293,8 @@ fun BookItem(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun ShelfDetailScreenPreview() {
-    ShelfDetailScreen()
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun ShelfDetailScreenPreview() {
+//    ShelfDetailScreen()
+//}

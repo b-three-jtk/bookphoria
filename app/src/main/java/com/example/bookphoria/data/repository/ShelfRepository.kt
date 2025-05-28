@@ -238,7 +238,9 @@ class ShelfRepository @Inject constructor(
                 ?.getAsJsonObject("data")
                 ?.get("id")
                 ?.asString
+
             val userId = userPreferences.getUserId().first() ?: throw IllegalStateException("User ID is null")
+
             database.ShelfDao().insert(
                 ShelfEntity(
                     userId = userId,
@@ -279,7 +281,12 @@ class ShelfRepository @Inject constructor(
             }
         }
     }
-    fun getShelvesWithBooks(userId: Int): Flow<List<ShelfWithBooks>> {
-        return database.ShelfDao().getShelvesWithBooks(userId)
+
+    fun getShelvesWithBooks(userId: Int, shelfId: Int): Flow<ShelfWithBooks?> {
+        return database.ShelfDao().getShelvesWithBooks(userId, shelfId)
+    }
+
+    fun getAllShelvesWithBooks(userId: Int): Flow<List<ShelfWithBooks>> {
+        return database.ShelfDao().getAllShelvesWithBooks(userId)
     }
 }

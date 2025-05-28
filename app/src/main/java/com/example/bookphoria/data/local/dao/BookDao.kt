@@ -14,14 +14,13 @@ import com.example.bookphoria.data.local.entities.FullBookDataWithUserInfo
 import com.example.bookphoria.data.local.entities.GenreEntity
 import com.example.bookphoria.data.local.entities.UserBookCrossRef
 import com.example.bookphoria.data.local.entities.UserWithBooks
-import com.google.android.gms.common.api.Status
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BookDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertBook(book: BookEntity)
+    suspend fun insertBook(book: BookEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAuthor(author: AuthorEntity): Long
@@ -35,17 +34,11 @@ interface BookDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBookGenreCrossRef(crossRef: BookGenreCrossRef)
 
-    @Query("SELECT * FROM books WHERE id = :bookId LIMIT 1")
-    suspend fun getBookById(bookId: Int): BookWithGenresAndAuthors?
+    @Query("SELECT * FROM books WHERE serverId = :bookId LIMIT 1")
+    suspend fun getBookById(bookId: String): BookWithGenresAndAuthors?
 
-//    @Query("SELECT * FROM books")
-//    suspend fun getAllBooks(): List<BookEntity>
-//
-//    @Query("SELECT * FROM books WHERE title LIKE '%' || :query || '%' OR isbn LIKE '%' || :query || '%'")
-//    suspend fun searchBooksByTitleOrIsbn(query: String): List<BookEntity>
-//
-//    @Query("SELECT * FROM books WHERE isbn  LIKE '%' || :query || '%'")
-//    suspend fun searchBooksByIsbn(query: String): List<BookEntity>
+    @Query("SELECT * FROM books WHERE serverId = :bookId LIMIT 1")
+    suspend fun getBookByNetworkId(bookId: String): BookEntity
 
     @Transaction
     @Query("SELECT * FROM users WHERE id = :userId")
@@ -55,11 +48,14 @@ interface BookDao {
     @Query("SELECT * FROM users WHERE id = :userId")
     fun getUserWithBooksStream(userId: Int): Flow<UserWithBooks>
 
-    @Query("SELECT id FROM authors WHERE name = :name LIMIT 1")
-    suspend fun getAuthorIdByName(name: String): Int?
+    @Query("SELECT id FROM authors WHERE id = :id LIMIT 1")
+    suspend fun getAuthorId(id: String): String?
 
-    @Query("SELECT id FROM genres WHERE name = :name LIMIT 1")
-    suspend fun getGenreIdByName(name: String): Int?
+    @Query("SELECT id FROM genres WHERE id = :id LIMIT 1")
+    suspend fun getGenreId(id: String): String?
+
+    @Query("SELECT * FROM UserBookCrossRef WHERE bookId = :bookId AND userId = :userId LIMIT 1")
+    suspend fun getUserBookCrossRef(userId: Int, bookId: Int): UserBookCrossRef
 
     @Query("DELETE FROM UserBookCrossRef WHERE userId = :userId AND bookId = :bookId")
     suspend fun deleteUserBook(userId: Int, bookId: Int)
@@ -70,14 +66,11 @@ interface BookDao {
     @Query("SELECT id FROM books WHERE isbn = :isbn LIMIT 1")
     suspend fun getBookIdByIsbn(isbn: String): Int
 
-    @Query("SELECT * FROM books WHERE id IN (:ids)")
-    suspend fun getBooksByIds(ids: List<Int>): List<BookWithGenresAndAuthors>
+    @Query("SELECT id FROM books WHERE serverId = :bookId LIMIT 1")
+    suspend fun getBookIdByServerId(bookId: String): Int
 
-    @Query("SELECT * FROM authors")
-    suspend fun getAllAuthors(): List<AuthorEntity>
-
-    @Query("SELECT * FROM genres")
-    suspend fun getAllGenres(): List<GenreEntity>
+    @Query("SELECT serverId FROM books WHERE id = :bookId LIMIT 1")
+    suspend fun getBookServerIdById(bookId: Int): String
 
     @Query("DELETE FROM BookAuthorCrossRef WHERE bookId = :bookId")
     suspend fun deleteBookAuthorCrossRefs(bookId: Int)
@@ -90,7 +83,7 @@ interface BookDao {
 
     @Transaction
     @Query("SELECT * FROM books WHERE id IN ( SELECT bookId FROM userbookcrossref WHERE userId = :userId )")
-    fun getYourBooks(userId: Int): Flow<List<BookWithGenresAndAuthors>>
+    fun getYourBooks(userId: Int): Flow<List<FullBookDataWithUserInfo>>
 
     @Transaction
     @Query("SELECT * FROM books WHERE id IN ( SELECT bookId FROM userbookcrossref WHERE userId = :userId AND status = :status )")

@@ -21,16 +21,6 @@ class BookSearchPagingSource(
             val response = apiService.getBooksByQuery("Bearer $token", query, pageSize, page)
             val books = response.data
 
-            // Simpan setiap buku ke database lokal
-            books.forEach { book ->
-                try {
-                    bookRepository.insertBook(book)
-                    Log.d("Paging","Book saved to local: ${book.title}")
-                } catch (e: Exception) {
-                    Log.e("Paging","Failed to save book ${book.title} to local database")
-                }
-            }
-
             LoadResult.Page(
                 data = books,
                 prevKey = if (page == 1) null else page - 1,

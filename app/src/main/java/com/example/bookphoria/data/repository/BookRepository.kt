@@ -1,7 +1,5 @@
 package com.example.bookphoria.data.repository
 
-import android.content.Context
-import android.net.Uri
 import android.util.Log
 import java.util.Locale
 import androidx.paging.Pager
@@ -15,20 +13,20 @@ import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.data.local.entities.FullBookDataWithUserInfo
 import com.example.bookphoria.data.local.entities.GenreEntity
 import com.example.bookphoria.data.local.entities.UserBookCrossRef
-import com.example.bookphoria.data.local.entities.toBookEntity
+import com.example.bookphoria.data.local.entities.toBookWithGenresAndAuthors
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.BookApiService
 import com.example.bookphoria.data.remote.pagingsources.BookSearchPagingSource
-import com.example.bookphoria.data.remote.responses.AddBookRequest
+import com.example.bookphoria.data.remote.requests.AddBookRequest
+import com.example.bookphoria.data.remote.requests.EditBookRequest
 import com.example.bookphoria.data.remote.responses.BookNetworkModel
+import com.example.bookphoria.data.remote.responses.toFullBookData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import java.io.File
-import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import javax.inject.Inject
 
@@ -37,48 +35,7 @@ class BookRepository @Inject constructor(
     private val apiService: BookApiService,
     private val userPreferences: UserPreferences
 ) {
-    suspend fun insertBook(
-        bookNetworkModel: BookNetworkModel
-    ): Int {
-        Log.d("BookRepository", "Book added: ${bookNetworkModel.title}")
-        val bookEntity = bookNetworkModel.toBookEntity()
-
-        try {
-            bookDao.insertBook(bookEntity)
-        } catch (e: Exception) {
-            Log.d("BookRepository", "Book failed: $e")
-            throw Exception("Terjadi kesalahan saat menambahkan buku: ${e.message}")
-        }
-        val localBookId = bookDao.getBookIdByIsbn(bookEntity.isbn)
-
-        bookNetworkModel.authors.forEach { authorNetwork ->
-            val existingId = bookDao.getAuthorIdByName(authorNetwork.name)
-            val authorId = existingId ?: bookDao.insertAuthor(
-                AuthorEntity(name = authorNetwork.name, desc = "")
-            ).toInt()
-
-            bookDao.insertBookAuthorCrossRef(
-                BookAuthorCrossRef(bookId = localBookId, authorId = authorId)
-            )
-        }
-
-        // Insert genres
-        bookNetworkModel.genres.forEach { genreNetwork ->
-            val existingId = bookDao.getGenreIdByName(genreNetwork.name)
-            val genreId = existingId ?: bookDao.insertGenre(
-                GenreEntity(name = genreNetwork.name)
-            ).toInt()
-
-            bookDao.insertBookGenreCrossRef(
-                BookGenreCrossRef(bookId = localBookId, genreId = genreId)
-            )
-        }
-
-        return localBookId
-    }
-
-
-    suspend fun addBookFromApi(request: AddBookRequest, context: Context): Int {
+    suspend fun addBookFromApi(request: AddBookRequest): Int {
         val accessToken = userPreferences.getAccessToken().first()
         Log.d("BookRepository", "Token: $accessToken")
 
@@ -99,16 +56,12 @@ class BookRepository @Inject constructor(
 
             val userStartDate = request.userStartDate?.let { dateFormat.format(it) }
             val userFinishDate = request.userFinishDate?.let { dateFormat.format(it) }
-            val authors = request.authors.map { it.toRequestBody("text/plain".toMediaTypeOrNull()) }
-            val genres = request.genres.map { it.toRequestBody("text/plain".toMediaTypeOrNull()) }
+            val authors = request.authors?.map { it.toRequestBody("text/plain".toMediaTypeOrNull()) } ?: emptyList()
+            val genres = request.genres?.map { it.toRequestBody("text/plain".toMediaTypeOrNull()) } ?: emptyList()
 
-            val coverPart: MultipartBody.Part? = if (request.cover?.isNotEmpty() == true) {
-                val uri = Uri.parse(request.cover)
-                val file = uri.toFile(context) // Convert Uri to File
-                val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
-                MultipartBody.Part.createFormData("cover", file.name, requestFile)
-            } else {
-                null
+            val coverPart = request.cover?.let {
+                val requestFile = it.asRequestBody("image/*".toMediaTypeOrNull())
+                MultipartBody.Part.createFormData("cover", it.name, requestFile)
             }
 
             val response = apiService.addBook(
@@ -131,8 +84,39 @@ class BookRepository @Inject constructor(
             Log.d("Raw API response", response.toString())
 
             if (response.message == "Book added successfully") {
-                val bookNetworkModel = response.book
-                val localBookId = insertBook(bookNetworkModel)
+                val bookEntity = response.toBookWithGenresAndAuthors()
+
+                Log.d("BookRepository", "Book: $bookEntity")
+
+                try {
+                    bookDao.insertBook(bookEntity.book)
+                } catch (e: Exception) {
+                    Log.d("BookRepository", "Book failed: $e")
+                    throw Exception("Terjadi kesalahan saat menambahkan buku: ${e.message}")
+                }
+                val localBookId = bookDao.getBookIdByIsbn(bookEntity.book.isbn)
+
+                response.authors.forEach { authorNetwork ->
+                    val existingId = bookDao.getAuthorId(authorNetwork.id)
+                    val authorId = existingId ?: bookDao.insertAuthor(
+                        AuthorEntity(id = authorNetwork.id, name = authorNetwork.name, desc = "")
+                    ).toString()
+
+                    bookDao.insertBookAuthorCrossRef(
+                        BookAuthorCrossRef(bookId = localBookId, authorId = authorId)
+                    )
+                }
+
+                response.genres.forEach { genreNetwork ->
+                    val existingId = bookDao.getGenreId(genreNetwork.id)
+                    val genreId = existingId ?: bookDao.insertGenre(
+                        GenreEntity(id = genreNetwork.id, name = genreNetwork.name)
+                    ).toString()
+
+                    bookDao.insertBookGenreCrossRef(
+                        BookGenreCrossRef(bookId = localBookId, genreId = genreId)
+                    )
+                }
                 addToUserBooks(localBookId)
                 return localBookId
             } else {
@@ -141,22 +125,10 @@ class BookRepository @Inject constructor(
         } catch (e: Exception) {
             Log.d("BookRepository", "Book failed: $e")
             throw Exception("Terjadi kesalahan saat menambahkan buku: ${e.message}")
-
         }
     }
 
-    // Helper function to convert Uri to File
-    private fun Uri.toFile(context: Context): File {
-        val file = File(context.cacheDir, "cover_${System.currentTimeMillis()}.jpg")
-        context.contentResolver.openInputStream(this)?.use { input ->
-            FileOutputStream(file).use { output ->
-                input.copyTo(output)
-            }
-        }
-        return file
-    }
-
-    private suspend fun addToUserBooks(bookId: Int, status: String = "Belum dibaca") {
+    private suspend fun addToUserBooks(bookId: Int, status: String = "owned") {
         val userId = userPreferences.getUserId().first()
 
         val userBook = userId?.let {
@@ -175,19 +147,123 @@ class BookRepository @Inject constructor(
         }
     }
 
+    suspend fun updateBook(updated: EditBookRequest) {
+        try {
+            val title = updated.title.toRequestBody("text/plain".toMediaTypeOrNull())
+            val publisher = updated.publisher?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val publishedDate =
+                updated.publishedDate.toRequestBody("text/plain".toMediaTypeOrNull())
+            val synopsis = updated.synopsis.toRequestBody("text/plain".toMediaTypeOrNull())
+            val isbn = updated.isbn.toRequestBody("text/plain".toMediaTypeOrNull())
+            val pages = updated.pages.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+            val authors = updated.authors.map { it.toRequestBody("text/plain".toMediaTypeOrNull()) }
+            val genres = updated.genres.map { it.toRequestBody("text/plain".toMediaTypeOrNull()) }
+
+            val coverPart = updated.cover?.let {
+                val requestFile = it.asRequestBody("image/*".toMediaTypeOrNull())
+                MultipartBody.Part.createFormData("cover", it.name, requestFile)
+            }
+
+            val response = apiService.editBook(
+                token = "Bearer ${userPreferences.getAccessToken().first()}",
+                id = updated.id,
+                title = title,
+                publisher = publisher,
+                publishedDate = publishedDate,
+                synopsis = synopsis,
+                isbn = isbn,
+                pages = pages,
+                authors = authors,
+                genres = genres,
+                cover = coverPart
+            )
+
+            Log.d("Raw API response", response.toString())
+
+            if (response.message == "Book updated successfully") {
+                val localBook = bookDao.getBookByNetworkId(updated.id)
+                bookDao.updateBook(localBook)
+
+                bookDao.deleteBookAuthorCrossRefs(localBook.id)
+                bookDao.deleteBookGenreCrossRefs(localBook.id)
+
+                updated.authors.forEach {
+                    bookDao.insertBookAuthorCrossRef(BookAuthorCrossRef(localBook.id, it))
+                }
+                updated.genres.forEach {
+                    bookDao.insertBookGenreCrossRef(BookGenreCrossRef(localBook.id, it))
+                }
+            } else {
+                throw Exception("Gagal memperbarui buku: ${response.message}")
+            }
+        } catch (e: Exception) {
+            throw Exception("Terjadi kesalahan saat memperbarui buku: ${e.message}")
+        }
+    }
+
+    suspend fun saveBooksToLocal(books: List<FullBookDataWithUserInfo>) {
+        try {
+            books.forEach { bookWithRelations ->
+                val bookEntity = bookWithRelations.book
+
+                bookDao.insertBook(bookEntity)
+
+                bookWithRelations.authors.forEach { author ->
+                    val existingAuthorId = bookDao.getAuthorId(author.id)
+                    val authorId = existingAuthorId ?: bookDao.insertAuthor(
+                        AuthorEntity(id = author.id, name = author.name, desc = author.desc)
+                    ).toString()
+
+                    bookDao.insertBookAuthorCrossRef(
+                        BookAuthorCrossRef(bookId = bookEntity.id, authorId = authorId)
+                    )
+                }
+
+                bookWithRelations.genres.forEach { genre ->
+                    val existingGenreId = bookDao.getGenreId(genre.id)
+                    val genreId = existingGenreId ?: bookDao.insertGenre(
+                        GenreEntity(id = genre.id, name = genre.name)
+                    ).toString()
+
+                    bookDao.insertBookGenreCrossRef(
+                        BookGenreCrossRef(bookId = bookEntity.id, genreId = genreId)
+                    )
+                }
+
+                addToUserBooks(bookEntity.id)
+            }
+        } catch (e: Exception) {
+            Log.d("BookRepository", "Book failed: $e")
+            throw Exception("Terjadi kesalahan saat menambahkan buku: ${e.message}")
+        }
+    }
+
     suspend fun getBookById(bookId: Int): BookWithGenresAndAuthors? {
-        return bookDao.getBookById(bookId)
+        val book = bookDao.getBookServerIdById(bookId)
+        return bookDao.getBookById(book)
     }
 
-    fun getYourBooks(
-        userId: Int
-    ): Flow<List<BookWithGenresAndAuthors>> {
-        return bookDao.getYourBooks(
-            userId
-        )
+    suspend fun getYourBooksRemote(userId: Int): List<FullBookDataWithUserInfo> {
+        val accessToken = userPreferences.getAccessToken().first()
+            ?: throw Exception("Access token not available")
+
+        val response = apiService.getYourBooks("Bearer $accessToken")
+        val books = response.data
+
+        return books.map { book ->
+            val bookId = bookDao.getBookIdByServerId(book.id)
+            addToUserBooks(bookId, "owned")
+            val localUserBook = bookDao.getUserBookCrossRef(userId, bookId)
+
+            book.toFullBookData(userId, localUserBook.bookId)
+        }
     }
 
-    fun getYourCurrentlyReadingBooks(
+    fun getYourBooksLocal(userId: Int): Flow<List<FullBookDataWithUserInfo>> {
+        return bookDao.getYourBooks(userId)
+    }
+
+    fun getCurrentlyReadingLocal(
         userId: Int,
         status: String
     ): Flow<List<FullBookDataWithUserInfo>> {
@@ -212,5 +288,9 @@ class BookRepository @Inject constructor(
 
     suspend fun getReadingProgress(userId: Int, bookId: Int): Int? {
         return bookDao.getReadingProgress(userId, bookId)
+    }
+
+    suspend fun getUserBooksCount(userId: Int): Int {
+        return bookDao.getYourBooks(userId).first().size
     }
 }

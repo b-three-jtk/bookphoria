@@ -9,11 +9,12 @@ import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.repository.AuthRepository
 import com.example.bookphoria.data.repository.BookRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -25,50 +26,74 @@ class HomeViewModel @Inject constructor(
 
     private val _currentlyReading = MutableStateFlow<List<FullBookDataWithUserInfo>>(emptyList())
     val currentlyReading: StateFlow<List<FullBookDataWithUserInfo>> = _currentlyReading
-    private val _yourBooks = MutableStateFlow<List<BookWithGenresAndAuthors>>(emptyList())
-    val yourBooks: StateFlow<List<BookWithGenresAndAuthors>> = _yourBooks
+
+    private val _yourBooks = MutableStateFlow<List<FullBookDataWithUserInfo>>(emptyList())
+    val yourBooks: StateFlow<List<FullBookDataWithUserInfo>> = _yourBooks
 
     private val _userName = MutableStateFlow("...")
     val userName: StateFlow<String> = _userName
+
     private val _avatar = MutableStateFlow("...")
     val avatar: StateFlow<String> = _avatar
 
+    private val _isLoading = MutableStateFlow(false)
+
     init {
-        loadUserData()
+        loadInitialData()
     }
 
-    private fun loadUserData() {
+    private fun loadInitialData() {
         viewModelScope.launch {
-            userPreferences.getUserId().collect { userId ->
-                if (userId != null) {
-                    val user = userRepository.getUserById(userId)
-                    val name = if (!user?.firstName.isNullOrBlank()) user?.firstName else user?.username
-                    if (name != null) {
-                        _userName.value = name
-                    }
-                    if (user != null) {
-                        _avatar.value = user.profilePicture ?: ""
-                    }
-
-                    launch {
-                        repository.getYourCurrentlyReadingBooks(userId, "reading").collect { book ->
-                            Log.d("HomeViewModel", "Currently Reading: ${book.size} books")
-                            _currentlyReading.value = book
-                        }
-                    }
-
-                    launch {
-                        repository.getYourBooks(userId).collect { book ->
-                            Log.d("HomeViewModel", "Your Books: ${book.size} books")
-                            _yourBooks.value = book
-                        }
-                    }
-
-                } else {
-                    Log.w("HomeViewModel", "User ID is null")
-                }
+            _isLoading.value = true
+            try {
+                loadUserProfile()
+                loadBooks()
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Error loading data", e)
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
+    private suspend fun loadUserProfile() {
+        val userName = userPreferences.getUserName().first()
+        val userId = userPreferences.getUserId().first()
+
+        if (userName != null && userId != null) {
+            val user = withContext(Dispatchers.IO) {
+                userRepository.getUserByUsername(userName)
+            }
+
+            _userName.value = user?.firstName ?: user?.username ?: ""
+            _avatar.value = user?.profilePicture ?: ""
+        }
+    }
+
+    private suspend fun loadBooks() {
+        val userId = userPreferences.getUserId().first() ?: return
+
+        val remoteBooks = withContext(Dispatchers.IO) {
+            repository.getYourBooksRemote(userId)
+        }
+
+        Log.d("HomeViewModel", "Remote Books: $remoteBooks")
+
+        withContext(Dispatchers.IO) {
+            repository.saveBooksToLocal(remoteBooks)
+        }
+
+        viewModelScope.launch {
+            repository.getYourBooksLocal(userId).collect { books ->
+                _yourBooks.value = books
+                Log.d("HomeViewModel", "Your Books: $books")
+            }
+        }
+
+        viewModelScope.launch {
+            repository.getCurrentlyReadingLocal(userId, "reading").collect { books ->
+                _currentlyReading.value = books
+            }
+        }
+    }
 }

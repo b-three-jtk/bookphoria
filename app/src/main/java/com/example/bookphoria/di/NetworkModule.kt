@@ -73,4 +73,5 @@ object NetworkModule {
     fun provideShelfApiService(retrofit: Retrofit): ShelfApiServices {
         return retrofit.create(ShelfApiServices::class.java)
     }
+
 }
