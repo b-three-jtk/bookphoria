@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.bookphoria.data.local.dao.UserDao
 import com.example.bookphoria.data.local.entities.FriendWithUsers
 import com.example.bookphoria.data.local.entities.UserEntity
+import com.example.bookphoria.data.local.entities.UserWithFriends
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.FriendApiService
 import com.example.bookphoria.data.remote.requests.FriendRequest
@@ -12,7 +13,8 @@ import javax.inject.Inject
 
 class FriendRepository @Inject constructor(
     private val apiService: FriendApiService,
-    private val userPreferences: UserPreferences
+    private val userPreferences: UserPreferences,
+    private val userDao: UserDao
 ) {
     suspend fun sendFriendRequest(req: FriendRequest): Boolean {
         val accessToken = userPreferences.getAccessToken().first()
@@ -151,5 +153,13 @@ class FriendRepository @Inject constructor(
         } else {
             throw Exception("Token tidak ditemukan. Mohon login ulang.")
         }
+    }
+
+    suspend fun getFriendsCount(userId: Int): Int {
+        return userDao.getUserWithFriends(userId).friends.size
+    }
+
+    suspend fun getUserWithFriends(userId: Int): UserWithFriends {
+        return userDao.getUserWithFriends(userId)
     }
 }

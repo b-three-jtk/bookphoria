@@ -40,6 +40,7 @@ class ShelfRepository @Inject constructor(
         private const val MAX_IMAGE_DIMENSION = 2048
     }
 
+
     suspend fun createShelf(
         name: String,
         desc: String?,
@@ -282,7 +283,11 @@ class ShelfRepository @Inject constructor(
         }
     }
 
-    fun getShelvesWithBooks(userId: Int): Flow<List<ShelfWithBooks>> {
-        return database.ShelfDao().getShelvesWithBooks(userId)
+    fun getShelvesWithBooks(userId: Int, shelfId: Int): Flow<ShelfWithBooks?> {
+        return database.ShelfDao().getShelvesWithBooks(userId, shelfId)
+    }
+
+    fun getAllShelvesWithBooks(userId: Int): Flow<List<ShelfWithBooks>> {
+        return database.ShelfDao().getAllShelvesWithBooks(userId)
     }
 }

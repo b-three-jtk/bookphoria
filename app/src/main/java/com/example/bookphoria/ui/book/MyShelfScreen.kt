@@ -55,14 +55,14 @@ fun MyShelfScreen(
     onCreateCollectionClick: () -> Unit = {}
 ) {
     var showCreateDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         viewModel.loadUserBooks()
     }
 
     val booksWithAuthors by viewModel.booksWithAuthors.collectAsState()
     val shelvesWithBooks by viewModel.shelvesWithBooks.collectAsState()
-    //Ini di pakai ketika friend ingin melihat shelf user lain
-    //val userWithShelves by viewModel.userWithShelves.collectAsState()
+    val currentUserId by viewModel.currentUserId.collectAsState()
 
     Column(
         modifier = Modifier
@@ -140,7 +140,7 @@ fun MyShelfScreen(
                         .fillMaxWidth()
                         .padding(bottom = 12.dp)
                         .clickable {
-                            navController.navigate("detail_shelf")
+                            navController.navigate("detail_shelf/${currentUserId}/${shelfWithBooks.shelf.id}")
                         },
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White)

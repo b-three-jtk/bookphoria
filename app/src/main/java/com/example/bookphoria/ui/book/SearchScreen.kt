@@ -152,7 +152,7 @@ fun BookSearchItem(
     imageUrl: String?,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
-    ) {
+) {
     Row(
         modifier = modifier
             .fillMaxWidth()

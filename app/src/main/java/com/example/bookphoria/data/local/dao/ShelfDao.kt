@@ -22,8 +22,12 @@ interface ShelfDao {
     suspend fun delete(shelf: ShelfEntity)
 
     @Transaction
-    @Query("SELECT * FROM shelves WHERE userId = :userId")
-    fun getShelvesWithBooks(userId: Int): Flow<List<ShelfWithBooks>>
+    @Query("""SELECT * FROM shelves WHERE userId = :userId AND id = :shelfId LIMIT 1""")
+    fun getShelvesWithBooks(userId: Int, shelfId: Int): Flow<ShelfWithBooks?>
+
+    @Transaction
+    @Query("""SELECT * FROM shelves WHERE userId = :userId ORDER BY createdAt DESC""")
+    fun getAllShelvesWithBooks(userId: Int): Flow<List<ShelfWithBooks>>
 
     @Insert
     suspend fun addBookToShelf(crossRef: ShelfBookCrossRef)

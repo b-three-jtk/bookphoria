@@ -2,10 +2,13 @@ package com.example.bookphoria.ui.book
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bookphoria.data.local.dao.BookDao
+import com.example.bookphoria.data.local.dao.ShelfDao
 import com.example.bookphoria.data.local.dao.UserDao
 import com.example.bookphoria.data.local.entities.BookWithAuthors
 import com.example.bookphoria.data.local.entities.ShelfWithBooks
 import com.example.bookphoria.data.local.preferences.UserPreferences
+import com.example.bookphoria.data.repository.AuthRepository
 import com.example.bookphoria.data.repository.ShelfRepository
 import com.example.bookphoria.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,11 +25,17 @@ class MyShelfViewModel @Inject constructor(
     private val userDao: UserDao,
     private val userRepository: UserRepository,
     private val shelfRepository: ShelfRepository,
-    private val userPreferences: UserPreferences
+    private val userPreferences: UserPreferences,
+    private val authRepository: AuthRepository,
+    private val shelfDao: ShelfDao,
+    private val bookDao: BookDao
 ) : ViewModel() {
 
     private val _booksWithAuthors = MutableStateFlow<List<BookWithAuthors>>(emptyList())
     val booksWithAuthors: StateFlow<List<BookWithAuthors>> = _booksWithAuthors
+
+    private val _currentUserId = MutableStateFlow<Int?>(null)
+    val currentUserId: StateFlow<Int?> = _currentUserId.asStateFlow()
 
     private val _userId = MutableStateFlow<Int?>(null)
 
@@ -37,8 +46,10 @@ class MyShelfViewModel @Inject constructor(
         viewModelScope.launch {
             val uid = userPreferences.getUserId().first()
             _userId.value = uid
+            val currentUid = authRepository.getCurrentUserId()
+            _currentUserId.value = currentUid
             uid?.let {
-                shelfRepository.getShelvesWithBooks(it).collect { shelves ->
+                shelfRepository.getAllShelvesWithBooks(it).collect { shelves ->
                     _shelvesWithBooks.value = shelves
                 }
             }

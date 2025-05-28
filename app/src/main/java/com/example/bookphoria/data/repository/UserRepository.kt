@@ -2,8 +2,13 @@ package com.example.bookphoria.data.repository
 
 import android.util.Log
 import com.example.bookphoria.data.local.dao.UserDao
+import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.BookWithAuthors
 import com.example.bookphoria.data.local.entities.UserEntity
+import com.example.bookphoria.data.local.entities.UserWithBooks
+import com.example.bookphoria.data.local.entities.toBookEntity
+import com.example.bookphoria.data.remote.api.UserApiService
+import com.example.bookphoria.data.remote.responses.BookNetworkModel
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.AuthApiService
 import com.example.bookphoria.data.remote.api.FriendApiService
@@ -80,4 +85,14 @@ class UserRepository @Inject constructor (
             emit(Result.failure(e))
         }
     }
+
+    suspend fun getProfile(): UserEntity? {
+        val userId = userPreferences.getUserId().first()
+        return userId?.let { userDao.getUserById(it) }
+    }
+
+    suspend fun getUserById(userId: Int): UserEntity? {
+        return userDao.getUserById(userId)
+    }
+
 }

@@ -29,4 +29,10 @@ interface ShelfApiServices {
         @Path("shelf_id") shelfId: String,
         @Path("book_id") bookId: String
     ): Response<JsonObject>
+
+    @DELETE("shelves/{shelf_id}")
+    suspend fun deleteShelf(
+        @Header("Authorization") token: String,
+        @Path("shelf_id") shelfId: String
+    ): Response<JsonObject>
 }
