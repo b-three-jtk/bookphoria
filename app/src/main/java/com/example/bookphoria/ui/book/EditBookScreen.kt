@@ -1,5 +1,6 @@
 package com.example.bookphoria.ui.book
 
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.bookphoria.ui.components.BookTextField
+import com.example.bookphoria.ui.helper.uriToFile
 import com.example.bookphoria.ui.theme.*
 import com.example.bookphoria.ui.viewmodel.EditBookViewModel
 import java.text.SimpleDateFormat
@@ -53,8 +55,14 @@ fun EditBookScreen(
 
     val datePickerState = rememberDatePickerState()
 
-    val imageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
-        it?.let { uri -> viewModel.imageUrl = uri.toString() }
+    val imageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            val file = uriToFile(context, it)
+            viewModel.imageFile = file
+            viewModel.imageUrl = uri.toString()
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -228,7 +236,7 @@ fun EditBookScreen(
                     text = { Text("Apakah kamu yakin ingin menyimpan perubahan?", style = AppTypography.bodyMedium) },
                     confirmButton = {
                         TextButton(onClick = {
-                            viewModel.updateBook(bookId) {
+                            viewModel.updateBook(viewModel.bookNetworkId) {
                                 Toast.makeText(context, "Buku berhasil diperbarui", Toast.LENGTH_SHORT).show()
                                 navController.navigate("detail/${bookId}") {
                                     popUpTo("edit_book/$bookId") { inclusive = true }

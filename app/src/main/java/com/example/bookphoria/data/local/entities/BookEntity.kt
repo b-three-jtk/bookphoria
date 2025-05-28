@@ -5,6 +5,8 @@ import androidx.room.Entity
 import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
+import com.example.bookphoria.data.remote.responses.AddBookNetworkModel
+import com.example.bookphoria.data.remote.responses.AddBookResponse
 import com.example.bookphoria.data.remote.responses.BookNetworkModel
 
 @Entity(tableName = "books")
@@ -29,6 +31,21 @@ fun BookNetworkModel.toBookEntity(): BookEntity = BookEntity(
     isbn = this.isbn,
     pages = this.pages,
     imageUrl = this.cover
+)
+
+fun AddBookResponse.toBookWithGenresAndAuthors(): BookWithGenresAndAuthors = BookWithGenresAndAuthors(
+    book = BookEntity(
+        serverId = this.book.id,
+        title = this.book.title,
+        publisher = this.book.publisher,
+        publishedDate = this.book.publishedDate,
+        synopsis = this.book.synopsis,
+        isbn = this.book.isbn,
+        pages = this.book.pages,
+        imageUrl = this.book.cover
+    ),
+    authors = this.authors.map { AuthorEntity(id = it.id, name = it.name, desc = "") },
+    genres = this.genres.map { GenreEntity(id = it.id, name = it.name) }
 )
 
 data class BookWithGenresAndAuthors(
@@ -86,5 +103,5 @@ data class FullBookDataWithUserInfo(
         parentColumn = "id",
         entityColumn = "bookId"
     )
-    val userBookCrossRefs: List<UserBookCrossRef>
+    val userBookCrossRefs: UserBookCrossRef
 )

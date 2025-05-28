@@ -18,14 +18,16 @@ class UserPreferences @Inject constructor(@ApplicationContext context: Context) 
         private val ACCESS_TOKEN_KEY = stringPreferencesKey("access_token")
         private val USER_ID_KEY = intPreferencesKey("user_id")
         private val IS_LOGGED_IN_KEY = booleanPreferencesKey("is_logged_in")
+        private val USER_NAME_KEY = stringPreferencesKey("user_name")
         private val SAVED_EMAIL_KEY = stringPreferencesKey("saved_email")
         private val SAVED_PASSWORD_KEY = stringPreferencesKey("saved_password")
     }
 
-    suspend fun saveLoginData(token: String, userId: Int) {
+    suspend fun saveLoginData(token: String, userId: Int, userName: String) {
         dataStore.edit { preferences ->
             preferences[ACCESS_TOKEN_KEY] = token
             preferences[USER_ID_KEY] = userId
+            preferences[USER_NAME_KEY] = userName
             preferences[IS_LOGGED_IN_KEY] = true
         }
     }
@@ -54,6 +56,12 @@ class UserPreferences @Inject constructor(@ApplicationContext context: Context) 
     fun getUserId(): Flow<Int?> {
         return dataStore.data.map { preferences ->
             preferences[USER_ID_KEY]
+        }
+    }
+
+    fun getUserName(): Flow<String?> {
+        return dataStore.data.map { preferences ->
+            preferences[USER_NAME_KEY]
         }
     }
 

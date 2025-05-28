@@ -6,15 +6,18 @@ import com.example.bookphoria.data.local.entities.UserEntity
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.AuthApiService
 import com.example.bookphoria.data.remote.api.ForgotPasswordRequest
+import com.example.bookphoria.data.remote.api.FriendApiService
 import com.example.bookphoria.data.remote.api.LoginRequest
 import com.example.bookphoria.data.remote.api.RegisterRequest
 import com.example.bookphoria.data.remote.api.ResetPasswordRequest
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AuthRepository @Inject constructor(
     private val apiService: AuthApiService,
+    private val userApiService: FriendApiService,
     private val userDao: UserDao,
     private val userPreferences: UserPreferences
 ) {
@@ -27,12 +30,15 @@ class AuthRepository @Inject constructor(
             }
             Log.d("AuthRepository", "Saving token: ${response.accessToken}")
 
-            userPreferences.saveLoginData(token = response.accessToken, userId = response.user.id)
+            userPreferences.saveLoginData(token = response.accessToken, userId = response.user.id, userName = response.user.username)
 
             val userEntity = UserEntity(
                 id = response.user.id,
                 username = response.user.username,
-                email = response.user.email
+                email = response.user.email,
+                firstName = response.user.firstName,
+                lastName = response.user.lastName,
+                profilePicture = response.user.profilePicture
             )
             userDao.insertUser(userEntity)
 
@@ -49,7 +55,7 @@ class AuthRepository @Inject constructor(
             }
 
             val response = apiService.register(RegisterRequest(username, email, password))
-            userPreferences.saveLoginData(response.accessToken, response.user.id)
+            userPreferences.saveLoginData(response.accessToken, response.user.id, response.user.username)
 
             val userEntity = UserEntity(
                 id = response.user.id,
@@ -95,7 +101,25 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun getUserById(userId: Int): UserEntity? {
-        return userDao.getUserById(userId)
+    suspend fun getUserByUsername(username: String): UserEntity? {
+        val accessToken = userPreferences.getAccessToken().first() ?: return null
+
+        val userLocal = userDao.getUserByUsername(username)
+        if (userLocal != null) {
+            return userLocal
+        }
+
+        val response = userApiService.getUserByUsername(
+            token = "Bearer ${accessToken}",
+            userName = username
+        )
+        Log.d("AuthRepository", "Received user: $response")
+        if (response != null) {
+            userDao.updateUser(response.id, response.username, response.firstName, response.lastName, response.email, response.profilePicture)
+            return response
+        } else {
+            Log.e("AuthRepository", "User not found in response")
+            return null
+        }
     }
 }

@@ -143,7 +143,8 @@ class FriendRepository @Inject constructor(
 
         if (accessToken != null) {
             try {
-                return apiService.getUserByUsername("Bearer $accessToken", username)
+                val data = apiService.getUserByUsername("Bearer $accessToken", username)
+                return data
             } catch (e: Exception) {
                 throw Exception("Terjadi kesalahan saat mengambil data pengguna: ${e.message}")
             }

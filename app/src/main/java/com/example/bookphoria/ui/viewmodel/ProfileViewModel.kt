@@ -1,5 +1,9 @@
 package com.example.bookphoria.ui.viewmodel
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bookphoria.data.local.entities.UserEntity
@@ -27,9 +31,9 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun getProfile(onSuccess: (UserEntity) -> Unit, onError: (Throwable) -> Unit) {
+    fun getProfile(username: String, onSuccess: (UserEntity) -> Unit, onError: (Throwable) -> Unit) {
         viewModelScope.launch {
-            val result = userRepository.getProfile()
+            val result = authRepository.getUserByUsername(username)
             result?.let {
                 onSuccess(it)
             } ?: onError(Exception("Profile not found"))
