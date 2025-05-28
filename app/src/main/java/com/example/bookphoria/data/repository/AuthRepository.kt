@@ -10,7 +10,6 @@ import com.example.bookphoria.data.remote.api.LoginRequest
 import com.example.bookphoria.data.remote.api.RegisterRequest
 import com.example.bookphoria.data.remote.api.ResetPasswordRequest
 import javax.inject.Inject
-import android.util.Log
 import com.example.bookphoria.data.remote.api.UserStatsResponse
 import com.google.android.gms.common.api.Response
 import kotlinx.coroutines.flow.first
