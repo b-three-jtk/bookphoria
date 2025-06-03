@@ -34,8 +34,9 @@ interface BookDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBookGenreCrossRef(crossRef: BookGenreCrossRef)
 
-    @Query("SELECT * FROM books WHERE serverId = :bookId LIMIT 1")
-    suspend fun getBookById(bookId: String): BookWithGenresAndAuthors?
+    @Transaction
+    @Query("SELECT * FROM books WHERE serverId = :serverId LIMIT 1")
+    suspend fun getBookById(serverId: String): BookWithGenresAndAuthors?
 
     @Query("SELECT * FROM books WHERE serverId = :bookId LIMIT 1")
     suspend fun getBookByNetworkId(bookId: String): BookEntity

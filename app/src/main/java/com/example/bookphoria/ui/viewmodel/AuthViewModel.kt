@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.repository.AuthRepository
+import com.example.bookphoria.data.repository.BookRepository
 import com.example.bookphoria.ui.helper.InputValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val bookRepository: BookRepository,
     private val userPreferences: UserPreferences
 ) : ViewModel() {
     private val _isLoading = MutableStateFlow(false)
@@ -48,16 +50,19 @@ class AuthViewModel @Inject constructor(
             try {
                 val result = authRepository.login(email, password)
 
-                if (result.isSuccess) {
+                if (result != null) {
                     if (rememberMe) {
                         userPreferences.saveCredentials(email, password)
                     } else {
                         userPreferences.clearCredentials()
                     }
+
+                    val remoteBooks = result.let { bookRepository.getYourBooksRemote(it.id) }
+                    bookRepository.saveBooksToLocal(remoteBooks)
+
                     onSuccess()
                 } else {
-                    Log.e("LoginError", "Login failed with message: ${result.exceptionOrNull()?.message}")
-                    onError(result.exceptionOrNull()?.message ?: "Login gagal")
+                    onError("Login gagal")
                 }
             } catch (e: Exception) {
                 Log.e("LoginError", "Error during login: ${e.message}")

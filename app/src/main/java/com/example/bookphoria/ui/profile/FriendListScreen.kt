@@ -1,5 +1,6 @@
 package com.example.bookphoria.ui.profile
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -52,17 +53,16 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.bookphoria.R
-import com.example.bookphoria.data.local.entities.UserEntity
 import com.example.bookphoria.ui.theme.SubTitleExtraSmall
 import com.example.bookphoria.ui.theme.TitleExtraSmall
 import com.example.bookphoria.ui.viewmodel.FriendViewModel
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.ui.platform.LocalContext
+import com.example.bookphoria.data.remote.api.UserWrapperResponse
 import com.example.bookphoria.ui.components.SearchBar
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.theme.SoftOrange
@@ -74,11 +74,11 @@ fun FriendListContent(
 ) {
     val context = LocalContext.current
     val friends by viewModel.friends
-    val friendDetail by viewModel.friendDetail
+    val friendDetail by viewModel.friendSearchDetail
     val isLoading by viewModel.isLoading.collectAsState()
     val showDialog = remember { mutableStateOf(false) }
     val searchQuery = remember { mutableStateOf("") }
-    val searchResults = remember { mutableStateOf<List<UserEntity>>(emptyList()) }
+    val searchResults = remember { mutableStateOf<List<UserWrapperResponse>>(emptyList()) }
     val debouncedQuery = rememberDebouncedState(searchQuery.value)
     var showRequestDialog by remember { mutableStateOf<Int?>(null) }
 
@@ -139,23 +139,32 @@ fun FriendListContent(
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.BottomEnd
+            ) {
+                FloatingActionButton(containerColor = SoftOrange, shape = RoundedCornerShape(24.dp), onClick = { showDialog.value = true }) {
+                    Icon(Icons.Filled.PersonAdd, tint = Color.White, contentDescription = "Cari Teman")
+                }
+            }
         }
-        return
-    }
+    } else {
+        Column {
+            friends.forEach {
+                val fullName = listOfNotNull(it.firstName, it.lastName).joinToString(" ")
+                val username = it.username ?: ""
 
-    Column {
-        friends.forEach {
-            val fullName = listOfNotNull(it.firstName, it.lastName).joinToString(" ")
-            val username = it.username ?: ""
-
-            FriendListItem(
-                name = fullName,
-                username = "@$username",
-                onClick = {
-                    navController.navigate("user-profile/${it.id}")
-                },
-                isNotFriend = false
-            )
+                FriendListItem(
+                    name = fullName,
+                    username = "@$username",
+                    onClick = {
+                        navController.navigate("user-profile/${it.id}")
+                    },
+                    isNotFriend = false
+                )
+            }
         }
     }
 
@@ -202,22 +211,32 @@ fun FriendListContent(
                             )
                         } else {
                             LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
-                                items(searchResults.value) { user ->
-                                    val fullName = listOfNotNull(user.firstName, user.lastName).joinToString(" ")
-                                    val username = user.username ?: ""
+                                items(searchResults.value) { data ->
+                                    val fullName = listOfNotNull(data.user.firstName, data.user.lastName).joinToString(" ")
+                                    Log.d("FriendListContent", "User: $data.user")
+                                    val username = data.user.username ?: ""
 
-                                    FriendListItem(
-                                        name = fullName,
-                                        username = "@$username",
-                                        onClick = {
-                                            navController.navigate("user-profile/${user.id}")
-                                            showDialog.value = false
-                                        },
-                                        isNotFriend = true,
-                                        onAdd = {
-                                            showRequestDialog = user.id
-                                        }
-                                    )
+                                    if (username != "") {
+                                        FriendListItem(
+                                            name = fullName,
+                                            username = "@$username",
+                                            onClick = {
+                                                navController.navigate("user-profile/${data.user.id}")
+                                                showDialog.value = false
+                                            },
+                                            isNotFriend = true,
+                                            onAdd = {
+                                                showRequestDialog = data.user.id
+                                            }
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "Tidak ditemukan hasil untuk '${searchQuery.value}'",
+                                            color = Color.Gray,
+                                            modifier = Modifier.padding(8.dp)
+                                        )
+                                    }
+
                                 }
                             }
                         }
@@ -244,17 +263,17 @@ fun FriendListContent(
         )
 
         if (showRequestDialog != null) {
-            val selectedUser = searchResults.value.find { it.id == showRequestDialog }
-            selectedUser?.let { user ->
+            val selectedUser = searchResults.value.find { it.user.id == showRequestDialog }
+            selectedUser?.let { data ->
                 AlertDialog(
                     onDismissRequest = { showRequestDialog = null },
                     title = { Text("Kirim Permintaan Teman") },
                     text = {
-                        Text("Apakah kamu yakin ingin mengirim permintaan pertemanan ke @${user.username}?")
+                        Text("Apakah kamu yakin ingin mengirim permintaan pertemanan ke @${data.user.username}?")
                     },
                     confirmButton = {
                         TextButton(onClick = {
-                            user.username?.let {
+                            data.user.username?.let {
                                 viewModel.sendFriendRequest(
                                     it,
                                     onSuccess = {

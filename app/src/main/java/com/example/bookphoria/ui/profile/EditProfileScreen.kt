@@ -53,7 +53,6 @@ fun EditProfileScreen(
 
     LaunchedEffect(Unit) {
         viewModel.getProfile(
-            username,
             onSuccess = { user ->
                 username = user.username ?: ""
                 firstName = user.firstName ?: ""
@@ -65,7 +64,6 @@ fun EditProfileScreen(
                 Toast.makeText(context, "Gagal mengambil data profil", Toast.LENGTH_SHORT).show()
             }
         )
-        Log.d("Edit Profile", "Avatar URL: $avatarUrl")
     }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -172,7 +170,7 @@ fun EditProfileScreen(
                         avatar = avatarFile,
                         onSuccess = {
                             Toast.makeText(context, "Profil berhasil diupdate.", Toast.LENGTH_SHORT).show()
-                            navController.navigate("profile")
+                            navController.navigate("home")
                         },
                         onError = {
                             Toast.makeText(context, "Gagal update profil.", Toast.LENGTH_SHORT).show()

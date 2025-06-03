@@ -4,9 +4,9 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bookphoria.data.local.entities.BookEntity
-import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.data.local.entities.UserBookCrossRef
 import com.example.bookphoria.data.local.preferences.UserPreferences
+import com.example.bookphoria.data.remote.responses.ReviewNetworkModel
 import com.example.bookphoria.data.repository.BookRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,10 +27,13 @@ class BookViewModel @Inject constructor(
     val selectedBook: StateFlow<BookDetailUIState?> = _selectedBook
     private val _readingProgress = MutableStateFlow<Int?>(null)
     val readingProgress: StateFlow<Int?> = _readingProgress.asStateFlow()
+    private val _reviews = MutableStateFlow<List<ReviewNetworkModel>>(emptyList())
+    val reviews: StateFlow<List<ReviewNetworkModel>> = _reviews.asStateFlow()
 
     fun getBookById(bookId: Int) {
         viewModelScope.launch {
             val bookWithRelations = bookRepository.getBookById(bookId)
+            Log.d("BookViewModel", "Book with relations: $bookWithRelations")
             if (bookWithRelations != null) {
                 _selectedBook.value = BookDetailUIState(
                     book = bookWithRelations.book,
@@ -66,6 +69,25 @@ class BookViewModel @Inject constructor(
                 )
             )
             _readingProgress.value = pagesRead
+        }
+    }
+
+    fun addReview(bookId: Int, desc: String, rate: Int) {
+        viewModelScope.launch {
+            Log.d("BookViewModel", "Adding review: bookId=$bookId, desc=$desc, rate=$rate")
+            bookRepository.addReview(bookId, desc, rate)
+        }
+    }
+
+    fun getReviews(bookId: Int) {
+        viewModelScope.launch {
+            try {
+                val reviews = bookRepository.getReviews(bookId)
+                _reviews.value = reviews
+                Log.d("BookViewModel", "Reviews: $reviews")
+            } catch (e: Exception) {
+                Log.e("BookViewModel", "Error fetching reviews: ${e.message}")
+            }
         }
     }
 

@@ -1,11 +1,14 @@
 package com.example.bookphoria.data.remote.api
 
+import com.example.bookphoria.data.remote.requests.AddReviewRequest
 import com.example.bookphoria.data.remote.responses.AddBookResponse
 import com.example.bookphoria.data.remote.responses.BookSearchResponse
 import com.example.bookphoria.data.remote.responses.EditBookResponse
+import com.example.bookphoria.data.remote.responses.ReviewNetworkModel
 import com.example.bookphoria.data.remote.responses.UserBookStatusResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Multipart
@@ -61,4 +64,15 @@ interface BookApiService {
         @Part cover: MultipartBody.Part?,
     ): EditBookResponse
 
+    @POST("review")
+    suspend fun addReview(
+        @Header("Authorization") token: String,
+        @Body request: AddReviewRequest
+    )
+
+    @GET("reviews/{bookId}")
+    suspend fun getReviews(
+        @Header("Authorization") token: String,
+        @Path("bookId") bookId: String
+    ) : List<ReviewNetworkModel>
 }

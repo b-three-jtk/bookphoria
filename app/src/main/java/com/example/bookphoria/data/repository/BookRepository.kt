@@ -18,8 +18,10 @@ import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.BookApiService
 import com.example.bookphoria.data.remote.pagingsources.BookSearchPagingSource
 import com.example.bookphoria.data.remote.requests.AddBookRequest
+import com.example.bookphoria.data.remote.requests.AddReviewRequest
 import com.example.bookphoria.data.remote.requests.EditBookRequest
 import com.example.bookphoria.data.remote.responses.BookNetworkModel
+import com.example.bookphoria.data.remote.responses.ReviewNetworkModel
 import com.example.bookphoria.data.remote.responses.toFullBookData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -56,8 +58,8 @@ class BookRepository @Inject constructor(
 
             val userStartDate = request.userStartDate?.let { dateFormat.format(it) }
             val userFinishDate = request.userFinishDate?.let { dateFormat.format(it) }
-            val authors = request.authors?.map { it.toRequestBody("text/plain".toMediaTypeOrNull()) } ?: emptyList()
-            val genres = request.genres?.map { it.toRequestBody("text/plain".toMediaTypeOrNull()) } ?: emptyList()
+            val authors = request.authors.map { it.toRequestBody("text/plain".toMediaTypeOrNull()) }
+            val genres = request.genres.map { it.toRequestBody("text/plain".toMediaTypeOrNull()) }
 
             val coverPart = request.cover?.let {
                 val requestFile = it.asRequestBody("image/*".toMediaTypeOrNull())
@@ -141,6 +143,8 @@ class BookRepository @Inject constructor(
                 endDate = null
             )
         }
+
+        Log.d("BookRepository", "UserBook: $userBook")
 
         if (userBook != null) {
             bookDao.insertUserBookCrossRef(userBook)
@@ -240,7 +244,9 @@ class BookRepository @Inject constructor(
 
     suspend fun getBookById(bookId: Int): BookWithGenresAndAuthors? {
         val book = bookDao.getBookServerIdById(bookId)
-        return bookDao.getBookById(book)
+        val fetchedBook = bookDao.getBookById(book)
+        Log.d("BookRepository", "Fetched book: $fetchedBook")
+        return fetchedBook
     }
 
     suspend fun getYourBooksRemote(userId: Int): List<FullBookDataWithUserInfo> {
@@ -292,5 +298,37 @@ class BookRepository @Inject constructor(
 
     suspend fun getUserBooksCount(userId: Int): Int {
         return bookDao.getYourBooks(userId).first().size
+    }
+
+    suspend fun addReview(bookId: Int, desc: String, rate: Int) {
+        try {
+            val bookStrId = bookDao.getBookServerIdById(bookId)
+            Log.d("BookRepository", "Book ID: $bookStrId")
+            val req = AddReviewRequest(
+                bookId = bookStrId,
+                desc = desc,
+                rate = rate
+            )
+            Log.d("BookRepository", "Request: $req")
+            apiService.addReview(
+                token = "Bearer ${userPreferences.getAccessToken().first()}",
+                request = req
+            )
+        } catch (e: Exception) {
+            throw Exception("Terjadi kesalahan saat menambahkan review buku: ${e.message}")
+        }
+    }
+
+    suspend fun getReviews(bookId: Int): List<ReviewNetworkModel> {
+        try {
+            val bookStrId = bookDao.getBookServerIdById(bookId)
+            val review = apiService.getReviews(
+                token = "Bearer ${userPreferences.getAccessToken().first()}",
+                bookId = bookStrId
+            )
+            return review
+        } catch (e: Exception) {
+            throw Exception("Terjadi kesalahan saat mengambil review buku: ${e.message}")
+        }
     }
 }

@@ -7,6 +7,7 @@ import com.example.bookphoria.data.local.entities.UserEntity
 import com.example.bookphoria.data.local.entities.UserWithFriends
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.FriendApiService
+import com.example.bookphoria.data.remote.api.UserWrapperResponse
 import com.example.bookphoria.data.remote.requests.FriendRequest
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
@@ -140,12 +141,13 @@ class FriendRepository @Inject constructor(
         }
     }
 
-    suspend fun getUserByUsername(username: String): UserEntity {
+    suspend fun getUserByUsername(username: String): UserWrapperResponse {
         val accessToken = userPreferences.getAccessToken().first()
 
         if (accessToken != null) {
             try {
                 val data = apiService.getUserByUsername("Bearer $accessToken", username)
+                Log.d("FriendRepository", "Data User: $data")
                 return data
             } catch (e: Exception) {
                 throw Exception("Terjadi kesalahan saat mengambil data pengguna: ${e.message}")

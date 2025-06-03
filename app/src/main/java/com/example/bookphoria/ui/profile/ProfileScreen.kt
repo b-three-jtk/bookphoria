@@ -1,32 +1,25 @@
 package com.example.bookphoria.ui.profile
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.bookphoria.ui.theme.PrimaryOrange
-import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
-import androidx.constraintlayout.motion.widget.MotionScene.Transition.TransitionOnClick
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
 import com.example.bookphoria.ui.theme.SoftCream
@@ -45,7 +38,6 @@ fun ProfileScreen(
     val readingListCount by viewModel.readingListCount.collectAsState()
     val friendCount by viewModel.friendCount.collectAsState()
 
-    // Handle error with a snackbar
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -58,17 +50,15 @@ fun ProfileScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        Log.d("ProfileScreen", "Rendering: userData=$userData, bookCount=$bookCount, readingListCount=$readingListCount, friendCount=$friendCount, loading=$loading, error=$error")
-    }
-
     Scaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(SoftCream),
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .background(SoftCream)
         ) {
             if (loading) {
@@ -101,10 +91,10 @@ fun ProfileScreen(
 
                     // Profile Picture
                     Image(
-                        painter = painterResource(R.drawable.user),
+                        painter = rememberAsyncImagePainter(model = userData?.profilePicture?.ifBlank { R.drawable.user }),
                         contentDescription = "Profile Picture",
                         modifier = Modifier
-                            .size(96.dp)
+                            .size(100.dp)
                             .clip(CircleShape)
                     )
 
@@ -153,15 +143,16 @@ fun ProfileScreen(
                         colors = CardDefaults.cardColors(containerColor = Color.White)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            ProfileInfoRow("Username", userData?.username ?: "-")
-                            Divider(modifier = Modifier.padding(vertical = 8.dp))
+                            val fullName = listOfNotNull(userData?.firstName, userData?.lastName).joinToString(" ")
 
-                            // Nama lengkap sengaja dikosongkan
-                            ProfileInfoRow("Nama Lengkap", "-")
-                            Divider(modifier = Modifier.padding(vertical = 8.dp))
+                            ProfileInfoRow("Username", userData?.username ?: "-")
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                            ProfileInfoRow("Nama Lengkap", fullName)
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                             ProfileInfoRow("Email", userData?.email ?: "-")
-                            Divider(modifier = Modifier.padding(vertical = 8.dp))
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                             Spacer(modifier = Modifier.height(16.dp))
 
@@ -195,7 +186,7 @@ fun ProfileScreen(
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.ExitToApp,
+                                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                                     contentDescription = "Logout Icon",
                                     tint = Color.White
                                 )
