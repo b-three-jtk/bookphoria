@@ -41,7 +41,7 @@ fun BookStatusNetworkModel.toFullBookData(userId: Int, bookId: Int): FullBookDat
         ),
         authors = this.book.authors.map {
             AuthorEntity(
-                id = it.id,
+                serverId = it.id,
                 name = it.name,
                 desc = it.desc?: ""
             )
@@ -49,7 +49,7 @@ fun BookStatusNetworkModel.toFullBookData(userId: Int, bookId: Int): FullBookDat
 
         genres = this.book.genres.map {
             GenreEntity(
-                id = it.id,
+                serverId = it.id,
                 name = it.name
             )
         },

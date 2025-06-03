@@ -14,11 +14,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -176,15 +174,19 @@ fun EditBookScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text("Penulis", style = AppTypography.bodyMedium,  modifier = Modifier.padding(top = 16.dp),)
+            Text(
+                "Penulis",
+                style = AppTypography.bodyMedium,
+                modifier = Modifier.padding(top = 16.dp),
+            )
             FlowRow {
                 viewModel.allAuthors.forEach { author ->
-                    val isSelected = author.id in viewModel.selectedAuthorIds
+                    val isSelected = author.serverId in viewModel.selectedAuthorIds
                     FilterChip(
                         selected = isSelected,
                         onClick = {
                             viewModel.selectedAuthorIds = viewModel.selectedAuthorIds.toMutableList().apply {
-                                if (isSelected) remove(author.id) else add(author.id)
+                                if (isSelected) remove(author.serverId) else add(author.serverId)
                             }
                         },
                         label = { Text(author.name) }
@@ -194,15 +196,19 @@ fun EditBookScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text("Genre", style = AppTypography.bodyMedium,  modifier = Modifier.padding(top = 16.dp),)
+            Text(
+                "Genre",
+                style = AppTypography.bodyMedium,
+                modifier = Modifier.padding(top = 16.dp),
+            )
             FlowRow {
                 viewModel.allGenres.forEach { genre ->
-                    val isSelected = genre.id in viewModel.selectedGenreIds
+                    val isSelected = genre.serverId in viewModel.selectedGenreIds
                     FilterChip(
                         selected = isSelected,
                         onClick = {
                             viewModel.selectedGenreIds = viewModel.selectedGenreIds.toMutableList().apply {
-                                if (isSelected) remove(genre.id) else add(genre.id)
+                                if (isSelected) remove(genre.serverId) else add(genre.serverId)
                             }
                         },
                         label = { Text(genre.name) }

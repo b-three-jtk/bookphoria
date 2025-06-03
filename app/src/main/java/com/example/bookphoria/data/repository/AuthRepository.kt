@@ -12,10 +12,7 @@ import com.example.bookphoria.data.remote.api.RegisterRequest
 import com.example.bookphoria.data.remote.api.ResetPasswordRequest
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
-import com.example.bookphoria.data.remote.api.UserStatsResponse
 import javax.inject.Singleton
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlin.Result.Companion.failure
 
 @Singleton
@@ -26,7 +23,7 @@ class AuthRepository @Inject constructor(
     private val userPreferences: UserPreferences,
 ) {
     suspend fun login(email: String, password: String): UserEntity? {
-        return try {
+        try {
             val response = apiService.login(LoginRequest(email, password))
 
             userPreferences.saveLoginData(token = response.accessToken, userId = response.user.id, userName = response.user.username)

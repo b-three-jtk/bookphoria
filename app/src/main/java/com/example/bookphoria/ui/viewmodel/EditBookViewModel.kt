@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.bookphoria.data.local.entities.AuthorEntity
 import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.data.local.entities.GenreEntity
@@ -59,8 +58,8 @@ class EditBookViewModel @Inject constructor(
                 pages = it.book.pages.toString()
                 imageUrl = it.book.imageUrl ?: ""
 
-                selectedAuthorIds = it.authors.map { author -> author.id }
-                selectedGenreIds = it.genres.map { genre -> genre.id }
+                selectedAuthorIds = it.authors.map { author -> author.serverId }
+                selectedGenreIds = it.genres.map { genre -> genre.serverId }
             }
         }
     }

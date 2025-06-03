@@ -49,11 +49,11 @@ interface BookDao {
     @Query("SELECT * FROM users WHERE id = :userId")
     fun getUserWithBooksStream(userId: Int): Flow<UserWithBooks>
 
-    @Query("SELECT id FROM authors WHERE id = :id LIMIT 1")
-    suspend fun getAuthorId(id: String): String?
+    @Query("SELECT id FROM authors WHERE serverId = :id LIMIT 1")
+    suspend fun getAuthorId(id: String): Int?
 
-    @Query("SELECT id FROM genres WHERE id = :id LIMIT 1")
-    suspend fun getGenreId(id: String): String?
+    @Query("SELECT id FROM genres WHERE serverId = :id LIMIT 1")
+    suspend fun getGenreId(id: String): Int?
 
     @Query("SELECT * FROM UserBookCrossRef WHERE bookId = :bookId AND userId = :userId LIMIT 1")
     suspend fun getUserBookCrossRef(userId: Int, bookId: Int): UserBookCrossRef
