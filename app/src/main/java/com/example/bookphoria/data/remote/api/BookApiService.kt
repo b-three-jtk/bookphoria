@@ -6,6 +6,7 @@ import com.example.bookphoria.data.remote.responses.BookSearchResponse
 import com.example.bookphoria.data.remote.responses.EditBookResponse
 import com.example.bookphoria.data.remote.responses.ReviewNetworkModel
 import com.example.bookphoria.data.remote.responses.UserBookStatusResponse
+import com.example.bookphoria.data.remote.responses.WrapperDetailBookNetworkModel
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.http.Body
@@ -52,7 +53,7 @@ interface BookApiService {
     @POST("book/{id}")
     suspend fun editBook(
         @Header("Authorization") token: String,
-        @Part("id") id: String,
+        @Path("id") id: String,
         @Part("title") title: RequestBody,
         @Part("publisher") publisher: RequestBody?,
         @Part("published_date") publishedDate: RequestBody,
@@ -75,4 +76,10 @@ interface BookApiService {
         @Header("Authorization") token: String,
         @Path("bookId") bookId: String
     ) : List<ReviewNetworkModel>
+
+    @GET("book/{id}")
+    suspend fun getBookById(
+        @Header("Authorization") token: String,
+        @Path("id") id: String
+    ) : WrapperDetailBookNetworkModel
 }

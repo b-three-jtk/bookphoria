@@ -94,7 +94,7 @@ fun ProfileScreen(
                         painter = rememberAsyncImagePainter(model = userData?.profilePicture?.ifBlank { R.drawable.user }),
                         contentDescription = "Profile Picture",
                         modifier = Modifier
-                            .size(100.dp)
+                            .size(140.dp)
                             .clip(CircleShape)
                     )
 

@@ -19,6 +19,7 @@ import com.example.bookphoria.ui.auth.ForgotpassScreen
 import com.example.bookphoria.ui.auth.LoginScreen
 import com.example.bookphoria.ui.auth.RegisterScreen
 import com.example.bookphoria.ui.auth.ResetpassScreen
+import com.example.bookphoria.ui.book.DetailBookNetworkScreen
 import com.example.bookphoria.ui.book.DetailBookScreen
 import com.example.bookphoria.ui.book.EditBookScreen
 import com.example.bookphoria.ui.book.EntryBookScreen
@@ -35,6 +36,7 @@ import com.example.bookphoria.ui.profile.ProfileFriendScreen
 import com.example.bookphoria.ui.profile.ProfileScreen
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
 import com.example.bookphoria.ui.viewmodel.BookViewModel
+import com.example.bookphoria.ui.viewmodel.DetailBookViewModel
 import com.example.bookphoria.ui.viewmodel.EditBookViewModel
 import com.example.bookphoria.ui.viewmodel.EntryBookViewModel
 import com.example.bookphoria.ui.viewmodel.FriendViewModel
@@ -53,6 +55,7 @@ fun AppNavHost(
     val navController = rememberNavController()
     val authViewModel: AuthViewModel = hiltViewModel()
     val bookViewModel: BookViewModel = hiltViewModel()
+    val detailBookViewModel: DetailBookViewModel = hiltViewModel()
     val homeViewModel: HomeViewModel = hiltViewModel()
     val friendViewModel: FriendViewModel = hiltViewModel()
     val profilViewModel: ProfileViewModel = hiltViewModel()
@@ -172,6 +175,13 @@ fun AppNavHost(
             ) { backStackEntry ->
                 val id = backStackEntry.arguments?.getInt("id") ?: 0
                 DetailBookScreen(navController = navController, bookViewModel = bookViewModel, bookId = id)
+            }
+            composable(
+                route = "detail/search/{id}",
+                arguments = listOf(navArgument("id") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val id = backStackEntry.arguments?.getString("id") ?: ""
+                DetailBookNetworkScreen(navController = navController, bookViewModel = detailBookViewModel, bookId = id)
             }
             composable("scan") {
                 ScanCodeScreen(

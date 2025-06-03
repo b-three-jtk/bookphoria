@@ -62,7 +62,7 @@ interface BookDao {
     suspend fun deleteUserBook(userId: Int, bookId: Int)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun updateBook(book: BookEntity)
+    suspend fun updateBook(book: BookEntity): Long
 
     @Query("SELECT id FROM books WHERE isbn = :isbn LIMIT 1")
     suspend fun getBookIdByIsbn(isbn: String): Int
@@ -92,4 +92,10 @@ interface BookDao {
 
     @Query("SELECT pagesRead FROM UserBookCrossRef WHERE userId = :userId AND bookId = :bookId")
     suspend fun getReadingProgress(userId: Int, bookId: Int): Int?
+
+    @Query("SELECT * FROM authors")
+    suspend fun getAllAuthors(): List<AuthorEntity>
+
+    @Query("SELECT * FROM genres")
+    suspend fun getAllGenres(): List<GenreEntity>
 }
