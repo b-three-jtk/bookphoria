@@ -86,11 +86,6 @@ class UserRepository @Inject constructor (
         }
     }
 
-    suspend fun getProfile(): UserEntity? {
-        val userId = userPreferences.getUserId().first()
-        return userId?.let { userDao.getUserById(it) }
-    }
-
     suspend fun getUserById(userId: Int): UserEntity? {
         return userDao.getUserById(userId)
     }

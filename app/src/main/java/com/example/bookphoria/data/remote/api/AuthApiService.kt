@@ -1,5 +1,6 @@
 package com.example.bookphoria.data.remote.api
 
+import com.example.bookphoria.data.local.entities.UserEntity
 import com.example.bookphoria.data.remote.responses.AuthResponse
 import com.example.bookphoria.data.remote.responses.EditProfileResponse
 import okhttp3.MultipartBody
@@ -40,6 +41,9 @@ interface AuthApiService {
 
     @GET("user")
     suspend fun getCurrentUser(): retrofit2.Response<UserStatsResponse>
+
+    @GET("user/profile")
+    suspend fun getUserProfile(): UserEntity
 }
 
 data class LoginRequest(

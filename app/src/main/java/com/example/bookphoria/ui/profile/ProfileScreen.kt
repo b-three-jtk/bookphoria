@@ -45,6 +45,11 @@ fun ProfileScreen(
     val readingListCount by viewModel.readingListCount.collectAsState()
     val friendCount by viewModel.friendCount.collectAsState()
 
+    // Log untuk debugging
+    LaunchedEffect(userData, bookCount, readingListCount, friendCount) {
+        Log.d("ProfileScreen", "userData=$userData, bookCount=$bookCount, readingListCount=$readingListCount, friendCount=$friendCount")
+    }
+
     // Handle error with a snackbar
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
