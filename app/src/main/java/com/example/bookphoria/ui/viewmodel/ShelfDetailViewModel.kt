@@ -5,8 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bookphoria.data.local.dao.BookDao
 import com.example.bookphoria.data.local.dao.ShelfDao
+import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
+import com.example.bookphoria.data.local.entities.ShelfBookCrossRef
 import com.example.bookphoria.data.local.entities.ShelfWithBooks
+import com.example.bookphoria.data.repository.ShelfRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +20,7 @@ import javax.inject.Inject
 class ShelfDetailViewModel @Inject constructor(
     private val shelfDao: ShelfDao,
     private val bookDao: BookDao,
+    private val repository: ShelfRepository
 ) : ViewModel() {
 
     private val _shelfWithBooks = MutableStateFlow<ShelfWithBooks?>(null)
@@ -24,6 +28,10 @@ class ShelfDetailViewModel @Inject constructor(
 
     private val _loadingState = MutableStateFlow(false)
     val loadingState: StateFlow<Boolean> = _loadingState
+
+    private val _addBookResult = MutableStateFlow<Result<Boolean>?>(null)
+    val addBookResult: StateFlow<Result<Boolean>?> = _addBookResult
+
 
     private val _errorState = MutableStateFlow<String?>(null)
     val errorState: StateFlow<String?> = _errorState
@@ -86,6 +94,25 @@ class ShelfDetailViewModel @Inject constructor(
 
     fun clearError() {
         _errorState.value = null
+    }
+
+    fun addBookToShelf(token: String, shelfId: String, bookId: String) {
+        viewModelScope.launch {
+            try {
+                val success = repository.addBookToShelf(token, shelfId, bookId)
+                _addBookResult.value = Result.success(success)
+                // Refresh shelf content after success
+                _shelfWithBooks.value?.shelf?.id?.let {
+                    loadShelfWithBooks(_shelfWithBooks.value!!.shelf.userId, it.toInt())
+                }
+            } catch (e: Exception) {
+                _addBookResult.value = Result.failure(e)
+            }
+        }
+    }
+
+    fun resetAddBookResult() {
+        _addBookResult.value = null
     }
 
     fun refreshShelf(userId: Int, shelfId: Int) {
