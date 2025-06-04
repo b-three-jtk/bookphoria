@@ -46,6 +46,7 @@ import com.example.bookphoria.R
 import com.example.bookphoria.ui.theme.AppTypography
 import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.theme.PrimaryOrange
+import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.theme.SubTitleExtraSmall
 import com.example.bookphoria.ui.viewmodel.BookViewModel
 
@@ -267,11 +268,14 @@ fun DetailBookScreen(
 
                 Text("Review", style = MaterialTheme.typography.titleMedium)
 
-                ReviewSection(
-                    reviewerName = "Ningen Sastrawijaya",
-                    reviewText = "Bagus bukunya, andalan tiap aku mau tidur",
-                    rating = 4
-                )
+                reviewsState.value.forEach { review ->
+                    ReviewSection(
+                        reviewerAvatar = review.user.avatar,
+                        reviewerName = review.user.username,
+                        reviewText = review.desc,
+                        rating = review.rate
+                    )
+                }
             }
             if (showStatusBottomSheet) {
                 ModalBottomSheet(
@@ -329,20 +333,20 @@ fun DetailBookScreen(
                         // Remove from collection option
                         if (bookStatusState.value?.isNotEmpty() == true) {
                             Spacer(modifier = Modifier.height(8.dp))
-                            Button(
-                                onClick = {
-                                    bookViewModel.updateBookStatus(bookId, "none")
-                                    showStatusBottomSheet = false
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color.White,
-                                    contentColor = Color.Red
-                                ),
-                                border = BorderStroke(1.dp, Color.Red)
-                            ) {
-                                Text("Hapus dari Koleksi")
-                            }
+//                            Button(
+//                                onClick = {
+//                                    bookViewModel.updateBookStatus(bookId, "none")
+//                                    showStatusBottomSheet = false
+//                                },
+//                                modifier = Modifier.fillMaxWidth(),
+//                                colors = ButtonDefaults.buttonColors(
+//                                    containerColor = Color.White,
+//                                    contentColor = Color.Red
+//                                ),
+//                                border = BorderStroke(1.dp, Color.Red)
+//                            ) {
+//                                Text("Hapus dari Koleksi")
+//                            }
                         }
                     }
                 }
