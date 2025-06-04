@@ -3,16 +3,19 @@ package com.example.bookphoria.ui.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bookphoria.DeepLinkHolder.token
 import com.example.bookphoria.data.local.dao.BookDao
 import com.example.bookphoria.data.local.dao.ShelfDao
 import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.data.local.entities.ShelfBookCrossRef
 import com.example.bookphoria.data.local.entities.ShelfWithBooks
+import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.repository.ShelfRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -32,9 +35,33 @@ class ShelfDetailViewModel @Inject constructor(
     private val _addBookResult = MutableStateFlow<Result<Boolean>?>(null)
     val addBookResult: StateFlow<Result<Boolean>?> = _addBookResult
 
-
     private val _errorState = MutableStateFlow<String?>(null)
     val errorState: StateFlow<String?> = _errorState
+
+    private val _deleteResult = MutableStateFlow<Result<Unit>?>(null)
+    val deleteResult: StateFlow<Result<Unit>?> = _deleteResult
+
+    fun deleteShelf(shelfId: Int) {
+        viewModelScope.launch {
+            try {
+                val success = repository.deleteShelf(shelfId)
+                if (success) {
+                    _deleteResult.value = Result.success(Unit)
+                } else {
+                    _deleteResult.value = Result.failure(Exception("Failed to delete shelf"))
+                    _errorState.value = "Gagal menghapus rak buku"
+                }
+            } catch (e: Exception) {
+                _deleteResult.value = Result.failure(e)
+                _errorState.value = "Error menghapus rak: ${e.message}"
+                Log.e("ShelfDetailVM", "Error deleting shelf: ${e.message}")
+            }
+        }
+    }
+
+    fun resetDeleteResult() {
+        _deleteResult.value = null
+    }
 
     fun loadShelfWithBooks(userId: Int, shelfId: Int) {
         _loadingState.value = true
@@ -96,17 +123,23 @@ class ShelfDetailViewModel @Inject constructor(
         _errorState.value = null
     }
 
-    fun addBookToShelf(token: String, shelfId: String, bookId: String) {
+    fun addBookToShelf(shelfId: Int, bookId: Int) {
         viewModelScope.launch {
             try {
-                val success = repository.addBookToShelf(token, shelfId, bookId)
-                _addBookResult.value = Result.success(success)
-                // Refresh shelf content after success
-                _shelfWithBooks.value?.shelf?.id?.let {
-                    loadShelfWithBooks(_shelfWithBooks.value!!.shelf.userId, it.toInt())
+                val success = repository.addBookToShelf(shelfId, bookId)
+                if (success) {
+                    _addBookResult.value = Result.success(true)
+                    _shelfWithBooks.value?.shelf?.let { shelf ->
+                        loadShelfWithBooks(shelf.userId, shelf.id)
+                    }
+                } else {
+                    _addBookResult.value = Result.failure(Throwable("Failed to add book"))
+                    _errorState.value = "Gagal menambahkan buku ke rak"
                 }
             } catch (e: Exception) {
                 _addBookResult.value = Result.failure(e)
+                _errorState.value = "Error menambahkan buku: ${e.message}"
+                Log.e("ShelfDetailVM", "Error adding book: ${e.message}")
             }
         }
     }

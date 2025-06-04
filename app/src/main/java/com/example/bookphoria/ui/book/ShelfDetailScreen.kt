@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material3.*
@@ -48,7 +49,6 @@ import com.example.bookphoria.ui.viewmodel.MyShelfViewModel
 import com.example.bookphoria.ui.viewmodel.ShelfDetailViewModel
 import kotlinx.coroutines.delay
 
-//VERSI OKE SALAH DIKIT
 @Composable
 fun ShelfDetailScreen(
     navController: NavController,
@@ -62,6 +62,8 @@ fun ShelfDetailScreen(
     val booksWithAuthors by myShelfViewModel.booksWithAuthors.collectAsState()
     val addResult by viewModel.addBookResult.collectAsState()
     var showBookPicker by remember { mutableStateOf(false) }
+    val deleteResult by viewModel.deleteResult.collectAsState()
+    var showDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadShelfWithBooks(userId, shelfId)
@@ -78,22 +80,31 @@ fun ShelfDetailScreen(
         }
     }
 
+    LaunchedEffect(deleteResult) {
+        deleteResult?.let {
+            if (it.isSuccess) {
+                navController.popBackStack() // kembali setelah hapus sukses
+            } else {
+                // tampilkan error
+                Log.e("ShelfDelete", "Error: ${it.exceptionOrNull()}")
+            }
+            viewModel.resetDeleteResult()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(SoftCream)
     ) {
         shelfWithBooks?.let { shelf ->
-            ShelfHeader(shelf = shelf.shelf, bookCount = shelf.books.size)
-
-            Button(
-                onClick = { showBookPicker = true },
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .padding(16.dp)
-            ) {
-                Text("Tambah Buku")
-            }
+            // Call ShelfHeader with proper parameters
+            ShelfHeader(
+                shelf = shelf.shelf,
+                bookCount = shelf.books.size,
+                onAddClick = { showBookPicker = true },
+                onRemoveClick =  { showDialog = true }
+            )
 
             BookCollection(books = shelf.books, userId = userId, viewModel = viewModel)
         } ?: run {
@@ -105,48 +116,71 @@ fun ShelfDetailScreen(
                 CircularProgressIndicator()
             }
         }
-    }
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Konfirmasi") },
+                text = { Text("Yakin ingin menghapus rak ini?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showDialog = false
+                        viewModel.deleteShelf(shelfId = shelfId)
+                    }) {
+                        Text("Ya")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDialog = false }) {
+                        Text("Batal")
+                    }
+                }
+            )
+        }
 
-    // Dialog popup untuk pilih buku
-    if (showBookPicker) {
-        Dialog(onDismissRequest = { showBookPicker = false }) {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = Color.White,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Pilih Buku", style = AppTypography.bodyLarge)
-                    Spacer(modifier = Modifier.height(8.dp))
+        // Dialog popup untuk pilih buku
+        if (showBookPicker) {
+            Dialog(onDismissRequest = { showBookPicker = false }) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color.White,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("Pilih Buku", style = AppTypography.bodyLarge)
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    if (booksWithAuthors.isEmpty()) {
-                        Text("Kamu belum punya buku.")
-                    } else {
-                        LazyColumn(modifier = Modifier.height(300.dp)) {
-                            items(booksWithAuthors) { bookWithAuthors ->
-                                val book = bookWithAuthors.book
-                                val authors = bookWithAuthors.authors.joinToString(", ") { it.name }
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            viewModel.addBookToShelf(
-                                                token = token,
-                                                shelfId = shelfId.toString(),
-                                                bookId = book.id.toString()
+                        if (booksWithAuthors.isEmpty()) {
+                            Text("Kamu belum punya buku.")
+                        } else {
+                            LazyColumn(modifier = Modifier.height(300.dp)) {
+                                items(booksWithAuthors) { bookWithAuthors ->
+                                    val book = bookWithAuthors.book
+                                    val authors =
+                                        bookWithAuthors.authors.joinToString(", ") { it.name }
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                viewModel.addBookToShelf(
+                                                    shelfId = shelfId,
+                                                    bookId = book.id
+                                                )
+                                            }
+                                            .padding(vertical = 8.dp)
+                                    ) {
+                                        Column {
+                                            Text(
+                                                text = book.title,
+                                                style = AppTypography.bodyMedium
+                                            )
+                                            Text(
+                                                text = "by $authors",
+                                                style = AppTypography.bodySmall,
+                                                color = Color.Gray
                                             )
                                         }
-                                        .padding(vertical = 8.dp)
-                                ) {
-                                    Column {
-                                        Text(text = book.title, style = AppTypography.bodyMedium)
-                                        Text(
-                                            text = "by $authors",
-                                            style = AppTypography.bodySmall,
-                                            color = Color.Gray
-                                        )
                                     }
                                 }
                             }
@@ -158,9 +192,14 @@ fun ShelfDetailScreen(
     }
 }
 
-
 @Composable
-fun ShelfHeader(shelf: ShelfEntity, bookCount: Int) {
+fun ShelfHeader(
+    shelf: ShelfEntity,
+    bookCount: Int,
+    onAddClick: () -> Unit,
+    onRemoveClick: () -> Unit
+)
+    {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -203,17 +242,33 @@ fun ShelfHeader(shelf: ShelfEntity, bookCount: Int) {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Book count
+                // Add & book count
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.align(Alignment.Start)
                 ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Add,
-                        contentDescription = "Add",
-                        tint = Color.Gray,
+                    IconButton(
+                        onClick = { onAddClick() },
                         modifier = Modifier.size(16.dp)
-                    )
+                    ){
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = "Add Book",
+                            tint = Color.Gray
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
+                    IconButton(
+                        onClick = { onRemoveClick() },
+                        modifier = Modifier.size(16.dp)
+                    ){
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Delete Shelf",
+                            tint = Color.Red
+                        )
+                    }
+
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "$bookCount Books",
@@ -376,9 +431,3 @@ fun BookItem(
         }
     }
 }
-
-//@Preview(showBackground = true)
-//@Composable
-//fun ShelfDetailScreenPreview() {
-//    ShelfDetailScreen()
-//}
