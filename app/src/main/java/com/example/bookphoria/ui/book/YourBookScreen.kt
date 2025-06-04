@@ -89,7 +89,7 @@ fun YourBooksScreen(
                 items(booksWithAuthors) { bookWithAuthors ->
                     ShelfItem(
                         book = bookWithAuthors.book,
-                        authors = bookWithAuthors.authors.joinToString(", ") { it.name },
+                        authors = bookWithAuthors.authors.joinToString(", ") { it.name ?: "Unknown" },
                         onClick = {
                             navController.navigate("detail/${bookWithAuthors.book.id}")
                         }

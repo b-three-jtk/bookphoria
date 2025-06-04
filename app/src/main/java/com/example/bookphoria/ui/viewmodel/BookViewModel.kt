@@ -25,10 +25,17 @@ class BookViewModel @Inject constructor(
 
     private val _selectedBook = MutableStateFlow<BookDetailUIState?>(null)
     val selectedBook: StateFlow<BookDetailUIState?> = _selectedBook
+
     private val _readingProgress = MutableStateFlow<Int?>(null)
     val readingProgress: StateFlow<Int?> = _readingProgress.asStateFlow()
     private val _reviews = MutableStateFlow<List<ReviewNetworkModel>>(emptyList())
     val reviews: StateFlow<List<ReviewNetworkModel>> = _reviews.asStateFlow()
+
+    private val _bookStatus = MutableStateFlow<String?>(null)
+    val bookStatus: StateFlow<String?> = _bookStatus.asStateFlow()
+
+    private val _statusUpdateSuccess = MutableStateFlow(false)
+    val statusUpdateSuccess: StateFlow<Boolean> = _statusUpdateSuccess.asStateFlow()
 
     fun getBookById(bookId: Int) {
         viewModelScope.launch {
@@ -89,6 +96,35 @@ class BookViewModel @Inject constructor(
                 Log.e("BookViewModel", "Error fetching reviews: ${e.message}")
             }
         }
+    }
+
+    fun getBookStatus(bookId: Int) {
+        viewModelScope.launch {
+            try {
+                val userId = userPreferences.getUserId().first() ?: return@launch
+                val status = bookRepository.getBookStatus(userId, bookId)
+                _bookStatus.value = status
+            } catch (e: Exception) {
+                _bookStatus.value = "none"
+            }
+        }
+    }
+
+    fun updateBookStatus(bookId: Int, newStatus: String) {
+        viewModelScope.launch {
+            try {
+                val userId = userPreferences.getUserId().first() ?: return@launch
+                bookRepository.updateBookStatus(userId, bookId, newStatus)
+                _bookStatus.value = newStatus
+                _statusUpdateSuccess.value = true
+            } catch (e: Exception) {
+                _statusUpdateSuccess.value = false
+            }
+        }
+    }
+
+    fun updateStatusUpdateSuccess(success: Boolean) {
+        _statusUpdateSuccess.value = success
     }
 
     data class BookDetailUIState(

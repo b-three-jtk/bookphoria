@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -49,9 +50,11 @@ import com.example.bookphoria.R
 import com.example.bookphoria.ui.theme.AppTypography
 import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.theme.PrimaryOrange
+import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.theme.SubTitleExtraSmall
 import com.example.bookphoria.ui.viewmodel.BookViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailBookScreen(
     navController: NavController,
@@ -60,15 +63,26 @@ fun DetailBookScreen(
 ) {
     val selectedBookState = bookViewModel.selectedBook.collectAsState()
     val readingProgressState = bookViewModel.readingProgress.collectAsState()
+    val bookStatusState = bookViewModel.bookStatus.collectAsState()
+    val statusUpdateSuccess = bookViewModel.statusUpdateSuccess.collectAsState()
     val book = selectedBookState.value
     var showCreateDialog by remember { mutableStateOf(false) }
     var showAddReview by remember { mutableStateOf(false) }
     val reviewsState = bookViewModel.reviews.collectAsState()
+    var showStatusBottomSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(bookId) {
         bookViewModel.getBookById(bookId)
         bookViewModel.getReadingProgress(bookId)
         bookViewModel.getReviews(bookId)
+        bookViewModel.getBookStatus(bookId)
+    }
+
+    LaunchedEffect(statusUpdateSuccess.value) {
+        if (statusUpdateSuccess.value) {
+            bookViewModel.getBookStatus(bookId)
+            bookViewModel.updateStatusUpdateSuccess(false)
+        }
     }
 
     if (book == null) {
@@ -88,83 +102,119 @@ fun DetailBookScreen(
             )
         }
     } else {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Kembali"
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Kembali"
+                        )
+                    }
+                    Text(
+                        text = "Detail Buku",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(start = 8.dp)
                     )
                 }
-                Text(
-                    text = "Detail Buku",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-            }
 
-            Row(modifier = Modifier.fillMaxWidth()) {
-                AsyncImage(
-                    model = book.book.imageUrl ?: R.drawable.bookshelf,
-                    contentDescription = book.book.title,
-                    modifier = Modifier
-                        .height(160.dp)
-                        .width(120.dp)
-                        .clip(MaterialTheme.shapes.small),
-                    contentScale = ContentScale.Crop
-                )
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    AsyncImage(
+                        model = book.book.imageUrl ?: R.drawable.bookshelf,
+                        contentDescription = book.book.title,
+                        modifier = Modifier
+                            .height(160.dp)
+                            .width(120.dp)
+                            .clip(MaterialTheme.shapes.small),
+                        contentScale = ContentScale.Crop
+                    )
 
-                Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
 
-                Column(modifier = Modifier.align(Alignment.Top)) {
-                    Text(book.book.title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    Text("by ${book.author}", fontSize = 14.sp, color = Color.Gray)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row {
-                        Button(
-                            onClick = { /* TODO: Toggle owned/bookmarked */ },
-                            shape = RoundedCornerShape(20.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE45758)),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+                    Column(modifier = Modifier.align(Alignment.Top)) {
+                        Text(
+                            text = book.book.title,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "by ${book.author}",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(bottom = 8.dp)
                         ) {
-                            Text("Owned", color = Color.White)
+                            // Status button
+                            val currentStatus = bookStatusState.value?.lowercase() ?: "none"
+                            val (buttonText, buttonColor) = when (currentStatus) {
+                                "owned" -> "Owned" to Color(0xFFE45758)
+                                "reading" -> "Reading" to Color.Blue
+                                "borrowed" -> "Borrowed" to Color.Green
+                                else -> "Add to Collection" to Color.Gray
+                            }
+
+                            Button(
+                                onClick = { showStatusBottomSheet = true },
+                                shape = RoundedCornerShape(20.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = buttonColor,
+                                    contentColor = Color.White
+                                ),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(buttonText, style = MaterialTheme.typography.labelLarge)
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            // Edit button
+                            IconButton(
+                                onClick = { navController.navigate("edit_book/${book.book.id}") },
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(
+                                        color = DarkIndigo.copy(alpha = 0.1f),
+                                        shape = CircleShape
+                                    )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Edit Book",
+                                    tint = DarkIndigo,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
                         }
-                        IconButton(
-                            onClick = {
-                                navController.navigate("edit_book/${book.book.id}")
-                            },
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "Edit",
-                                tint = DarkIndigo,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-                    Row {
-                        OutlinedButton(
-                            onClick = { showCreateDialog = true },
-                            shape = RoundedCornerShape(24.dp),
-                            border = BorderStroke(1.dp, color = Color.Gray),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = Color.White,
-                                contentColor = LocalContentColor.current)
-                        ) {
-                            Text("Progress Baca", style = AppTypography.bodyMedium)
+                        Row {
+                            OutlinedButton(
+                                onClick = { showCreateDialog = true },
+                                shape = RoundedCornerShape(24.dp),
+                                border = BorderStroke(1.dp, color = Color.Gray),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = Color.White,
+                                    contentColor = LocalContentColor.current
+                                )
+                            ) {
+                                Text("Progress Baca", style = AppTypography.bodyMedium)
+                            }
                         }
                     }
                 }
-            }
 
             if (showCreateDialog) {
                 CreateProgressDialog(
@@ -178,6 +228,18 @@ fun DetailBookScreen(
                     previousProgress = readingProgressState.value
                 )
             }
+                if (showCreateDialog && book != null) {
+                    CreateProgressDialog(
+                        onDismiss = { showCreateDialog = false },
+                        onSave = { pagesRead ->
+                            bookViewModel.updateReadingProgress(book.book.id, pagesRead)
+                            showCreateDialog = false
+                        },
+                        totalPages = book.book.pages,
+                        currentProgress = readingProgressState.value ?: 0,
+                        previousProgress = readingProgressState.value
+                    )
+                }
 
             if (showAddReview) {
                 AddReviewDialog(
@@ -194,28 +256,117 @@ fun DetailBookScreen(
                 fontSize = 14.sp,
                 lineHeight = 20.sp
             )
+                Text(
+                    text = book.book.synopsis,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp
+                )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                book.genres.forEach { genre ->
-                    Text(
-                        text = genre,
-                        modifier = Modifier
-                            .background(Color(0xFFE0E0E0), RoundedCornerShape(50))
-                            .padding(horizontal = 12.dp, vertical = 4.dp),
-                        fontSize = 12.sp
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    book.genres.forEach { genre ->
+                        Text(
+                            text = genre,
+                            modifier = Modifier
+                                .background(Color(0xFFE0E0E0), RoundedCornerShape(50))
+                                .padding(horizontal = 12.dp, vertical = 4.dp),
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    InfoItem(label = "Penerbit", value = book.book.publisher)
+                    InfoItem(label = "Tanggal Terbit", value = book.book.publishedDate)
+                    InfoItem(label = "Jumlah Halaman", value = "${book.book.pages} halaman")
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                Text("Review", style = MaterialTheme.typography.titleMedium)
+
+                reviewsState.value.forEach { review ->
+                    ReviewSection(
+                        reviewerAvatar = review.user.avatar,
+                        reviewerName = review.user.username,
+                        reviewText = review.desc,
+                        rating = review.rate
                     )
                 }
             }
+            if (showStatusBottomSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { showStatusBottomSheet = false },
+                    sheetState = rememberModalBottomSheetState(),
+                    containerColor = SoftCream
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 16.dp)
+                    ) {
+                        Text(
+                            text = "Update Status Buku",
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                InfoItem(label = "Penerbit", value = book.book.publisher)
-                InfoItem(label = "Tanggal Terbit", value = book.book.publishedDate)
-                InfoItem(label = "Jumlah Halaman", value = "${book.book.pages} halaman")
+                        // Owned option
+                        BottomSheetCard(
+                            icon = Icons.Default.Star,
+                            bgColor = Color(0xFFE45758),
+                            title = "Owned",
+                            description = "Buku ini milikmu",
+                            onClick = {
+                                bookViewModel.updateBookStatus(bookId, "owned")
+                                showStatusBottomSheet = false
+                            }
+                        )
+
+                        // Reading option
+                        BottomSheetCard(
+                            icon = Icons.Default.Star,
+                            bgColor = Color.Blue,
+                            title = "Reading",
+                            description = "Sedang membaca buku ini",
+                            onClick = {
+                                bookViewModel.updateBookStatus(bookId, "reading")
+                                showStatusBottomSheet = false
+                            }
+                        )
+
+                        // Borrowed option
+                        BottomSheetCard(
+                            icon = Icons.Default.Star,
+                            bgColor = Color.Green,
+                            title = "Borrowed",
+                            description = "Buku ini dipinjam",
+                            onClick = {
+                                bookViewModel.updateBookStatus(bookId, "borrowed")
+                                showStatusBottomSheet = false
+                            }
+                        )
+
+                        // Remove from collection option
+                        if (bookStatusState.value?.isNotEmpty() == true) {
+                            Spacer(modifier = Modifier.height(8.dp))
+//                            Button(
+//                                onClick = {
+//                                    bookViewModel.updateBookStatus(bookId, "none")
+//                                    showStatusBottomSheet = false
+//                                },
+//                                modifier = Modifier.fillMaxWidth(),
+//                                colors = ButtonDefaults.buttonColors(
+//                                    containerColor = Color.White,
+//                                    contentColor = Color.Red
+//                                ),
+//                                border = BorderStroke(1.dp, Color.Red)
+//                            ) {
+//                                Text("Hapus dari Koleksi")
+//                            }
+                        }
+                    }
+                }
             }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-            Text("Review", style = MaterialTheme.typography.titleMedium)
 
             Button(
                 onClick = { showAddReview = true },
@@ -542,5 +693,42 @@ fun CreateProgressDialogPreview() {
             currentProgress = 50,
             previousProgress = 100
         )
+    }
+}
+
+@Composable
+fun BottomSheetCard(
+    icon: ImageVector,
+    bgColor: Color,
+    title: String,
+    description: String,
+    onClick: () -> Unit
+) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, Color(0xFFE5E5E5)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Row(modifier = Modifier.padding(24.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(RoundedCornerShape(5.dp))
+                    .background(bgColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(imageVector = icon, contentDescription = null, tint = Color.White)
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(text = title, style = MaterialTheme.typography.titleSmall, color = Color(0xFF1D1B20))
+                Text(text = description, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF6F6F6F))
+            }
+        }
     }
 }

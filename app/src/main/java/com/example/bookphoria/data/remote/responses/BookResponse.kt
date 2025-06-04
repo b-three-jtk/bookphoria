@@ -150,3 +150,11 @@ data class WrapperDetailBookNetworkModel(
     @SerializedName("message") val message: String,
     @SerializedName("book") val book: BookNetworkModel
 )
+
+data class AddBookToShelfResponse(
+    @SerializedName("message") val message: String
+)
+
+data class BookIdRequest(
+    @SerializedName("book_id") val bookId: String
+)
