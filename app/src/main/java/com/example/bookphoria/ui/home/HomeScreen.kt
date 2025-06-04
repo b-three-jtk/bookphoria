@@ -131,7 +131,7 @@ fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
             }
         }
 
-        SearchBarHome()
+        SearchBarHome(navController)
 
         Column(
             modifier = Modifier
@@ -145,7 +145,7 @@ fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchBarHome() {
+fun SearchBarHome(navCon: NavController) {
     var query by remember { mutableStateOf("") }
     var active by remember { mutableStateOf(false) }
     val searchHistory = listOf("")
@@ -153,7 +153,8 @@ fun SearchBarHome() {
     DockedSearchBar(
         modifier = Modifier
             .padding(horizontal = 20.dp)
-            .offset(y = 170.dp),
+            .offset(y = 170.dp)
+            .clickable { navCon.navigate("search") },
         colors = SearchBarDefaults.colors(
             containerColor = Color.White
         ),

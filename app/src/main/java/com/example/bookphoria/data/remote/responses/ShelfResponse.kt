@@ -1,0 +1,14 @@
+package com.example.bookphoria.data.remote.responses
+
+import com.google.gson.annotations.SerializedName
+
+data class updateShelfResponse(
+    @SerializedName("message") val message: String,
+    @SerializedName("shelf") val shelf: ShelfNetworkModel
+)
+
+data class ShelfNetworkModel(
+    @SerializedName("name") val name: String,
+    @SerializedName("desc") val desc: String,
+    @SerializedName("image") val image: String?,
+)

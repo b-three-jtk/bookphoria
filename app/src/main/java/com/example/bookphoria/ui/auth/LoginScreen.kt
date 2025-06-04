@@ -187,10 +187,10 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
                 modifier = Modifier.padding(top = 24.dp, bottom = 16.dp)
             )
 
-            GoogleButton(
-                iconRes = R.drawable.ic_google,
-                contentDesc = "Google Login"
-            )
+//            GoogleButton(
+//                iconRes = R.drawable.ic_google,
+//                contentDesc = "Google Login"
+//            )
 
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),

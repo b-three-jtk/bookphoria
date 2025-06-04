@@ -10,7 +10,6 @@ import com.example.bookphoria.data.local.entities.ShelfEntity
 import com.example.bookphoria.data.local.entities.ShelfWithBooks
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.ShelfApiServices
-import com.example.bookphoria.data.remote.responses.BookNetworkModel
 import com.google.gson.JsonObject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -18,9 +17,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import retrofit2.Response
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
@@ -44,7 +45,8 @@ class ShelfRepository @Inject constructor(
     suspend fun createShelf(
         name: String,
         desc: String?,
-        imageUri: Uri?
+        imageFile: File?,
+        imageUri: String?
     ): Result<Unit> {
         return try {
             // Get the token first
@@ -53,15 +55,9 @@ class ShelfRepository @Inject constructor(
                 return Result.failure(Exception("Authentication required"))
             }
 
-            val imagePart = imageUri?.let { uri ->
-                try {
-                    val compressedFile = uri.compressImage(DEFAULT_MAX_SIZE_KB)
-                    Log.d("ImageUpload", "Image size: ${compressedFile.sizeInKB()}KB")
-                    compressedFile.toMultipartPart()
-                } catch (e: Exception) {
-                    Log.e("ImageProcessing", "Error processing image", e)
-                    return Result.failure(Exception("Failed to process image: ${e.message}"))
-                }
+            val imagePart = imageFile?.let {
+                val requestFile = it.asRequestBody("image/*".toMediaTypeOrNull())
+                MultipartBody.Part.createFormData("cover", it.name, requestFile)
             }
 
             val response = try {
@@ -86,6 +82,66 @@ class ShelfRepository @Inject constructor(
         } catch (e: Exception) {
             Result.failure(Exception("Unexpected error: ${e.message}"))
         }
+    }
+
+
+    suspend fun updateShelf(
+        name: String,
+        desc: String?,
+        imageUri: String?,
+        imageFile: File?,
+        id: String
+    ): String? {
+        try {
+            val token = userPreferences.getAccessToken().first()
+            if (token.isNullOrEmpty()) {
+                return "Token tidak ditemukan silahkan login ulang"
+            }
+            val coverPart = imageFile?.let {
+                val requestFile = it.asRequestBody("image/*".toMediaTypeOrNull())
+                MultipartBody.Part.createFormData("cover", it.name, requestFile)
+            }
+
+            val shelf = database.ShelfDao().getShelfById(id)
+
+            val response = try {
+                shelf?.serverId?.let {
+                    api.updateShelf(
+                        token = "Bearer $token",
+                        shelfId = it,
+                        name = name.toRequestBody("text/plain".toMediaType()),
+                        description = desc?.toRequestBody("text/plain".toMediaType()),
+                        image = coverPart
+                    )
+                }
+            } catch (e: IOException) {
+                return "Network error: ${e.message}"
+            } catch (e: Exception) {
+                return "API error: ${e.message}"
+            }
+
+            if (response != null) {
+                if (response.message == "Shelf updated successfully") {
+                    val shelfEntity = database.ShelfDao().getShelfById(id)
+                    shelfEntity?.let {
+                        val updatedShelf = it.copy(
+                            name = name,
+                            description = desc,
+                            imagePath = imageUri
+                        )
+                        database.ShelfDao().update(
+                            description = updatedShelf.description,
+                            imagePath = updatedShelf.imagePath,
+                            id = updatedShelf.id,
+                            name = updatedShelf.name
+                        )
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            return ("Unexpected error: ${e.message}")
+        }
+        return null
     }
 
     private fun Uri.compressImage(maxFileSizeKB: Int): File {
@@ -204,7 +260,7 @@ class ShelfRepository @Inject constructor(
     }
 
     private fun handleApiResponse(
-        response: retrofit2.Response<*>,
+        response: Response<*>,
         maxSize: Int
     ): Result<Unit> {
         return when {
@@ -228,13 +284,10 @@ class ShelfRepository @Inject constructor(
     private suspend fun saveToLocalDatabase(
         name: String,
         desc: String?,
-        imageUri: Uri?,
+        imageUri: String?,
         response: JsonObject?
     ) {
         try {
-            val localImagePath = imageUri?.let { uri ->
-                saveImageToInternalStorage(uri)
-            }
             val serverId = response
                 ?.getAsJsonObject("data")
                 ?.get("id")
@@ -248,7 +301,7 @@ class ShelfRepository @Inject constructor(
                     serverId = serverId,
                     name = name,
                     description = desc,
-                    imagePath = localImagePath
+                    imagePath = imageUri
                 )
             )
         } catch (e: Exception) {

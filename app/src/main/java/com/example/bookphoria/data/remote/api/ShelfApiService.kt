@@ -1,5 +1,6 @@
 package com.example.bookphoria.data.remote.api
 
+import com.example.bookphoria.data.remote.responses.updateShelfResponse
 import com.google.gson.JsonObject
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -35,4 +36,15 @@ interface ShelfApiServices {
         @Header("Authorization") token: String,
         @Path("shelf_id") shelfId: String
     ): Response<JsonObject>
+
+    @Multipart
+    @POST("shelves/update/{shelf_id}")
+    suspend fun updateShelf(
+        @Header("Authorization") token: String,
+        @Path("shelf_id") shelfId: String,
+        @Part("name") name: RequestBody,
+        @Part("desc") description: RequestBody?,
+        @Part image: MultipartBody.Part?
+    ): updateShelfResponse
+
 }

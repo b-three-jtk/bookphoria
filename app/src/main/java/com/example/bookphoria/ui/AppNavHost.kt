@@ -217,10 +217,10 @@ fun AppNavHost(
                 val shelfId = backStackEntry.arguments?.getInt("shelfId") ?: 0
                 val viewModel: ShelfDetailViewModel = hiltViewModel()
                 ShelfDetailScreen(
-                    navController = navController,
                     userId = userId,
                     shelfId = shelfId,
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    navController = navController
                 )
             }
             composable("change") {

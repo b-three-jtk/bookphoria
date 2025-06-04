@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -26,12 +27,11 @@ class ShelfViewModel @Inject constructor(
     val uiState: StateFlow<ShelfUiState> = _uiState
     val localShelves: Flow<List<ShelfEntity>> = database.ShelfDao().getAllShelves()
 
-
-    fun createShelf(name: String, desc: String?, imageUri: Uri?) {
+    fun createShelf(name: String, desc: String?, imageFile: File?, imageUri: String?) {
         _uiState.value = ShelfUiState.Loading
 
         viewModelScope.launch {
-            repository.createShelf(name, desc, imageUri)
+            repository.createShelf(name, desc, imageFile, imageUri)
                 .onSuccess {
                     _uiState.value = ShelfUiState.Success
                 }

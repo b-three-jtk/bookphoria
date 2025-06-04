@@ -5,15 +5,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bookphoria.data.local.dao.BookDao
 import com.example.bookphoria.data.local.dao.ShelfDao
-import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
-import com.example.bookphoria.data.local.entities.ShelfBookCrossRef
 import com.example.bookphoria.data.local.entities.ShelfWithBooks
 import com.example.bookphoria.data.repository.ShelfRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -89,6 +88,30 @@ class ShelfDetailViewModel @Inject constructor(
         } catch (e: Exception) {
             Log.e("ShelfDetailVM", "Error getting book author", e)
             "Unknown Author"
+        }
+    }
+
+    suspend fun updateShelf(
+        name: String? = null,
+        desc: String? = null,
+        imageUri: String? = null,
+        imageFile: File? = null
+    ) {
+        try {
+            if (name != null) {
+                _shelfWithBooks.value!!.shelf.serverId?.let {
+                    repository.updateShelf(name, desc, imageUri, imageFile,
+                        it
+                    )
+                }
+
+                _shelfWithBooks.value!!.shelf.name = name
+                _shelfWithBooks.value!!.shelf.description = desc
+                _shelfWithBooks.value!!.shelf.imagePath = imageUri
+                _shelfWithBooks.value = _shelfWithBooks.value
+            }
+        } catch (e: Exception) {
+            Log.e("ShelfDetailVM", "Error updating shelf", e)
         }
     }
 
