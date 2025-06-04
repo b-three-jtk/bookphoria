@@ -1,10 +1,7 @@
-package com.example.bookphoria.ui.book
+package com.example.bookphoria.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.bookphoria.data.local.dao.BookDao
-import com.example.bookphoria.data.local.dao.ShelfDao
-import com.example.bookphoria.data.local.dao.UserDao
 import com.example.bookphoria.data.local.entities.BookWithAuthors
 import com.example.bookphoria.data.local.entities.ShelfWithBooks
 import com.example.bookphoria.data.local.preferences.UserPreferences
@@ -22,13 +19,10 @@ import kotlinx.coroutines.flow.asStateFlow
 
 @HiltViewModel
 class MyShelfViewModel @Inject constructor(
-    private val userDao: UserDao,
     private val userRepository: UserRepository,
     private val shelfRepository: ShelfRepository,
     private val userPreferences: UserPreferences,
     private val authRepository: AuthRepository,
-    private val shelfDao: ShelfDao,
-    private val bookDao: BookDao
 ) : ViewModel() {
 
     private val _booksWithAuthors = MutableStateFlow<List<BookWithAuthors>>(emptyList())
@@ -58,7 +52,8 @@ class MyShelfViewModel @Inject constructor(
 
     fun loadUserBooks() {
         viewModelScope.launch {
-            _userId.value?.let { uid ->
+            val uid = userPreferences.getUserId().first()
+            uid?.let {
                 _booksWithAuthors.value = userRepository.getBooksWithAuthorsByUser(uid)
             }
         }

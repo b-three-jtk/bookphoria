@@ -34,7 +34,7 @@ interface FriendApiService {
     suspend fun getUserByUsername(
         @Header("Authorization") token: String,
         @Path("userName") userName: String
-    ): UserEntity
+    ): UserWrapperResponse
 }
 
 data class UserWrapperResponse(

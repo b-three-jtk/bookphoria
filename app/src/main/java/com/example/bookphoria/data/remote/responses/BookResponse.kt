@@ -41,7 +41,7 @@ fun BookStatusNetworkModel.toFullBookData(userId: Int, bookId: Int): FullBookDat
         ),
         authors = this.book.authors.map {
             AuthorEntity(
-                id = it.id,
+                serverId = it.id,
                 name = it.name,
                 desc = it.desc?: ""
             )
@@ -49,7 +49,7 @@ fun BookStatusNetworkModel.toFullBookData(userId: Int, bookId: Int): FullBookDat
 
         genres = this.book.genres.map {
             GenreEntity(
-                id = it.id,
+                serverId = it.id,
                 name = it.name
             )
         },
@@ -116,4 +116,35 @@ data class AuthorNetworkModel(
 data class GenreNetworkModel(
     @SerializedName("id") val id: String,
     @SerializedName("name") val name: String
+)
+
+data class ReviewResponse(
+    @SerializedName("user_id") val userId: Int,
+    @SerializedName("book_id") val bookId: Int,
+    @SerializedName("desc") val desc: String,
+    @SerializedName("rate") val rate: Int,
+    @SerializedName("created_at") val createdAt: String,
+    @SerializedName("user") val user : UserNetworkModel
+)
+
+data class ReviewNetworkModel(
+    @SerializedName("user_id") val userId: Int,
+    @SerializedName("book_id") val bookId: String,
+    @SerializedName("desc") val desc: String,
+    @SerializedName("rate") val rate: Int,
+    @SerializedName("created_at") val createdAt: String,
+    @SerializedName("user") val user : UserNetworkModel
+)
+
+data class UserNetworkModel(
+    @SerializedName("username") val username: String,
+    @SerializedName("first_name") val firstName: String,
+    @SerializedName("last_name") val lastName: String,
+    @SerializedName("email") val email: String,
+    @SerializedName("avatar") val avatar: String
+)
+
+data class AddReviewModel(
+    @SerializedName("message") val message: String,
+    @SerializedName("review") val review: ReviewNetworkModel
 )

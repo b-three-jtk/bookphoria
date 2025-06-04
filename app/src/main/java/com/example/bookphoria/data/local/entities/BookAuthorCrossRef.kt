@@ -11,5 +11,5 @@ import androidx.room.Index
 
 data class BookAuthorCrossRef(
     val bookId: Int,
-    val authorId: String
+    val authorId: Int
 )

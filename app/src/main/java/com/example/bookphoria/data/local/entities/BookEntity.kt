@@ -44,8 +44,8 @@ fun AddBookResponse.toBookWithGenresAndAuthors(): BookWithGenresAndAuthors = Boo
         pages = this.book.pages,
         imageUrl = this.book.cover
     ),
-    authors = this.authors.map { AuthorEntity(id = it.id, name = it.name, desc = "") },
-    genres = this.genres.map { GenreEntity(id = it.id, name = it.name) }
+    authors = this.authors.map { AuthorEntity(serverId = it.id, name = it.name, desc = "") },
+    genres = this.genres.map { GenreEntity(serverId = it.id, name = it.name) }
 )
 
 data class BookWithGenresAndAuthors(

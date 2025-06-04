@@ -10,6 +10,7 @@ import com.example.bookphoria.data.local.entities.ShelfEntity
 import com.example.bookphoria.data.local.entities.ShelfWithBooks
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.ShelfApiServices
+import com.example.bookphoria.data.remote.responses.BookNetworkModel
 import com.google.gson.JsonObject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +40,6 @@ class ShelfRepository @Inject constructor(
         private const val DEFAULT_MAX_SIZE_KB = 300
         private const val MAX_IMAGE_DIMENSION = 2048
     }
-
 
     suspend fun createShelf(
         name: String,
@@ -280,6 +280,19 @@ class ShelfRepository @Inject constructor(
             } finally {
                 inputStream.close()
             }
+        }
+    }
+
+    suspend fun addBookToShelf(token: String, shelfId: String, bookId: String): Boolean {
+        return try {
+            val bookData = JsonObject().apply {
+                addProperty("book_id", bookId)
+            }
+            val response = api.addBookToShelf("Bearer $token", shelfId, bookData)
+            response.isSuccessful
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
         }
     }
 

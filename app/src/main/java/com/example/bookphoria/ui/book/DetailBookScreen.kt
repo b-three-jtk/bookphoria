@@ -1,7 +1,5 @@
 package com.example.bookphoria.ui.book
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -34,7 +32,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -49,7 +46,7 @@ import com.example.bookphoria.R
 import com.example.bookphoria.ui.theme.AppTypography
 import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.theme.PrimaryOrange
-import com.example.bookphoria.ui.theme.SoftCream
+import com.example.bookphoria.ui.theme.SubTitleExtraSmall
 import com.example.bookphoria.ui.viewmodel.BookViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,11 +62,14 @@ fun DetailBookScreen(
     val statusUpdateSuccess = bookViewModel.statusUpdateSuccess.collectAsState()
     val book = selectedBookState.value
     var showCreateDialog by remember { mutableStateOf(false) }
+    var showAddReview by remember { mutableStateOf(false) }
+    val reviewsState = bookViewModel.reviews.collectAsState()
     var showStatusBottomSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(bookId) {
         bookViewModel.getBookById(bookId)
         bookViewModel.getReadingProgress(bookId)
+        bookViewModel.getReviews(bookId)
         bookViewModel.getBookStatus(bookId)
     }
 
@@ -199,6 +199,18 @@ fun DetailBookScreen(
                     }
                 }
 
+            if (showCreateDialog) {
+                CreateProgressDialog(
+                    onDismiss = { showCreateDialog = false },
+                    onSave = { pagesRead ->
+                        bookViewModel.updateReadingProgress(book.book.id, pagesRead)
+                        showCreateDialog = false
+                    },
+                    totalPages = book.book.pages,
+                    currentProgress = readingProgressState.value ?: 0,
+                    previousProgress = readingProgressState.value
+                )
+            }
                 if (showCreateDialog && book != null) {
                     CreateProgressDialog(
                         onDismiss = { showCreateDialog = false },
@@ -212,6 +224,21 @@ fun DetailBookScreen(
                     )
                 }
 
+            if (showAddReview) {
+                AddReviewDialog(
+                    onDismiss = { showAddReview = false },
+                    onSubmit = { desc, rate ->
+                        bookViewModel.addReview(bookId = book.book.id, desc = desc, rate = rate)
+                    }
+                )
+
+            }
+
+            Text(
+                text = book.book.synopsis,
+                fontSize = 14.sp,
+                lineHeight = 20.sp
+            )
                 Text(
                     text = book.book.synopsis,
                     fontSize = 14.sp,
@@ -321,6 +348,38 @@ fun DetailBookScreen(
                 }
             }
 
+            Button(
+                onClick = { showAddReview = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(36.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PrimaryOrange.copy(alpha = 0.1f),
+                    contentColor = PrimaryOrange
+                ),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+            ) {
+                Text(
+                    text = "+ Add a Review",
+                    style = SubTitleExtraSmall,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            if (reviewsState.value.isEmpty()) {
+                Text("Belum ada review.", style = MaterialTheme.typography.bodySmall)
+            } else {
+                reviewsState.value.forEach { review ->
+                    ReviewSection(
+                        reviewerAvatar = review.user.avatar,
+                        reviewerName = review.user.username,
+                        reviewText = review.desc,
+                        rating = review.rate
+                    )
+                }
+            }
         }
     }
 }
@@ -335,6 +394,7 @@ fun InfoItem(label: String, value: String) {
 
 @Composable
 fun ReviewSection(
+    reviewerAvatar: String,
     reviewerName: String,
     reviewText: String,
     rating: Int
@@ -346,11 +406,14 @@ fun ReviewSection(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.AccountCircle,
-                    contentDescription = null,
-                    tint = Color.Gray,
-                    modifier = Modifier.size(36.dp)
+                Image(
+                    painter = rememberAsyncImagePainter(model = reviewerAvatar.ifBlank { R.drawable.user }),
+                    contentDescription = "Profile",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(45.dp)
+                        .clip(CircleShape)
+                        .border(1.dp, Color.LightGray, CircleShape)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
@@ -383,6 +446,84 @@ fun ReviewSection(
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(start = 44.dp)
         )
+    }
+}
+
+@Composable
+fun AddReviewDialog(
+    onDismiss: () -> Unit,
+    onSubmit: (String, Int) -> Unit = { _, _ -> }
+) {
+    var reviewText by remember { mutableStateOf("") }
+    var selectedRating by remember { mutableStateOf(0) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(20.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Tambahkan Ulasan",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                OutlinedTextField(
+                    value = reviewText,
+                    onValueChange = { reviewText = it },
+                    label = { Text("Deskripsi") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 4,
+                    singleLine = false
+                )
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Rating:")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Row {
+                        for (i in 1..5) {
+                            Icon(
+                                imageVector = if (i <= selectedRating) Icons.Filled.Star else Icons.Outlined.Star,
+                                contentDescription = "Rating Star",
+                                tint = if (i <= selectedRating) Color(0xFFFF9800) else Color.Gray,
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clickable { selectedRating = i }
+                            )
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Batal")
+                    }
+                    Button(
+                        onClick = {
+                            if (reviewText.isNotBlank() && selectedRating > 0) {
+                                onSubmit(reviewText, selectedRating)
+                                onDismiss()
+                            }
+                        },
+                        enabled = reviewText.isNotBlank() && selectedRating > 0
+                    ) {
+                        Text("Simpan")
+                    }
+                }
+            }
+        }
     }
 }
 

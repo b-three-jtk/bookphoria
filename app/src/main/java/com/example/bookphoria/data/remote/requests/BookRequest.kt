@@ -32,3 +32,9 @@ data class EditBookRequest(
     @SerializedName("authors") val authors: List<String>,
     @SerializedName("genres") val genres: List<String>,
 )
+
+data class AddReviewRequest(
+    @SerializedName("book_id") val bookId: String,
+    @SerializedName("rate") val rate: Int,
+    @SerializedName("desc") val desc: String
+)

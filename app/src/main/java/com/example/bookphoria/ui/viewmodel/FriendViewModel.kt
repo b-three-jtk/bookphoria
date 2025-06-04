@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bookphoria.data.local.entities.FriendWithUsers
 import com.example.bookphoria.data.local.entities.UserEntity
+import com.example.bookphoria.data.remote.api.UserWrapperResponse
 import com.example.bookphoria.data.repository.FriendRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,8 @@ class FriendViewModel @Inject constructor(
     val friendRequest: State<List<FriendWithUsers>> get() = _friendRequest
     private val _friendDetail = mutableStateOf<UserEntity?>(null)
     val friendDetail: State<UserEntity?> = _friendDetail
+    private val _friendSearchDetail = mutableStateOf<UserWrapperResponse?>(null)
+    val friendSearchDetail: State<UserWrapperResponse?> = _friendSearchDetail
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -127,7 +130,8 @@ class FriendViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val result = repository.getUserByUsername(username)
-                _friendDetail.value = result
+                Log.d("FriendViewModel", "Result User: $result")
+                _friendSearchDetail.value = result
             } catch (e: Exception) {
                 Log.e("FriendViewModel", "Error: ${e.message}")
             }

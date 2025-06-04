@@ -12,56 +12,65 @@ import com.example.bookphoria.data.remote.api.RegisterRequest
 import com.example.bookphoria.data.remote.api.ResetPasswordRequest
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
-import com.example.bookphoria.data.remote.api.UserStatsResponse
-import com.google.android.gms.common.api.Response
-import kotlinx.coroutines.flow.first
 import javax.inject.Singleton
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.launch
+import kotlin.Result.Companion.failure
 
 @Singleton
 class AuthRepository @Inject constructor(
     private val apiService: AuthApiService,
     private val userApiService: FriendApiService,
     private val userDao: UserDao,
-    private val userPreferences: UserPreferences
+    private val userPreferences: UserPreferences,
 ) {
-    suspend fun login(email: String, password: String): Result<Unit> {
-        return try {
+    suspend fun login(email: String, password: String): UserEntity? {
+        try {
             val response = apiService.login(LoginRequest(email, password))
-            Log.d("AuthRepo", "API User Data - id: ${response.user.id}, username: ${response.user.username}, email: ${response.user.email}")
-
-            if (response.accessToken.isNullOrEmpty()) {
-                return Result.failure(Exception("Access token dari server kosong atau null"))
-            }
-            Log.d("AuthRepository", "Saving token: ${response.accessToken}")
 
             userPreferences.saveLoginData(token = response.accessToken, userId = response.user.id, userName = response.user.username)
 
-            val userEntity = UserEntity(
-                id = response.user.id,
-                username = response.user.username,
-                email = response.user.email,
-                firstName = response.user.firstName,
-                lastName = response.user.lastName,
-                profilePicture = response.user.profilePicture
-            )
-            userDao.insertUser(userEntity)
+            val user = userDao.getUserById(response.user.id)
+            if (user == null) {
+                val userEntity = UserEntity(
+                    id = response.user.id,
+                    username = response.user.username,
+                    email = response.user.email,
+                    firstName = response.user.firstName,
+                    lastName = response.user.lastName,
+                    profilePicture = response.user.profilePicture
+                )
+                userDao.insertUser(userEntity)
 
-            Result.success(Unit)
+                return userEntity
+            } else {
+                val username = user.username
+                val res = username?.let {
+                    userApiService.getUserByUsername(
+                        token = "Bearer ${response.accessToken}",
+                        userName = it
+                    )
+                }
+                Log.d("AuthRepository", "Received user: $res")
+                if (res != null) {
+                    userDao.updateUser(res.user.id, res.user.username, res.user.firstName, res.user.lastName, res.user.email, res.user.profilePicture)
+                }
+            }
+
+            return user
         } catch (e: Exception) {
-            Result.failure(e)
+            Log.d("AuthRepository", "Error during login: ${e.message}")
+            return null
         }
     }
 
     suspend fun register(username: String, email: String, password: String): Result<Unit> {
         return try {
             if (username.isBlank() || email.isBlank() || password.isBlank()) {
-                return Result.failure(Exception("Seluruh field harus terisi"))
+                return failure(Exception("Seluruh field harus terisi"))
             }
 
             val response = apiService.register(RegisterRequest(username, email, password))
-            userPreferences.saveLoginData(response.accessToken, response.user.id, response.user.username)
+            userPreferences.saveLoginData(token = response.accessToken, userId = response.user.id, userName = response.user.username)
+            Log.d("AuthRepository", "Received user: $response")
 
             val userEntity = UserEntity(
                 id = response.user.id,
@@ -73,7 +82,7 @@ class AuthRepository @Inject constructor(
             Result.success(Unit)
         } catch (e: Exception) {
             println("Error saat register: ${e.message}")
-            Result.failure(e)
+            failure(e)
         }
     }
 
@@ -82,7 +91,7 @@ class AuthRepository @Inject constructor(
             val response = apiService.forgotPassword(ForgotPasswordRequest(email))
             Result.success(response.message)
         } catch (e: Exception) {
-            Result.failure(e)
+            failure(e)
         }
     }
 
@@ -93,7 +102,7 @@ class AuthRepository @Inject constructor(
             )
             Result.success(response.message)
         } catch (e: Exception) {
-            Result.failure(e)
+            failure(e)
         }
     }
 
@@ -103,56 +112,15 @@ class AuthRepository @Inject constructor(
             userDao.clearUsers()
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            failure(e)
         }
     }
 
     suspend fun getUserByUsername(username: String): UserEntity? {
-        val accessToken = userPreferences.getAccessToken().first() ?: return null
-
-        val userLocal = userDao.getUserByUsername(username)
-        if (userLocal != null) {
-            return userLocal
-        }
-
-        val response = userApiService.getUserByUsername(
-            token = "Bearer ${accessToken}",
-            userName = username
-        )
-        Log.d("AuthRepository", "Received user: $response")
-        if (response != null) {
-            userDao.updateUser(response.id, response.username, response.firstName, response.lastName, response.email, response.profilePicture)
-            return response
-        } else {
-            Log.e("AuthRepository", "User not found in response")
-            return null
-        }
+        return userDao.getUserByUsername(username)
     }
 
     suspend fun getCurrentUserId(): Int? {
         return userPreferences.getUserId().first()
-    }
-
-    suspend fun getCurrentUser(): Result<UserStatsResponse> {
-        return try {
-            val response = apiService.getCurrentUser()
-            if (response.isSuccessful) {
-                response.body()?.let { userStats ->
-                    // Update local database
-                    userDao.insertUser(
-                        UserEntity(
-                            id = userStats.id,
-                            username = userStats.username,
-                            email = userStats.email
-                        )
-                    )
-                    Result.success(userStats)
-                } ?: Result.failure(Exception("Response body is null"))
-            } else {
-                Result.failure(Exception("API error: ${response.code()} - ${response.message()}"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
     }
 }

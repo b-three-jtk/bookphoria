@@ -16,7 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.material3.AlertDialogDefaults.shape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -24,12 +23,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -39,12 +36,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
-import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.ui.theme.*
+import com.example.bookphoria.ui.viewmodel.MyShelfViewModel
 import com.example.bookphoria.ui.viewmodel.ShelfUiState
 import com.example.bookphoria.ui.viewmodel.ShelfViewModel
 
@@ -52,7 +48,6 @@ import com.example.bookphoria.ui.viewmodel.ShelfViewModel
 fun MyShelfScreen(
     viewModel: MyShelfViewModel = hiltViewModel(),
     navController: NavController,
-    onCreateCollectionClick: () -> Unit = {}
 ) {
     var showCreateDialog by remember { mutableStateOf(false) }
 
@@ -350,7 +345,7 @@ fun CreateCollectionDialog(
                             if (collectionName.isNotBlank()) {
                                 viewModel.createShelf(
                                     name = collectionName,
-                                    desc = collectionDescription.takeIf { it?.isNotBlank() == true },
+                                    desc = collectionDescription.takeIf { it.isNotBlank() == true },
                                     imageUri = imageUri.value
                                 )
                             }

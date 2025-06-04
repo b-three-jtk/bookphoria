@@ -5,6 +5,7 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "genres")
 data class GenreEntity(
-    @PrimaryKey(autoGenerate = false) val id: String,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val serverId: String,
     val name: String
 )

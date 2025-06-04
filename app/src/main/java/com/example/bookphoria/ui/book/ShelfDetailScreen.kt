@@ -1,14 +1,17 @@
 package com.example.bookphoria.ui.book
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Book
 import androidx.compose.material3.*
@@ -24,34 +27,55 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.bookphoria.DeepLinkHolder.token
 import com.example.bookphoria.R
 import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.ShelfEntity
+import com.example.bookphoria.ui.theme.AppTypography
 import com.example.bookphoria.ui.theme.SoftCream
+import com.example.bookphoria.ui.viewmodel.MyShelfViewModel
 import com.example.bookphoria.ui.viewmodel.ShelfDetailViewModel
-import com.example.bookphoria.ui.viewmodel.ShelfDetailViewModelFactory
+import kotlinx.coroutines.delay
 
+//VERSI OKE SALAH DIKIT
 @Composable
 fun ShelfDetailScreen(
     navController: NavController,
     userId: Int,
     shelfId: Int,
-    viewModel: ShelfDetailViewModel = hiltViewModel()
-    ) {
+    viewModel: ShelfDetailViewModel = hiltViewModel(),
+    myShelfViewModel: MyShelfViewModel = hiltViewModel()
+) {
 
     val shelfWithBooks by viewModel.shelfWithBooks.collectAsState()
+    val booksWithAuthors by myShelfViewModel.booksWithAuthors.collectAsState()
+    val addResult by viewModel.addBookResult.collectAsState()
+    var showBookPicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadShelfWithBooks(userId, shelfId)
+        myShelfViewModel.loadUserBooks()
+    }
+
+    LaunchedEffect(addResult) {
+        addResult?.let {
+            if (it.isSuccess) {
+                showBookPicker = false
+            }
+            delay(1500)
+            viewModel.resetAddBookResult()
+        }
     }
 
     Column(
@@ -61,6 +85,16 @@ fun ShelfDetailScreen(
     ) {
         shelfWithBooks?.let { shelf ->
             ShelfHeader(shelf = shelf.shelf, bookCount = shelf.books.size)
+
+            Button(
+                onClick = { showBookPicker = true },
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(16.dp)
+            ) {
+                Text("Tambah Buku")
+            }
+
             BookCollection(books = shelf.books, userId = userId, viewModel = viewModel)
         } ?: run {
             Box(
@@ -69,6 +103,56 @@ fun ShelfDetailScreen(
                     .wrapContentSize(Alignment.Center)
             ) {
                 CircularProgressIndicator()
+            }
+        }
+    }
+
+    // Dialog popup untuk pilih buku
+    if (showBookPicker) {
+        Dialog(onDismissRequest = { showBookPicker = false }) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = Color.White,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Pilih Buku", style = AppTypography.bodyLarge)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    if (booksWithAuthors.isEmpty()) {
+                        Text("Kamu belum punya buku.")
+                    } else {
+                        LazyColumn(modifier = Modifier.height(300.dp)) {
+                            items(booksWithAuthors) { bookWithAuthors ->
+                                val book = bookWithAuthors.book
+                                val authors = bookWithAuthors.authors.joinToString(", ") { it.name }
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            viewModel.addBookToShelf(
+                                                token = token,
+                                                shelfId = shelfId.toString(),
+                                                bookId = book.id.toString()
+                                            )
+                                        }
+                                        .padding(vertical = 8.dp)
+                                ) {
+                                    Column {
+                                        Text(text = book.title, style = AppTypography.bodyMedium)
+                                        Text(
+                                            text = "by $authors",
+                                            style = AppTypography.bodySmall,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

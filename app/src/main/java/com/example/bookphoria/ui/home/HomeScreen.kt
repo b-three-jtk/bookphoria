@@ -41,6 +41,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,8 +62,6 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
-import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
-import com.example.bookphoria.data.remote.responses.BookNetworkModel
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.viewmodel.HomeViewModel
 
@@ -70,6 +69,11 @@ import com.example.bookphoria.ui.viewmodel.HomeViewModel
 fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
     val userName by viewModel.userName.collectAsState()
     val avatar by viewModel.avatar.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadBooks()
+        viewModel.loadUserProfile()
+    }
 
     Box(modifier = Modifier.fillMaxSize().background(SoftCream)) {
         Box(

@@ -41,10 +41,8 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
 import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.ui.theme.AppTypography
-import com.example.bookphoria.ui.theme.DeepBlue
-import com.example.bookphoria.ui.theme.LightBlue
 import com.example.bookphoria.ui.theme.SoftCream
-import com.example.bookphoria.ui.theme.TitleExtraSmall
+import com.example.bookphoria.ui.viewmodel.MyShelfViewModel
 
 @Composable
 fun YourBooksScreen(

@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.UserEntity
+import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.repository.AuthRepository
 import com.example.bookphoria.data.repository.BookRepository
 import com.example.bookphoria.data.repository.FriendRepository
@@ -24,7 +25,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val userPreferences: UserPreferences
 ) : ViewModel() {
 
     private val _userData = MutableStateFlow<UserEntity?>(null)
@@ -46,7 +48,7 @@ class ProfileViewModel @Inject constructor(
     val error: StateFlow<String?> = _error
 
     init {
-        fetchUserData() // Fetch user data when ViewModel is initialized
+        fetchUserData()
     }
 
     private fun fetchUserData() {
@@ -57,7 +59,7 @@ class ProfileViewModel @Inject constructor(
                 Log.d("ProfileViewModel", "Fetched userId: $userId")
                 if (userId != null) {
                     val user = userRepository.getUserById(userId)
-                    Log.d("ProfileViewModel", "Fetched user: id=${user?.id}, username=${user?.username}, email=${user?.email}")
+                    Log.d("ProfileViewModel", "Fetched user: id=${user?.id}, username=${user?.username}, email=${user?.email}, profilePicture=${user?.profilePicture}")
                     _userData.value = user
                 } else {
                     _error.value = "User not logged in"
@@ -74,9 +76,12 @@ class ProfileViewModel @Inject constructor(
         _error.value = null
     }
 
-    fun getProfile(username: String, onSuccess: (UserEntity) -> Unit, onError: (Throwable) -> Unit) {
+    fun getProfile(onSuccess: (UserEntity) -> Unit, onError: (Throwable) -> Unit) {
         viewModelScope.launch {
-            val result = authRepository.getUserByUsername(username)
+            val username = userPreferences.getUserName().first()
+            val result = username?.let { authRepository.getUserByUsername(it) }
+            Log.d("ProfileViewModel", "Fetched username: $username")
+            Log.d("ProfileViewModel", "Fetched user: $result")
             result?.let {
                 onSuccess(it)
             } ?: onError(Exception("Profile not found"))

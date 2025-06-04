@@ -9,5 +9,5 @@ import androidx.room.Index
 )
 data class BookGenreCrossRef(
     val bookId: Int,
-    val genreId: String
+    val genreId: Int
 )
