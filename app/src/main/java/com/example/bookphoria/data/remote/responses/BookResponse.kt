@@ -2,13 +2,10 @@ package com.example.bookphoria.data.remote.responses
 
 import com.example.bookphoria.data.local.entities.AuthorEntity
 import com.example.bookphoria.data.local.entities.BookEntity
-import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.data.local.entities.FullBookDataWithUserInfo
 import com.example.bookphoria.data.local.entities.GenreEntity
 import com.example.bookphoria.data.local.entities.UserBookCrossRef
 import com.google.gson.annotations.SerializedName
-import java.io.File
-import java.util.Date
 
 data class BookSearchResponse(
     @SerializedName("books") val data: List<BookNetworkModel>
@@ -147,4 +144,9 @@ data class UserNetworkModel(
 data class AddReviewModel(
     @SerializedName("message") val message: String,
     @SerializedName("review") val review: ReviewNetworkModel
+)
+
+data class WrapperDetailBookNetworkModel(
+    @SerializedName("message") val message: String,
+    @SerializedName("book") val book: BookNetworkModel
 )

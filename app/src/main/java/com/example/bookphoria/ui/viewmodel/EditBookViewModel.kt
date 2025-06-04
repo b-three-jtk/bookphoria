@@ -1,5 +1,6 @@
 package com.example.bookphoria.ui.viewmodel
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -46,6 +47,11 @@ class EditBookViewModel @Inject constructor(
     fun loadBook(bookId: Int) {
         viewModelScope.launch {
             val bookEntity = bookRepository.getBookById(bookId)
+            val authors = bookRepository.getAllAuthors()
+            val genres = bookRepository.getAllGenres()
+
+            allAuthors = authors
+            allGenres = genres
 
             bookEntity?.let {
                 bookNetworkId = it.book.serverId
@@ -60,6 +66,10 @@ class EditBookViewModel @Inject constructor(
 
                 selectedAuthorIds = it.authors.map { author -> author.serverId }
                 selectedGenreIds = it.genres.map { genre -> genre.serverId }
+            }
+
+            if (bookEntity != null) {
+                Log.d("EditBookViewModel", "Selected Author IDs: ${bookEntity.authors}")
             }
         }
     }
@@ -78,6 +88,7 @@ class EditBookViewModel @Inject constructor(
                 authors = selectedAuthorIds.toList(),
                 genres = selectedGenreIds.toList(),
             )
+            Log.d("EditBookViewModel", "Request: $request")
             bookRepository.updateBook(
                 request
             )

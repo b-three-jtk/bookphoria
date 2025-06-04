@@ -12,13 +12,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -48,6 +48,11 @@ import androidx.navigation.NavController
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.bookphoria.R
 import com.example.bookphoria.ui.viewmodel.SearchViewModel
 
@@ -91,10 +96,10 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel(), navController: Na
                         if (data != null) {
                             BookSearchItem(
                                 title = data.title,
-                                author = data.authors.joinToString(", ") { it.name },
+                                author = data.authors?.joinToString(", ") { it.name }.orEmpty(),
                                 imageUrl = data.cover,
                                 onClick = {
-                                    navController.navigate("detail/${data.id}")
+                                    navController.navigate("detail/search/${data.id}")
                                 }
                             )
                         }
@@ -104,16 +109,46 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel(), navController: Na
                         when {
                             loadState.refresh is LoadState.Loading -> {
                                 item {
-                                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                                        CircularProgressIndicator()
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        val composition by rememberLottieComposition(
+                                            LottieCompositionSpec.RawRes(R.raw.splashbuku)
+                                        )
+                                        val progress by animateLottieCompositionAsState(
+                                            composition = composition,
+                                            iterations = LottieConstants.IterateForever
+                                        )
+
+                                        LottieAnimation(
+                                            composition = composition,
+                                            progress = { progress },
+                                            modifier = Modifier.size(200.dp)
+                                        )
                                     }
                                 }
                             }
 
                             loadState.append is LoadState.Loading -> {
                                 item {
-                                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                                        CircularProgressIndicator()
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        val composition by rememberLottieComposition(
+                                            LottieCompositionSpec.RawRes(R.raw.splashbuku)
+                                        )
+                                        val progress by animateLottieCompositionAsState(
+                                            composition = composition,
+                                            iterations = LottieConstants.IterateForever
+                                        )
+
+                                        LottieAnimation(
+                                            composition = composition,
+                                            progress = { progress },
+                                            modifier = Modifier.size(200.dp)
+                                        )
                                     }
                                 }
                             }

@@ -183,6 +183,7 @@ fun EditBookScreen(
                 viewModel.allAuthors.forEach { author ->
                     val isSelected = author.serverId in viewModel.selectedAuthorIds
                     FilterChip(
+                        modifier = Modifier.padding(end = 4.dp),
                         selected = isSelected,
                         onClick = {
                             viewModel.selectedAuthorIds = viewModel.selectedAuthorIds.toMutableList().apply {
@@ -205,6 +206,7 @@ fun EditBookScreen(
                 viewModel.allGenres.forEach { genre ->
                     val isSelected = genre.serverId in viewModel.selectedGenreIds
                     FilterChip(
+                        modifier = Modifier.padding(end = 4.dp),
                         selected = isSelected,
                         onClick = {
                             viewModel.selectedGenreIds = viewModel.selectedGenreIds.toMutableList().apply {
