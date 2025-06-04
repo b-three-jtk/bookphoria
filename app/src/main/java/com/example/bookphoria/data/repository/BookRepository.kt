@@ -428,4 +428,30 @@ class BookRepository @Inject constructor(
             throw Exception("Terjadi kesalahan saat mengambil data: ${e.message}")
         }
     }
+
+    suspend fun getBookStatus(userId: Int, bookId: Int): String {
+        return bookDao.getBookStatus(userId, bookId) ?: "none"
+    }
+
+    suspend fun updateBookStatus(userId: Int, bookId: Int, newStatus: String) {
+        val existingCrossRef = bookDao.getUserBookCrossRef(userId, bookId)
+
+        if (existingCrossRef != null) {
+            bookDao.updateBookStatus(userId, bookId, newStatus)
+        } else {
+            // Buat relasi baru
+            bookDao.insertUserBookCrossRef(
+                UserBookCrossRef(
+                    userId = userId,
+                    bookId = bookId,
+                    status = newStatus,
+                    pagesRead = 0,
+                    startDate = null,
+                    endDate = null
+                )
+            )
+        }
+    }
+
+
 }

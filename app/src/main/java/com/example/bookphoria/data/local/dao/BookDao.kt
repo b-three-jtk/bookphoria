@@ -93,6 +93,12 @@ interface BookDao {
     @Query("SELECT pagesRead FROM UserBookCrossRef WHERE userId = :userId AND bookId = :bookId")
     suspend fun getReadingProgress(userId: Int, bookId: Int): Int?
 
+    @Query("SELECT status FROM UserBookCrossRef WHERE userId = :userId AND bookId = :bookId")
+    suspend fun getBookStatus(userId: Int, bookId: Int): String?
+
+    @Query("UPDATE UserBookCrossRef SET status = :newStatus WHERE userId = :userId AND bookId = :bookId")
+    suspend fun updateBookStatus(userId: Int, bookId: Int, newStatus: String)
+
     @Query("SELECT * FROM authors")
     suspend fun getAllAuthors(): List<AuthorEntity>
 
