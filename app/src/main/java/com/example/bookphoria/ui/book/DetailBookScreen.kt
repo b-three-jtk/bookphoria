@@ -47,6 +47,7 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.bookphoria.R
+import com.example.bookphoria.ui.components.LoadingState
 import com.example.bookphoria.ui.theme.AppTypography
 import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.theme.PrimaryOrange
@@ -86,21 +87,7 @@ fun DetailBookScreen(
     }
 
     if (book == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            val composition by rememberLottieComposition(
-                LottieCompositionSpec.RawRes(R.raw.splashbuku)
-            )
-            val progress by animateLottieCompositionAsState(
-                composition = composition,
-                iterations = LottieConstants.IterateForever
-            )
-
-            LottieAnimation(
-                composition = composition,
-                progress = { progress },
-                modifier = Modifier.size(200.dp)
-            )
-        }
+        LoadingState()
     } else {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -284,6 +271,39 @@ fun DetailBookScreen(
 
                 Text("Review", style = MaterialTheme.typography.titleMedium)
 
+                Button(
+                    onClick = { showAddReview = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(36.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PrimaryOrange.copy(alpha = 0.1f),
+                        contentColor = PrimaryOrange
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                ) {
+                    Text(
+                        text = "+ Add a Review",
+                        style = SubTitleExtraSmall,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                if (reviewsState.value.isEmpty()) {
+                    Text("Belum ada review.", style = MaterialTheme.typography.bodySmall)
+                } else {
+                    reviewsState.value.forEach { review ->
+                        ReviewSection(
+                            reviewerAvatar = review.user.avatar,
+                            reviewerName = review.user.username,
+                            reviewText = review.desc,
+                            rating = review.rate
+                        )
+                    }
+                }
+
                 reviewsState.value.forEach { review ->
                     ReviewSection(
                         reviewerAvatar = review.user.avatar,
@@ -368,38 +388,6 @@ fun DetailBookScreen(
                 }
             }
 
-            Button(
-                onClick = { showAddReview = true },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(36.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = PrimaryOrange.copy(alpha = 0.1f),
-                    contentColor = PrimaryOrange
-                ),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
-            ) {
-                Text(
-                    text = "+ Add a Review",
-                    style = SubTitleExtraSmall,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            if (reviewsState.value.isEmpty()) {
-                Text("Belum ada review.", style = MaterialTheme.typography.bodySmall)
-            } else {
-                reviewsState.value.forEach { review ->
-                    ReviewSection(
-                        reviewerAvatar = review.user.avatar,
-                        reviewerName = review.user.username,
-                        reviewText = review.desc,
-                        rating = review.rate
-                    )
-                }
-            }
         }
     }
 }

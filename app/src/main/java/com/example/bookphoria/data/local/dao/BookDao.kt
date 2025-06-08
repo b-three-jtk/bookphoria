@@ -56,7 +56,7 @@ interface BookDao {
     suspend fun getGenreId(id: String): Int?
 
     @Query("SELECT * FROM UserBookCrossRef WHERE bookId = :bookId AND userId = :userId LIMIT 1")
-    suspend fun getUserBookCrossRef(userId: Int, bookId: Int): UserBookCrossRef
+    suspend fun getUserBookCrossRef(userId: Int, bookId: Int): UserBookCrossRef?
 
     @Query("DELETE FROM UserBookCrossRef WHERE userId = :userId AND bookId = :bookId")
     suspend fun deleteUserBook(userId: Int, bookId: Int)
@@ -65,10 +65,10 @@ interface BookDao {
     suspend fun updateBook(book: BookEntity): Long
 
     @Query("SELECT id FROM books WHERE isbn = :isbn LIMIT 1")
-    suspend fun getBookIdByIsbn(isbn: String): Int
+    suspend fun getBookIdByIsbn(isbn: String): Int?
 
     @Query("SELECT id FROM books WHERE serverId = :bookId LIMIT 1")
-    suspend fun getBookIdByServerId(bookId: String): Int
+    suspend fun getBookIdByServerId(bookId: String): Int?
 
     @Query("SELECT serverId FROM books WHERE id = :bookId LIMIT 1")
     suspend fun getBookServerIdById(bookId: Int): String
@@ -104,4 +104,9 @@ interface BookDao {
 
     @Query("SELECT * FROM genres")
     suspend fun getAllGenres(): List<GenreEntity>
+
+    // GET FULL BOOK DATA WITH NETWORK ID
+    @Transaction
+    @Query("SELECT * FROM books WHERE serverId = :serverId LIMIT 1")
+    suspend fun getFullBookDataWithNetworkId(serverId: String): FullBookDataWithUserInfo?
 }

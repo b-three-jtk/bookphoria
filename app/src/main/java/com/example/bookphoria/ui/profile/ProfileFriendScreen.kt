@@ -63,6 +63,7 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.bookphoria.R
 import com.example.bookphoria.ui.components.ConfirmationDialog
+import com.example.bookphoria.ui.components.LoadingState
 import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.theme.PrimaryOrange
 import com.example.bookphoria.ui.theme.SubTitleExtraSmall
@@ -94,24 +95,7 @@ fun ProfileFriendScreen(
     }
 
     if (friendDetail == null) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            val composition by rememberLottieComposition(
-                LottieCompositionSpec.RawRes(R.raw.splashbuku)
-            )
-            val progress by animateLottieCompositionAsState(
-                composition = composition,
-                iterations = LottieConstants.IterateForever
-            )
-
-            LottieAnimation(
-                composition = composition,
-                progress = { progress },
-                modifier = Modifier.size(200.dp)
-            )
-        }
+        LoadingState()
         return
     }
 

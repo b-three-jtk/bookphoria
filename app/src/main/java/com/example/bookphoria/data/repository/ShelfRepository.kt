@@ -24,13 +24,11 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import retrofit2.Response
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import javax.inject.Inject
-import retrofit2.Response
 
 
 class ShelfRepository @Inject constructor(
@@ -52,8 +50,8 @@ class ShelfRepository @Inject constructor(
     suspend fun createShelf(
         name: String,
         desc: String?,
-        imageFile: File?,
-        imageUri: String?
+        imageUri: String?,
+        imageFile: File?
     ): Result<Unit> {
         return try {
             // Get the token first
@@ -61,8 +59,7 @@ class ShelfRepository @Inject constructor(
             if (token.isNullOrEmpty()) {
                 return Result.failure(Exception("Authentication required"))
             }
-
-            val imagePart = imageFile?.let {
+            val coverPart = imageFile?.let {
                 val requestFile = it.asRequestBody("image/*".toMediaTypeOrNull())
                 MultipartBody.Part.createFormData("cover", it.name, requestFile)
             }
@@ -72,7 +69,7 @@ class ShelfRepository @Inject constructor(
                     token = "Bearer $token",  // Add Bearer prefix
                     name = name.toRequestBody("text/plain".toMediaType()),
                     description = desc?.toRequestBody("text/plain".toMediaType()),
-                    image = imagePart
+                    image = coverPart
                 )
             } catch (e: IOException) {
                 return Result.failure(Exception("Network error: ${e.message}"))
@@ -89,66 +86,6 @@ class ShelfRepository @Inject constructor(
         } catch (e: Exception) {
             Result.failure(Exception("Unexpected error: ${e.message}"))
         }
-    }
-
-
-    suspend fun updateShelf(
-        name: String,
-        desc: String?,
-        imageUri: String?,
-        imageFile: File?,
-        id: String
-    ): String? {
-        try {
-            val token = userPreferences.getAccessToken().first()
-            if (token.isNullOrEmpty()) {
-                return "Token tidak ditemukan silahkan login ulang"
-            }
-            val coverPart = imageFile?.let {
-                val requestFile = it.asRequestBody("image/*".toMediaTypeOrNull())
-                MultipartBody.Part.createFormData("cover", it.name, requestFile)
-            }
-
-            val shelf = database.ShelfDao().getShelfById(id)
-
-            val response = try {
-                shelf?.serverId?.let {
-                    api.updateShelf(
-                        token = "Bearer $token",
-                        shelfId = it,
-                        name = name.toRequestBody("text/plain".toMediaType()),
-                        description = desc?.toRequestBody("text/plain".toMediaType()),
-                        image = coverPart
-                    )
-                }
-            } catch (e: IOException) {
-                return "Network error: ${e.message}"
-            } catch (e: Exception) {
-                return "API error: ${e.message}"
-            }
-
-            if (response != null) {
-                if (response.message == "Shelf updated successfully") {
-                    val shelfEntity = database.ShelfDao().getShelfById(id)
-                    shelfEntity?.let {
-                        val updatedShelf = it.copy(
-                            name = name,
-                            description = desc,
-                            imagePath = imageUri
-                        )
-                        database.ShelfDao().update(
-                            description = updatedShelf.description,
-                            imagePath = updatedShelf.imagePath,
-                            id = updatedShelf.id,
-                            name = updatedShelf.name
-                        )
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            return ("Unexpected error: ${e.message}")
-        }
-        return null
     }
 
     private fun Uri.compressImage(maxFileSizeKB: Int): File {
@@ -267,7 +204,7 @@ class ShelfRepository @Inject constructor(
     }
 
     private fun handleApiResponse(
-        response: Response<*>,
+        response: retrofit2.Response<*>,
         maxSize: Int
     ): Result<Unit> {
         return when {
@@ -343,18 +280,59 @@ class ShelfRepository @Inject constructor(
         }
     }
 
-//    suspend fun addBookToShelf(token: String, shelfId: String, bookId: String): Boolean {
-//        return try {
-//            val bookData = JsonObject().apply {
-//                addProperty("book_id", bookId)
-//            }
-//            val response = api.addBookToShelf("Bearer $token", shelfId, bookData)
-//            response.isSuccessful
-//        } catch (e: Exception) {
-//            e.printStackTrace()
-//            false
-//        }
-//    }
+    suspend fun updateShelf(
+        name: String,
+        desc: String?,
+        imageUri: String?,
+        imageFile: File?,
+        id: String
+    ): String? {
+        try {
+            val token = userPreferences.getAccessToken().first()
+            if (token.isNullOrEmpty()) {
+                return "Token tidak ditemukan silahkan login ulang"
+            }
+            val coverPart = imageFile?.let {
+                val requestFile = it.asRequestBody("image/*".toMediaTypeOrNull())
+                MultipartBody.Part.createFormData("cover", it.name, requestFile)
+            }
+
+            val response = try {
+                api.updateShelf(
+                    token = "Bearer $token",
+                    shelfId = id,
+                    name = name.toRequestBody("text/plain".toMediaType()),
+                    description = desc?.toRequestBody("text/plain".toMediaType()),
+                    image = coverPart
+                )
+            } catch (e: IOException) {
+                return "Network error: ${e.message}"
+            } catch (e: Exception) {
+                return "API error: ${e.message}"
+            }
+
+            if (response.message == "Shelf updated successfully") {
+                val shelfEntity = database.ShelfDao().getShelfById(id)
+                shelfEntity?.let {
+                    val updatedShelf = it.copy(
+                        name = name,
+                        description = desc,
+                        imagePath = imageUri
+                    )
+                    shelfDao.update(
+                        description = updatedShelf.description,
+                        imagePath = updatedShelf.imagePath,
+                        id = updatedShelf.id,
+                        name = updatedShelf.name
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            return ("Unexpected error: ${e.message}")
+        }
+        return null
+    }
+
 
     suspend fun addBookToShelf(shelfId: Int, bookId: Int): Boolean {
         return try {
@@ -404,7 +382,7 @@ class ShelfRepository @Inject constructor(
         return database.ShelfDao().getAllShelvesWithBooks(userId)
     }
 
-//    suspend fun deleteShelf(token: String, shelfId: String): Response<JsonObject> {
+    //    suspend fun deleteShelf(token: String, shelfId: String): Response<JsonObject> {
 //        return api.deleteShelf("Bearer $token", shelfId)
 //    }
     suspend fun deleteShelf(shelfId: Int): Boolean {

@@ -107,14 +107,15 @@ class ShelfDetailViewModel @Inject constructor(
         }
     }
 
-    suspend fun getBookAuthor(bookId: Int): String {
+    suspend fun getBookAuthor(bookId: Int): BookWithGenresAndAuthors? {
         return try {
             val bookStrId = bookDao.getBookServerIdById(bookId)
             val bookWithDetails = bookDao.getBookById(bookStrId)
-            bookWithDetails?.authors?.joinToString(", ") ?: "Unknown Author"
+            bookWithDetails
         } catch (e: Exception) {
             Log.e("ShelfDetailVM", "Error getting book author", e)
             "Unknown Author"
+            null
         }
     }
 

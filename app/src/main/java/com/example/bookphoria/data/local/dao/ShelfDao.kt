@@ -15,17 +15,11 @@ interface ShelfDao {
     @Insert
     suspend fun insert(shelf: ShelfEntity): Long
 
-    @Query("UPDATE shelves SET name = :name, description = :description, imagePath = :imagePath WHERE id = :id")
-    suspend fun update(name: String, description: String?, imagePath: String?, id: Int)
-
     @Query("SELECT * FROM shelves ORDER BY createdAt DESC")
     fun getAllShelves(): Flow<List<ShelfEntity>>
 
     @Delete
     suspend fun delete(shelf: ShelfEntity)
-
-    @Query("SELECT * FROM shelves WHERE serverId = :shelfId LIMIT 1")
-    suspend fun getShelfById(shelfId: String): ShelfEntity?
 
     @Transaction
     @Query("""SELECT * FROM shelves WHERE userId = :userId AND id = :shelfId LIMIT 1""")
@@ -40,4 +34,25 @@ interface ShelfDao {
 
     @Delete
     suspend fun removeBookFromShelf(crossRef: ShelfBookCrossRef)
+
+    @Query("SELECT bookId FROM ShelfBookCrossRef WHERE shelfId = :shelfId")
+    suspend fun getBookIdsInShelf(shelfId: Int): List<Int>
+
+    @Query("INSERT INTO ShelfBookCrossRef (shelfId, bookId) VALUES (:shelfId, :bookId)")
+    suspend fun addBookToShelf(shelfId: Int, bookId: Int)
+
+    @Query("SELECT id FROM shelves WHERE serverId = :serverId")
+    suspend fun  getShelfByServerId(serverId: String): Int?
+
+    @Query("SELECT serverId FROM shelves WHERE id = :id")
+    suspend fun  getShelfById(id: Int): String?
+
+    @Query("DELETE FROM shelves WHERE id = :shelfId")
+    suspend fun deleteShelf(shelfId: Int)
+
+    @Query("UPDATE shelves SET name = :name, description = :description, imagePath = :imagePath WHERE id = :id")
+    suspend fun update(name: String, description: String?, imagePath: String?, id: Int)
+
+    @Query("SELECT * FROM shelves WHERE serverId = :shelfId LIMIT 1")
+    suspend fun getShelfById(shelfId: String): ShelfEntity?
 }

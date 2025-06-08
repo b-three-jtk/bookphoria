@@ -1,10 +1,12 @@
 package com.example.bookphoria.data.remote.api
 
 import com.example.bookphoria.data.remote.requests.AddReviewRequest
+import com.example.bookphoria.data.remote.requests.AddUserBookRequest
 import com.example.bookphoria.data.remote.responses.AddBookResponse
 import com.example.bookphoria.data.remote.responses.BookSearchResponse
 import com.example.bookphoria.data.remote.responses.EditBookResponse
 import com.example.bookphoria.data.remote.responses.ReviewNetworkModel
+import com.example.bookphoria.data.remote.responses.UserBookResponse
 import com.example.bookphoria.data.remote.responses.UserBookStatusResponse
 import com.example.bookphoria.data.remote.responses.WrapperDetailBookNetworkModel
 import okhttp3.MultipartBody
@@ -27,6 +29,9 @@ interface BookApiService {
 
     @GET("user/books")
     suspend fun getYourBooks(@Header("Authorization") authorization: String): UserBookStatusResponse
+
+    @GET("user/book/{id}")
+    suspend fun getYourBook(@Header("Authorization") authorization: String, @Path("id") id: String): UserBookResponse
 
     @JvmSuppressWildcards
     @Multipart
@@ -82,4 +87,16 @@ interface BookApiService {
         @Header("Authorization") token: String,
         @Path("id") id: String
     ) : WrapperDetailBookNetworkModel
+
+    @POST("user/books/update/{id}")
+    suspend fun updateStatus(
+        @Header("Authorization") token: String,
+        @Path("id") id: String,
+    )
+
+    @POST("user/books")
+    suspend fun addUserBook(
+        @Header("Authorization") token: String,
+        @Body request: AddUserBookRequest
+    )
 }

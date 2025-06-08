@@ -14,11 +14,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,7 +43,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
-import com.example.bookphoria.DeepLinkHolder.token
 import com.example.bookphoria.R
 import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.ShelfEntity
@@ -59,9 +57,9 @@ import java.io.File
 
 @Composable
 fun ShelfDetailScreen(
+    navController: NavController,
     userId: Int,
     shelfId: Int,
-    navController: NavController,
     viewModel: ShelfDetailViewModel = hiltViewModel(),
     myShelfViewModel: MyShelfViewModel = hiltViewModel()
 ) {
@@ -70,27 +68,17 @@ fun ShelfDetailScreen(
     val booksWithAuthors by myShelfViewModel.booksWithAuthors.collectAsState()
     val addResult by viewModel.addBookResult.collectAsState()
     var showBookPicker by remember { mutableStateOf(false) }
+    val deleteResult by viewModel.deleteResult.collectAsState()
+    var showDialog by remember { mutableStateOf(false) }
     var showEditShelf by remember { mutableStateOf(false) }
     var shelfName by remember { mutableStateOf("") }
     var shelfDescription by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
     var imageFile by remember { mutableStateOf<File?>(null) }
-    val deleteResult by viewModel.deleteResult.collectAsState()
-    var showDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadShelfWithBooks(userId, shelfId)
         myShelfViewModel.loadUserBooks()
-    }
-
-    LaunchedEffect(addResult) {
-        addResult?.let {
-            if (it.isSuccess) {
-                showBookPicker = false
-            }
-            delay(1500)
-            viewModel.resetAddBookResult()
-        }
     }
 
     LaunchedEffect(showEditShelf) {
@@ -110,6 +98,17 @@ fun ShelfDetailScreen(
             imageFile = file
             shelfWithBooks?.shelf?.imagePath = uri.toString()
             Log.d("ShelfDetailScreen", "Image URI: $uri")
+        }
+    }
+
+
+    LaunchedEffect(addResult) {
+        addResult?.let {
+            if (it.isSuccess) {
+                showBookPicker = false
+            }
+            delay(1500)
+            viewModel.resetAddBookResult()
         }
     }
 
@@ -155,30 +154,9 @@ fun ShelfDetailScreen(
                 shelf = shelf.shelf,
                 bookCount = shelf.books.size,
                 onAddClick = { showBookPicker = true },
-                onRemoveClick =  { showDialog = true }
+                onRemoveClick =  { showDialog = true },
+                showEditShelf = { showEditShelf = true }
             )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.End)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit Shelf",
-                    tint = Color.Black,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clickable { showEditShelf = true }
-                )
-                Button(
-                    onClick = { showBookPicker = true },
-                    modifier = Modifier
-                        .padding(16.dp)
-                ) {
-                    Text("Tambah Buku")
-                }
-            }
 
             BookCollection(books = shelf.books, userId = userId, viewModel = viewModel)
         } ?: run {
@@ -225,179 +203,6 @@ fun ShelfDetailScreen(
                         Text("Pilih Buku", style = AppTypography.bodyLarge)
                         Spacer(modifier = Modifier.height(8.dp))
 
-                    if (booksWithAuthors.isEmpty()) {
-                        Text("Kamu belum punya buku.")
-                    } else {
-                        LazyColumn(modifier = Modifier.height(300.dp)) {
-                            items(booksWithAuthors) { bookWithAuthors ->
-                                val book = bookWithAuthors.book
-                                val authors = bookWithAuthors.authors.joinToString(", ") { it.name }
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            viewModel.addBookToShelf(
-                                                token = token,
-                                                shelfId = shelfId.toString(),
-                                                bookId = book.id.toString()
-                                            )
-                                        }
-                                        .padding(vertical = 8.dp)
-                                ) {
-                                    Column {
-                                        Text(text = book.title, style = AppTypography.bodyMedium)
-                                        Text(
-                                            text = "by $authors",
-                                            style = AppTypography.bodySmall,
-                                            color = Color.Gray
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (showEditShelf) {
-        Dialog(onDismissRequest = { showBookPicker = false }) {
-            Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = SoftCream,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(top = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Column(
-                        modifier = Modifier.padding(start = 24.dp, end = 24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        if (shelfWithBooks?.shelf?.imagePath != null) {
-                            Image(
-                                painter = rememberAsyncImagePainter(model = imageFile ?: shelfWithBooks?.shelf?.imagePath),
-                                contentDescription = "Selected Image",
-                                modifier = Modifier
-                                    .size(72.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .border(BorderStroke(1.dp, Color.Gray))
-                            )
-
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .size(72.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .border(BorderStroke(1.dp, Color.Gray))
-                                    .clickable { imageLauncher.launch("image/*") },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = rememberAsyncImagePainter(model = shelfWithBooks?.shelf?.imagePath),
-                                    contentDescription = "Select Image"
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "Give your shelf a name",
-                            style = AppTypography.headlineSmall,
-                            textAlign = TextAlign.Left
-                        )
-
-                        shelfWithBooks?.shelf?.let {
-                            OutlinedTextField(
-                                value = shelfName,
-                                onValueChange = { shelfName = it },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = SoftCream,
-                                    unfocusedContainerColor = SoftCream,
-                                    focusedIndicatorColor = Color.Black,
-                                    unfocusedIndicatorColor = Color.Black,
-                                    focusedTextColor = Color.Black,
-                                    unfocusedTextColor = Color.Black
-                                ),
-                                singleLine = true,
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "Give your shelf description",
-                            style = AppTypography.headlineSmall,
-                            textAlign = TextAlign.Left
-                        )
-
-                        OutlinedTextField(
-                            value = shelfDescription ?: "",
-                            onValueChange = { shelfDescription = it },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = SoftCream,
-                                unfocusedContainerColor = SoftCream,
-                                focusedIndicatorColor = Color.Black,
-                                unfocusedIndicatorColor = Color.Black,
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black
-                            ),
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(72.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.Bottom,
-                        horizontalArrangement = Arrangement.spacedBy(0.dp)
-                    ) {
-                        Button(
-                            onClick = { showEditShelf = false },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color.Gray,
-                                contentColor = Color.White
-                            ),
-                            shape = RoundedCornerShape(bottomStart = 20.dp),
-                        ) {
-                            Text("Batal")
-                        }
-
-                        Button(
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(bottomEnd = 20.dp),
-                            onClick = {
-                                coroutineScope.launch {
-                                    viewModel.updateShelf(
-                                        name = shelfName,
-                                        desc = shelfDescription.takeIf { it.isNotBlank() },
-                                        imageUri = shelfWithBooks?.shelf?.imagePath,
-                                        imageFile = imageFile
-                                    )
-                                    showEditShelf = false
-                                }
-                            }
-                        ) {
-                            Text("Simpan")
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
                         if (booksWithAuthors.isEmpty()) {
                             Text("Kamu belum punya buku.")
                         } else {
@@ -412,7 +217,7 @@ fun ShelfDetailScreen(
                                             .clickable {
                                                 viewModel.addBookToShelf(
                                                     shelfId = shelfId,
-                                                    bookId = book.id,
+                                                    bookId = book.id
                                                 )
                                             }
                                             .padding(vertical = 8.dp)
@@ -436,6 +241,143 @@ fun ShelfDetailScreen(
                 }
             }
         }
+
+        if (showEditShelf) {
+            Dialog(onDismissRequest = { showBookPicker = false }) {
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = SoftCream,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(top = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(start = 24.dp, end = 24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            if (shelfWithBooks?.shelf?.imagePath != null) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(model = imageFile ?: shelfWithBooks?.shelf?.imagePath),
+                                    contentDescription = "Selected Image",
+                                    modifier = Modifier
+                                        .size(72.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .border(BorderStroke(1.dp, Color.Gray))
+                                        .clickable { imageLauncher.launch("image/*") }
+                                )
+
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(72.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .border(BorderStroke(1.dp, Color.Gray))
+                                        .clickable { imageLauncher.launch("image/*") },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = rememberAsyncImagePainter(model = shelfWithBooks?.shelf?.imagePath),
+                                        contentDescription = "Select Image"
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "Give your shelf a name",
+                                style = AppTypography.headlineSmall,
+                                textAlign = TextAlign.Left
+                            )
+
+                            shelfWithBooks?.shelf?.let {
+                                OutlinedTextField(
+                                    value = shelfName,
+                                    onValueChange = { shelfName = it },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    colors = TextFieldDefaults.colors(
+                                        focusedContainerColor = SoftCream,
+                                        unfocusedContainerColor = SoftCream,
+                                        focusedIndicatorColor = Color.Black,
+                                        unfocusedIndicatorColor = Color.Black,
+                                        focusedTextColor = Color.Black,
+                                        unfocusedTextColor = Color.Black
+                                    ),
+                                    singleLine = true,
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "Give your shelf description",
+                                style = AppTypography.headlineSmall,
+                                textAlign = TextAlign.Left
+                            )
+
+                            OutlinedTextField(
+                                value = shelfDescription ?: "",
+                                onValueChange = { shelfDescription = it },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = SoftCream,
+                                    unfocusedContainerColor = SoftCream,
+                                    focusedIndicatorColor = Color.Black,
+                                    unfocusedIndicatorColor = Color.Black,
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black
+                                ),
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(72.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.Bottom,
+                            horizontalArrangement = Arrangement.spacedBy(0.dp)
+                        ) {
+                            Button(
+                                onClick = { showEditShelf = false },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Gray,
+                                    contentColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(bottomStart = 20.dp),
+                            ) {
+                                Text("Batal")
+                            }
+
+                            Button(
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(bottomEnd = 20.dp),
+                                onClick = {
+                                    coroutineScope.launch {
+                                        viewModel.updateShelf(
+                                            name = shelfName,
+                                            desc = shelfDescription.takeIf { it.isNotBlank() },
+                                            imageUri = shelfWithBooks?.shelf?.imagePath,
+                                            imageFile = imageFile
+                                        )
+                                        showEditShelf = false
+                                    }
+                                }
+                            ) {
+                                Text("Simpan")
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -444,9 +386,10 @@ fun ShelfHeader(
     shelf: ShelfEntity,
     bookCount: Int,
     onAddClick: () -> Unit,
-    onRemoveClick: () -> Unit
+    onRemoveClick: () -> Unit,
+    showEditShelf: () -> Unit
 )
-    {
+{
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -504,6 +447,20 @@ fun ShelfHeader(
                             tint = Color.Gray
                         )
                     }
+                    Spacer(modifier = Modifier.width(4.dp))
+                    IconButton(
+                        onClick = {
+                            showEditShelf()
+                        },
+                        modifier = Modifier.size(16.dp)
+                    ){
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Edit Shelf",
+                            tint = Color.Gray
+                        )
+                    }
+
                     Spacer(modifier = Modifier.width(4.dp))
                     IconButton(
                         onClick = { onRemoveClick() },
@@ -578,13 +535,15 @@ fun BookCollection(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(books, key = { it.id }) { book ->
-            var authorName by remember { mutableStateOf("Unknown Author") }
+            var authorName by remember { mutableStateOf("") }
             var isFinished by remember(book.id) { mutableStateOf(false) }
 
             LaunchedEffect(book.id) {
                 try {
                     val bookId = book.id
-                    authorName = viewModel.getBookAuthor(bookId)
+                    authorName =
+                        viewModel.getBookAuthor(bookId)?.authors?.joinToString(", ") { it.name ?: "Unknown" }
+                            .toString()
                     isFinished = viewModel.getReadingProgress(userId, bookId)
                 } catch (e: Exception) {
                     authorName = "Unknown Author"
