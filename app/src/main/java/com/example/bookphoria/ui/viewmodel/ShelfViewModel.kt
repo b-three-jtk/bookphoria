@@ -1,13 +1,10 @@
 package com.example.bookphoria.ui.viewmodel
 
-import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bookphoria.data.local.AppDatabase
 import com.example.bookphoria.data.local.entities.ShelfEntity
-import com.example.bookphoria.data.local.preferences.UserPreferences
-import com.example.bookphoria.data.remote.api.ShelfApiServices
 import com.example.bookphoria.data.repository.ShelfRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
