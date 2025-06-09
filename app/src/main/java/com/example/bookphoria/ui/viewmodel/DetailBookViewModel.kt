@@ -83,4 +83,18 @@ class DetailBookViewModel @Inject constructor(
     fun updateStatusUpdateSuccess(success: Boolean) {
         _statusUpdateSuccess.value = success
     }
+
+    fun deleteUserBook(bookId: String) {
+        viewModelScope.launch {
+            try {
+                val bookLocalId = bookDao.getBookIdByServerId(bookId)
+                if (bookLocalId != null) {
+                    bookRepository.deleteUserBook(bookLocalId)
+                }
+                _statusUpdateSuccess.value = true
+            } catch (e: Exception) {
+                _statusUpdateSuccess.value = false
+            }
+        }
+    }
 }

@@ -79,6 +79,10 @@ interface BookDao {
     @Query("DELETE FROM BookGenreCrossRef WHERE bookId = :bookId")
     suspend fun deleteBookGenreCrossRefs(bookId: Int)
 
+    //delete book
+    @Query("DELETE FROM books WHERE id = :bookId")
+    suspend fun deleteBookById(bookId: Int)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUserBookCrossRef(crossRef: UserBookCrossRef)
 

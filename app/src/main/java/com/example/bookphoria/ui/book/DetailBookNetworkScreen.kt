@@ -235,7 +235,7 @@ fun DetailBookNetworkScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = {
-                            bookViewModel.updateBookStatus(bookId, "none")
+                            bookViewModel.deleteUserBook(bookId)
                             showStatusBottomSheet = false },
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(

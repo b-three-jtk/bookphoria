@@ -541,4 +541,23 @@ class BookRepository @Inject constructor(
             throw Exception("Failed to update book status: ${e.message}")
         }
     }
+
+    suspend fun deleteUserBook(bookId: Int) {
+        try {
+            val token = userPreferences.getAccessToken().first()
+            val userId = userPreferences.getUserId().first()
+            val bookLocalId = bookDao.getBookServerIdById(bookId)
+
+            apiService.removeUserBook(
+                token = "Bearer $token",
+                id = bookLocalId
+            )
+            if (userId != null) {
+                bookDao.deleteUserBook(userId, bookId)
+                bookDao.deleteBookById(bookId)
+            }
+        } catch (e: Exception) {
+            Log.d("BookRepository", "Failed to delete user book: ${e.message}")
+        }
+    }
 }

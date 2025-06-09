@@ -215,7 +215,7 @@ fun DetailBookScreen(
                     previousProgress = readingProgressState.value
                 )
             }
-                if (showCreateDialog && book != null) {
+                if (showCreateDialog) {
                     CreateProgressDialog(
                         onDismiss = { showCreateDialog = false },
                         onSave = { pagesRead ->
@@ -369,20 +369,20 @@ fun DetailBookScreen(
                         // Remove from collection option
                         if (bookStatusState.value?.isNotEmpty() == true) {
                             Spacer(modifier = Modifier.height(8.dp))
-//                            Button(
-//                                onClick = {
-//                                    bookViewModel.updateBookStatus(bookId, "none")
-//                                    showStatusBottomSheet = false
-//                                },
-//                                modifier = Modifier.fillMaxWidth(),
-//                                colors = ButtonDefaults.buttonColors(
-//                                    containerColor = Color.White,
-//                                    contentColor = Color.Red
-//                                ),
-//                                border = BorderStroke(1.dp, Color.Red)
-//                            ) {
-//                                Text("Hapus dari Koleksi")
-//                            }
+                            Button(
+                                onClick = {
+                                    bookViewModel.deleteUserBook(bookId)
+                                    showStatusBottomSheet = false
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.White,
+                                    contentColor = Color.Red
+                                ),
+                                border = BorderStroke(1.dp, Color.Red)
+                            ) {
+                                Text("Hapus dari Koleksi")
+                            }
                         }
                     }
                 }

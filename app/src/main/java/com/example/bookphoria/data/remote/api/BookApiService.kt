@@ -12,6 +12,7 @@ import com.example.bookphoria.data.remote.responses.WrapperDetailBookNetworkMode
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Multipart
@@ -98,5 +99,11 @@ interface BookApiService {
     suspend fun addUserBook(
         @Header("Authorization") token: String,
         @Body request: AddUserBookRequest
+    )
+
+    @DELETE("user/book/{id}/remove")
+    suspend fun removeUserBook(
+        @Header("Authorization") token: String,
+        @Path("id") id: String
     )
 }

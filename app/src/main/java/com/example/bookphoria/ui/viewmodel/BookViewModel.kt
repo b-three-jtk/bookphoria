@@ -123,6 +123,17 @@ class BookViewModel @Inject constructor(
         }
     }
 
+    fun deleteUserBook(bookId: Int) {
+        viewModelScope.launch {
+            try {
+                bookRepository.deleteUserBook(bookId)
+                _statusUpdateSuccess.value = true
+            } catch (e: Exception) {
+                _statusUpdateSuccess.value = false
+            }
+        }
+    }
+
     fun updateStatusUpdateSuccess(success: Boolean) {
         _statusUpdateSuccess.value = success
     }
