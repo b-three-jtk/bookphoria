@@ -1,6 +1,7 @@
 package com.example.bookphoria.ui.book
 
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -28,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -39,10 +42,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
+import com.example.bookphoria.ui.helper.uriToFile
 import com.example.bookphoria.ui.theme.*
 import com.example.bookphoria.ui.viewmodel.MyShelfViewModel
 import com.example.bookphoria.ui.viewmodel.ShelfUiState
 import com.example.bookphoria.ui.viewmodel.ShelfViewModel
+import java.io.File
 
 @Composable
 fun MyShelfScreen(
@@ -116,7 +121,7 @@ fun MyShelfScreen(
 
                     Column {
                         Text(
-                            text = "Your Books",
+                            text = "My Shelf",
                             style = TitleExtraSmall
                         )
                         Text(
@@ -191,6 +196,8 @@ fun CreateCollectionDialog(
     val imageUri = remember { mutableStateOf<Uri?>(null) }
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    var imageFile by remember { mutableStateOf<File?>(null) }
+    var imagePath by remember { mutableStateOf<String?>(null) }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -220,6 +227,17 @@ fun CreateCollectionDialog(
         }
     }
 
+    val imageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            val file = uriToFile(context, it)
+            imageFile = file
+            imagePath = uri.toString()
+            Log.d("ShelfDetailScreen", "Image URI: $uri")
+        }
+    }
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(20.dp),
@@ -242,22 +260,31 @@ fun CreateCollectionDialog(
                         .alpha(if (uiState is ShelfUiState.Loading) 0.5f else 1f),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    if (imageUri.value != null) {
-                        Image(
-                            painter = rememberAsyncImagePainter(imageUri.value),
-                            contentDescription = "Selected Image",
+                    if (imagePath !=  null) {
+                        Box(
                             modifier = Modifier
                                 .size(72.dp)
                                 .clip(RoundedCornerShape(12.dp))
                                 .border(BorderStroke(1.dp, Color.Gray))
-                        )
+                                .clickable { imageLauncher.launch("image/*") },
+                        ) {
+                            Image(
+                                painter = rememberAsyncImagePainter(model = imagePath!!.ifBlank { R.drawable.user }),
+                                contentDescription = "Profile",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(96.dp)
+                                    .border(1.dp, Color.LightGray, CircleShape)
+                                    .clickable { imageLauncher.launch("image/*") }
+                            )
+                        }
                     } else {
                         Box(
                             modifier = Modifier
                                 .size(72.dp)
                                 .clip(RoundedCornerShape(12.dp))
                                 .border(BorderStroke(1.dp, Color.Gray))
-                                .clickable { launcher.launch("image/*") },
+                                .clickable { imageLauncher.launch("image/*") },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -345,8 +372,9 @@ fun CreateCollectionDialog(
                             if (collectionName.isNotBlank()) {
                                 viewModel.createShelf(
                                     name = collectionName,
-                                    desc = collectionDescription.takeIf { it.isNotBlank() == true },
-                                    imageUri = imageUri.value
+                                    desc = collectionDescription,
+                                    imageFile = imageFile,
+                                    imageUri = imagePath
                                 )
                             }
                         },

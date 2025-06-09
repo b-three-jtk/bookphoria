@@ -15,6 +15,10 @@ data class UserBookStatusResponse(
     @SerializedName("data") val data: List<BookStatusNetworkModel>
 )
 
+data class UserBookResponse(
+    @SerializedName("data") val data: BookStatusNetworkModel
+)
+
 data class BookStatusNetworkModel(
     @SerializedName("user_book_id") val id: String,
     @SerializedName("status") val status: String,

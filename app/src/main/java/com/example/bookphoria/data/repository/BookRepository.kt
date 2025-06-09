@@ -19,6 +19,7 @@ import com.example.bookphoria.data.remote.api.BookApiService
 import com.example.bookphoria.data.remote.pagingsources.BookSearchPagingSource
 import com.example.bookphoria.data.remote.requests.AddBookRequest
 import com.example.bookphoria.data.remote.requests.AddReviewRequest
+import com.example.bookphoria.data.remote.requests.AddUserBookRequest
 import com.example.bookphoria.data.remote.requests.EditBookRequest
 import com.example.bookphoria.data.remote.responses.BookNetworkModel
 import com.example.bookphoria.data.remote.responses.ReviewNetworkModel
@@ -101,17 +102,14 @@ class BookRepository @Inject constructor(
 
                 response.authors.forEach { authorNetwork ->
                     val existingId = bookDao.getAuthorId(authorNetwork.id)
-                    val authorId = if (existingId != null) {
-                        existingId
-                    } else {
-                        bookDao.insertAuthor(
+                    val authorId = existingId
+                        ?: bookDao.insertAuthor(
                             AuthorEntity(
                                 name = authorNetwork.name,
                                 desc = "",
                                 serverId = authorNetwork.id
                             )
                         ).toInt()
-                    }
 
                     Log.d("BookRepository", "Author ID: $authorId")
 
@@ -123,17 +121,13 @@ class BookRepository @Inject constructor(
 
                 response.genres.forEach { genreNetwork ->
                     val existingId = bookDao.getGenreId(genreNetwork.id)
-                    val genreId = if (existingId != null) {
-                        existingId
-                    } else {
-                        bookDao.insertAuthor(
-                            AuthorEntity(
+                    val genreId = existingId
+                        ?: bookDao.insertGenre(
+                            GenreEntity(
                                 name = genreNetwork.name,
-                                desc = "",
                                 serverId = genreNetwork.id
                             )
                         ).toInt()
-                    }
 
                     Log.d("BookRepository", "Genre ID: $genreId")
 
@@ -250,14 +244,14 @@ class BookRepository @Inject constructor(
         }
     }
 
-    suspend fun saveBooksToLocal(books: List<FullBookDataWithUserInfo>) {
+    suspend fun saveBooksToLocal(books: List<FullBookDataWithUserInfo?>) {
         try {
             books.forEach { bookWithRelations ->
-                val bookEntity = bookWithRelations.book
+                val bookEntity = bookWithRelations?.book
 
-                val bookID = bookDao.insertBook(bookEntity).toInt()
+                val bookID = bookEntity?.let { bookDao.insertBook(it).toInt() }
 
-                bookWithRelations.authors.forEach { author ->
+                bookWithRelations?.authors?.forEach { author ->
                     val existingAuthorId = bookDao.getAuthorId(author.serverId)
                     val authorId = existingAuthorId ?: bookDao.insertAuthor(
                         AuthorEntity(
@@ -266,15 +260,17 @@ class BookRepository @Inject constructor(
                         )
                     )
 
-                    BookAuthorCrossRef(bookId = bookID, authorId = authorId.toInt())
-                        .let {
-                            bookDao.insertBookAuthorCrossRef(
-                                it
-                            )
-                        }
+                    if (bookID != null) {
+                        BookAuthorCrossRef(bookId = bookID, authorId = authorId.toInt())
+                            .let {
+                                bookDao.insertBookAuthorCrossRef(
+                                    it
+                                )
+                            }
+                    }
                 }
 
-                bookWithRelations.genres.forEach { genre ->
+                bookWithRelations?.genres?.forEach { genre ->
                     val existingGenreId = bookDao.getGenreId(genre.serverId)
                     val genreId = existingGenreId ?: bookDao.insertGenre(
                         GenreEntity(
@@ -283,12 +279,16 @@ class BookRepository @Inject constructor(
                         )
                     )
 
-                    bookDao.insertBookGenreCrossRef(
-                        BookGenreCrossRef(bookId = bookID, genreId = genreId.toInt())
-                    )
+                    bookID?.let { BookGenreCrossRef(bookId = it, genreId = genreId.toInt()) }?.let {
+                        bookDao.insertBookGenreCrossRef(
+                            it
+                        )
+                    }
                 }
 
-                addToUserBooks(bookID)
+                if (bookID != null) {
+                    addToUserBooks(bookID)
+                }
             }
         } catch (e: Exception) {
             Log.d("BookRepository", "Book failed: $e")
@@ -312,10 +312,12 @@ class BookRepository @Inject constructor(
 
         return books.map { book ->
             val bookId = bookDao.getBookIdByServerId(book.id)
-            addToUserBooks(bookId, "owned")
-            val localUserBook = bookDao.getUserBookCrossRef(userId, bookId)
+            if (bookId != null) {
+                addToUserBooks(bookId, "owned")
+            }
+            val localUserBook = bookId?.let { bookDao.getUserBookCrossRef(userId, it) }
 
-            book.toFullBookData(userId, localUserBook.bookId)
+            localUserBook?.let { book.toFullBookData(userId, it.bookId) }!!
         }
     }
 
@@ -348,10 +350,6 @@ class BookRepository @Inject constructor(
 
     suspend fun getReadingProgress(userId: Int, bookId: Int): Int? {
         return bookDao.getReadingProgress(userId, bookId)
-    }
-
-    suspend fun getUserBooksCount(userId: Int): Int {
-        return bookDao.getYourBooks(userId).first().size
     }
 
     suspend fun addReview(bookId: Int, desc: String, rate: Int) {
@@ -398,7 +396,6 @@ class BookRepository @Inject constructor(
         }
     }
 
-
     suspend fun getBookNetworkById(bookId: String): BookNetworkModel {
         try {
             val accessToken = userPreferences.getAccessToken().first()
@@ -435,11 +432,13 @@ class BookRepository @Inject constructor(
 
     suspend fun updateBookStatus(userId: Int, bookId: Int, newStatus: String) {
         val existingCrossRef = bookDao.getUserBookCrossRef(userId, bookId)
+        val token = userPreferences.getAccessToken().first()
+        val bookLocalId = bookDao.getBookServerIdById(bookId)
 
         if (existingCrossRef != null) {
             bookDao.updateBookStatus(userId, bookId, newStatus)
+            apiService.updateStatus("Bearer $token", bookLocalId)
         } else {
-            // Buat relasi baru
             bookDao.insertUserBookCrossRef(
                 UserBookCrossRef(
                     userId = userId,
@@ -450,8 +449,115 @@ class BookRepository @Inject constructor(
                     endDate = null
                 )
             )
+            apiService.addUserBook(
+                token = "Bearer $token",
+                request = AddUserBookRequest(
+                    bookId = bookLocalId,
+                    status = newStatus,
+                    pagesCount = 0,
+                    startDate = null,
+                    finishDate = null
+                )
+            )
         }
     }
 
+    suspend fun updateNewBookStatus(userId: Int, bookId: String, newStatus: String) {
+        val token = userPreferences.getAccessToken().first() ?: throw Exception("Access token not available")
+        val bookLocalId = bookDao.getBookIdByServerId(bookId)
+        val existingCrossRef = bookLocalId?.let { bookDao.getUserBookCrossRef(userId, it) }
+        Log.d("BookRepository", "Book local ID: $bookLocalId, Existing cross-ref: $existingCrossRef")
 
+        try {
+            if (existingCrossRef != null) {
+                bookDao.updateBookStatus(userId, bookLocalId, newStatus)
+                apiService.updateStatus("Bearer $token", bookId)
+            } else {
+                apiService.addUserBook(
+                    token = "Bearer $token",
+                    request = AddUserBookRequest(
+                        bookId = bookId,
+                        status = newStatus,
+                        pagesCount = 0,
+                        startDate = null,
+                        finishDate = null
+                    )
+                )
+                val bookNetwork = apiService.getYourBook(
+                    "Bearer $token", bookId
+                )
+
+                val book = BookEntity(
+                    serverId = bookNetwork.data.book.id,
+                    isbn = bookNetwork.data.book.isbn,
+                    title = bookNetwork.data.book.title,
+                    publisher = bookNetwork.data.book.publisher,
+                    publishedDate = bookNetwork.data.book.publishedDate,
+                    synopsis = bookNetwork.data.book.synopsis,
+                    pages = bookNetwork.data.book.pages,
+                    imageUrl = bookNetwork.data.book.cover
+                )
+
+                val localBookId = bookDao.insertBook(book).toInt()
+                bookNetwork.data.book.authors.forEach { authorNetwork ->
+                    val existingId = bookDao.getAuthorId(authorNetwork.id)
+                    val authorId = existingId
+                        ?: bookDao.insertAuthor(
+                            AuthorEntity(
+                                name = authorNetwork.name,
+                                desc = "",
+                                serverId = authorNetwork.id
+                            )
+                        ).toInt()
+
+                    Log.d("BookRepository", "Author ID: $authorId")
+
+                    bookDao.insertBookAuthorCrossRef(
+                        BookAuthorCrossRef(bookId = localBookId, authorId = authorId)
+                    )
+
+                }
+
+                bookNetwork.data.book.genres.forEach { genreNetwork ->
+                    val existingId = bookDao.getGenreId(genreNetwork.id)
+                    val genreId = existingId
+                        ?: bookDao.insertGenre(
+                            GenreEntity(
+                                name = genreNetwork.name,
+                                serverId = genreNetwork.id
+                            )
+                        ).toInt()
+
+                    Log.d("BookRepository", "Genre ID: $genreId")
+
+                    bookDao.insertBookGenreCrossRef(
+                        BookGenreCrossRef(bookId = localBookId, genreId = genreId)
+                    )
+                }
+                addToUserBooks(localBookId)
+            }
+        } catch (e: Exception) {
+            Log.e("BookRepository", "Failed to update book status for bookId: $bookId, userId: $userId, status: $newStatus", e)
+            throw Exception("Failed to update book status: ${e.message}")
+        }
+    }
+
+    suspend fun deleteUserBook(bookId: Int) {
+        try {
+            val token = userPreferences.getAccessToken().first()
+            val userId = userPreferences.getUserId().first()
+            val bookLocalId = bookDao.getBookServerIdById(bookId)
+
+            apiService.removeUserBook(
+                token = "Bearer $token",
+                id = bookLocalId
+            )
+            if (userId != null) {
+                bookDao.deleteUserBook(userId, bookId)
+                bookDao.deleteBookById(bookId)
+            }
+        } catch (e: Exception) {
+            Log.d("BookRepository", "Failed to delete user book: ${e.message}")
+        }
+    }
 }

@@ -6,9 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.bookphoria.DeepLinkHolder.token
 import com.example.bookphoria.data.local.dao.BookDao
 import com.example.bookphoria.data.local.dao.ShelfDao
-import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
-import com.example.bookphoria.data.local.entities.ShelfBookCrossRef
 import com.example.bookphoria.data.local.entities.ShelfWithBooks
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.repository.ShelfRepository
@@ -17,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -108,14 +107,39 @@ class ShelfDetailViewModel @Inject constructor(
         }
     }
 
-    suspend fun getBookAuthor(bookId: Int): String {
+    suspend fun getBookAuthor(bookId: Int): BookWithGenresAndAuthors? {
         return try {
             val bookStrId = bookDao.getBookServerIdById(bookId)
             val bookWithDetails = bookDao.getBookById(bookStrId)
-            bookWithDetails?.authors?.joinToString(", ") ?: "Unknown Author"
+            bookWithDetails
         } catch (e: Exception) {
             Log.e("ShelfDetailVM", "Error getting book author", e)
             "Unknown Author"
+            null
+        }
+    }
+
+    suspend fun updateShelf(
+        name: String? = null,
+        desc: String? = null,
+        imageUri: String? = null,
+        imageFile: File? = null
+    ) {
+        try {
+            if (name != null) {
+                _shelfWithBooks.value!!.shelf.serverId?.let {
+                    repository.updateShelf(name, desc, imageUri, imageFile,
+                        it
+                    )
+                }
+
+                _shelfWithBooks.value!!.shelf.name = name
+                _shelfWithBooks.value!!.shelf.description = desc
+                _shelfWithBooks.value!!.shelf.imagePath = imageUri
+                _shelfWithBooks.value = _shelfWithBooks.value
+            }
+        } catch (e: Exception) {
+            Log.e("ShelfDetailVM", "Error updating shelf", e)
         }
     }
 
