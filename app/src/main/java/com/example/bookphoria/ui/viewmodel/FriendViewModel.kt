@@ -24,8 +24,6 @@ class FriendViewModel @Inject constructor(
     val friends: State<List<UserEntity>> get() = _friends
     private val _friendRequest = mutableStateOf<List<FriendWithUsers>>(emptyList())
     val friendRequest: State<List<FriendWithUsers>> get() = _friendRequest
-    private val _friendDetail = mutableStateOf<UserEntity?>(null)
-    val friendDetail: State<UserEntity?> = _friendDetail
     private val _friendSearchDetail = mutableStateOf<UserWrapperResponse?>(null)
     val friendSearchDetail: State<UserWrapperResponse?> = _friendSearchDetail
     private val _isLoading = MutableStateFlow(false)
@@ -61,17 +59,6 @@ class FriendViewModel @Inject constructor(
                 Log.e("FriendViewModel", e.message.toString())
             } finally {
                 _isLoading.value = false
-            }
-        }
-    }
-
-    fun getFriendById(friendId: Int) {
-        viewModelScope.launch {
-            try {
-                val result = repository.getFriendById(friendId)
-                _friendDetail.value = result
-            } catch (e: Exception) {
-                Log.e("FriendViewModel", "Error: ${e.message}")
             }
         }
     }

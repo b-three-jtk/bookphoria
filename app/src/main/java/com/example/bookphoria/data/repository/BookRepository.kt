@@ -430,21 +430,29 @@ class BookRepository @Inject constructor(
         return bookDao.getBookStatus(userId, bookId) ?: "none"
     }
 
-    suspend fun updateBookStatus(userId: Int, bookId: Int, newStatus: String) {
+    suspend fun updateBookStatus(userId: Int, bookId: Int, newStatus: String, pagesRead: Int = 0) {
         val existingCrossRef = bookDao.getUserBookCrossRef(userId, bookId)
         val token = userPreferences.getAccessToken().first()
         val bookLocalId = bookDao.getBookServerIdById(bookId)
 
         if (existingCrossRef != null) {
             bookDao.updateBookStatus(userId, bookId, newStatus)
-            apiService.updateStatus("Bearer $token", bookLocalId)
+            apiService.updateStatus("Bearer $token", bookLocalId,
+                AddUserBookRequest(
+                    bookId = bookLocalId,
+                    status = newStatus,
+                    pagesCount = pagesRead,
+                    startDate = null,
+                    finishDate = null
+                )
+            )
         } else {
             bookDao.insertUserBookCrossRef(
                 UserBookCrossRef(
                     userId = userId,
                     bookId = bookId,
                     status = newStatus,
-                    pagesRead = 0,
+                    pagesRead = pagesRead,
                     startDate = null,
                     endDate = null
                 )
@@ -454,7 +462,7 @@ class BookRepository @Inject constructor(
                 request = AddUserBookRequest(
                     bookId = bookLocalId,
                     status = newStatus,
-                    pagesCount = 0,
+                    pagesCount = pagesRead,
                     startDate = null,
                     finishDate = null
                 )
@@ -471,7 +479,14 @@ class BookRepository @Inject constructor(
         try {
             if (existingCrossRef != null) {
                 bookDao.updateBookStatus(userId, bookLocalId, newStatus)
-                apiService.updateStatus("Bearer $token", bookId)
+                apiService.updateStatus("Bearer $token", bookId,
+                    AddUserBookRequest(
+                        bookId = bookId,
+                        status = newStatus,
+                        pagesCount = 0,
+                        startDate = null,
+                        finishDate = null
+                    ))
             } else {
                 apiService.addUserBook(
                     token = "Bearer $token",

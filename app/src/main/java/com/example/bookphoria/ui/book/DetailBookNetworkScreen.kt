@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.bookphoria.ui.components.LoadingState
+import com.example.bookphoria.ui.theme.AppTypography
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.theme.TitleExtraSmall
 import com.example.bookphoria.ui.viewmodel.DetailBookViewModel

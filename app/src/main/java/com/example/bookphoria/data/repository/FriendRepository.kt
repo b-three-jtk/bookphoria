@@ -9,34 +9,14 @@ import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.FriendApiService
 import com.example.bookphoria.data.remote.api.UserWrapperResponse
 import com.example.bookphoria.data.remote.requests.FriendRequest
+import com.example.bookphoria.data.remote.responses.DetailFriendResponse
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 class FriendRepository @Inject constructor(
     private val apiService: FriendApiService,
     private val userPreferences: UserPreferences,
-    private val userDao: UserDao
 ) {
-    suspend fun sendFriendRequest(req: FriendRequest): Boolean {
-        val accessToken = userPreferences.getAccessToken().first()
-
-        if (accessToken != null) {
-            try {
-                val response = apiService.sendFriendRequest("Bearer $accessToken", req)
-
-                if (response.message == "Friend request sent.") {
-                    return true
-                } else {
-                    return false
-                }
-            } catch (e: Exception) {
-                throw Exception("Terjadi kesalahan saat mengirim permintaan pertemanan: ${e.message}")
-            }
-        } else {
-            throw Exception("Token tidak ditemukan. Mohon login ulang.")
-        }
-    }
-
     suspend fun acceptFriendRequest(friendId: Int): Boolean {
         val accessToken = userPreferences.getAccessToken().first()
 
@@ -107,7 +87,7 @@ class FriendRepository @Inject constructor(
         }
     }
 
-    suspend fun getFriendById(friendId: Int): UserEntity {
+    suspend fun getFriendById(friendId: Int): DetailFriendResponse {
         val accessToken = userPreferences.getAccessToken().first()
 
         if (accessToken != null) {
@@ -155,13 +135,5 @@ class FriendRepository @Inject constructor(
         } else {
             throw Exception("Token tidak ditemukan. Mohon login ulang.")
         }
-    }
-
-    suspend fun getFriendsCount(userId: Int): Int {
-        return userDao.getUserWithFriends(userId).friends.size
-    }
-
-    suspend fun getUserWithFriends(userId: Int): UserWithFriends {
-        return userDao.getUserWithFriends(userId)
     }
 }

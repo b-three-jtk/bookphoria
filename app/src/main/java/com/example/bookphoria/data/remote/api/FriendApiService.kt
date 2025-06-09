@@ -3,6 +3,7 @@ package com.example.bookphoria.data.remote.api
 import com.example.bookphoria.data.local.entities.FriendWithUsers
 import com.example.bookphoria.data.local.entities.UserEntity
 import com.example.bookphoria.data.remote.requests.FriendRequest
+import com.example.bookphoria.data.remote.responses.DetailFriendResponse
 import com.example.bookphoria.data.remote.responses.FriendRequestResponse
 import com.google.gson.annotations.SerializedName
 import retrofit2.http.Body
@@ -25,7 +26,7 @@ interface FriendApiService {
     suspend fun getAllFriends(@Header("Authorization") token: String): List<UserEntity>
 
     @GET("friends/{friendId}")
-    suspend fun getFriendById(@Header("Authorization") token: String, @Path("friendId") friendId: Int): UserEntity
+    suspend fun getFriendById(@Header("Authorization") token: String, @Path("friendId") friendId: Int): DetailFriendResponse
 
     @GET("friends/pending")
     suspend fun getFriendRequests(@Header("Authorization") token: String): List<FriendWithUsers>

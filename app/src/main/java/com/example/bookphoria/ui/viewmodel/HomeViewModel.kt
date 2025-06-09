@@ -60,6 +60,8 @@ class HomeViewModel @Inject constructor(
             repository.getCurrentlyReadingLocal(userId, "reading").collect { books ->
                 _currentlyReading.value = books
             }
+            Log.d("HomeViewModel", "Currently Reading: $_currentlyReading")
+
         }
     }
 }

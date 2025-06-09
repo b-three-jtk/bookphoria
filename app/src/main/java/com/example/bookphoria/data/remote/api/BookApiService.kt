@@ -93,6 +93,7 @@ interface BookApiService {
     suspend fun updateStatus(
         @Header("Authorization") token: String,
         @Path("id") id: String,
+        @Body request: AddUserBookRequest
     )
 
     @POST("user/books")

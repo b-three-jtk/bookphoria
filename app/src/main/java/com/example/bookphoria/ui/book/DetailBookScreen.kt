@@ -303,15 +303,6 @@ fun DetailBookScreen(
                         )
                     }
                 }
-
-                reviewsState.value.forEach { review ->
-                    ReviewSection(
-                        reviewerAvatar = review.user.avatar,
-                        reviewerName = review.user.username,
-                        reviewText = review.desc,
-                        rating = review.rate
-                    )
-                }
             }
             if (showStatusBottomSheet) {
                 ModalBottomSheet(

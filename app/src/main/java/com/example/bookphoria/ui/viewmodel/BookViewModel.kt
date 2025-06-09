@@ -76,6 +76,7 @@ class BookViewModel @Inject constructor(
                 )
             )
             _readingProgress.value = pagesRead
+            _bookStatus.value = "reading"
         }
     }
 
@@ -114,7 +115,11 @@ class BookViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val userId = userPreferences.getUserId().first() ?: return@launch
-                bookRepository.updateBookStatus(userId, bookId, newStatus)
+                _readingProgress.value?.let {
+                    bookRepository.updateBookStatus(userId, bookId, newStatus,
+                        it
+                    )
+                }
                 _bookStatus.value = newStatus
                 _statusUpdateSuccess.value = true
             } catch (e: Exception) {

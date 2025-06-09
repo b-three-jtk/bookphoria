@@ -42,6 +42,7 @@ import com.example.bookphoria.ui.viewmodel.EntryBookViewModel
 import com.example.bookphoria.ui.viewmodel.FriendViewModel
 import com.example.bookphoria.ui.viewmodel.HomeViewModel
 import com.example.bookphoria.ui.viewmodel.OnboardingViewModel
+import com.example.bookphoria.ui.viewmodel.ProfileFriendViewModel
 import com.example.bookphoria.ui.viewmodel.ProfileViewModel
 import com.example.bookphoria.ui.viewmodel.ShelfDetailViewModel
 
@@ -58,6 +59,7 @@ fun AppNavHost(
     val detailBookViewModel: DetailBookViewModel = hiltViewModel()
     val homeViewModel: HomeViewModel = hiltViewModel()
     val friendViewModel: FriendViewModel = hiltViewModel()
+    val profileFriendViewModel: ProfileFriendViewModel = hiltViewModel()
     val profilViewModel: ProfileViewModel = hiltViewModel()
 
     val isOnboardingCompleteState = onboardingViewModel
@@ -146,7 +148,7 @@ fun AppNavHost(
                 arguments = listOf(navArgument("userId") { type = NavType.IntType })
             ) { backStackEntry ->
                 val userId = backStackEntry.arguments?.getInt("userId") ?: 0
-                ProfileFriendScreen(userId = userId, viewModel = friendViewModel, navController = navController)
+                ProfileFriendScreen(userId = userId, viewModel = profileFriendViewModel, friendViewModel = friendViewModel, navController = navController)
             }
 
             composable(
