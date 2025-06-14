@@ -1,5 +1,6 @@
 package com.example.bookphoria.ui.auth
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,9 +21,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -57,8 +60,20 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
     val savedCredentials by viewModel.getSavedCredentials().collectAsState(initial = Pair(null, null))
     val scrollState = rememberScrollState()
+
+    fun isValidEmail(email: String): Boolean {
+        val emailRegex = "^[A-Za-z0-9+_.-]+@([a-zA-Z0-9.-]+\\.)+[a-zA-Z]{2,}$".toRegex()
+        val allowedDomains = listOf(
+            "gmail.com", "yahoo.com", "outlook.com", "hotmail.com",
+            "aol.com", "icloud.com", "protonmail.com", "polban.ac.id"
+        )
+        if (!email.matches(emailRegex)) return false
+        val domain = email.substringAfter("@")
+        return allowedDomains.contains(domain) || domain.matches("^[a-zA-Z0-9.-]+\\.edu\\.[a-zA-Z]{2,}$".toRegex())
+    }
 
     LaunchedEffect(Unit) {
         val (savedEmail, savedPassword) = savedCredentials
@@ -113,14 +128,24 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
                 textAlign = TextAlign.End
             )
 
-            AuthTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = "Email",
-                leadingIcon = Icons.Default.Email,
-                contentDescription = "Email Icon",
-                modifier = Modifier.padding(top = 16.dp)
-            )
+            Column {
+                AuthTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = "Email",
+                    leadingIcon = Icons.Default.Email,
+                    contentDescription = "Email Icon",
+                    modifier = Modifier.padding(top = 20.dp)
+                )
+                if (email.isNotBlank() && !isValidEmail(email)) {
+                    Text(
+                        text = "Gunakan email dari penyedia seperti Gmail, Yahoo, Outlook, atau email instansi",
+                        color = Color.Red,
+                        style = AppTypography.bodySmall,
+                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                    )
+                }
+            }
 
             AuthTextField(
                 value = password,
@@ -158,28 +183,49 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
                 text = "MASUK",
                 backgroundColor = PrimaryOrange,
                 onClick = {
-                    viewModel.login(
-                        email = email,
-                        password = password,
-                        rememberMe = rememberMe,
-                        onSuccess = {
-                            Toast.makeText(
-                                context,
-                                "Login Berhasil! Selamat Datang.",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            navController.navigate("home")
-                        },
-                        onError = {
-                            Toast.makeText(
-                                context,
-                                "Terjadi kesalahan saat login! Coba beberapa saat lagi.",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                    when {
+                        email.isBlank() -> Toast.makeText(context, "Email harus diisi!", Toast.LENGTH_SHORT).show()
+                        !isValidEmail(email) -> {
+                            Log.d("LoginScreen", "Invalid email: $email")
+                            showDialog = true
                         }
-                    )
+                        password.isBlank() -> Toast.makeText(context, "Password harus diisi!", Toast.LENGTH_SHORT).show()
+                        else -> viewModel.login(
+                            email = email,
+                            password = password,
+                            rememberMe = rememberMe,
+                            onSuccess = {
+                                Toast.makeText(
+                                    context,
+                                    "Login Berhasil! Selamat Datang.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                navController.navigate("home")
+                            },
+                            onError = {
+                                Toast.makeText(
+                                    context,
+                                    "Terjadi kesalahan saat login! Coba beberapa saat lagi.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        )
+                    }
                 }
             )
+
+            if (showDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDialog = false },
+                    title = { Text("Email Tidak Valid") },
+                    text = { Text("Gunakan email dari penyedia seperti Gmail, Yahoo, Outlook, atau email instansi") },
+                    confirmButton = {
+                        TextButton(onClick = { showDialog = false }) {
+                            Text("OK")
+                        }
+                    }
+                )
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),

@@ -122,7 +122,7 @@ fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
             )
             if (email.isNotBlank() && !isValidEmail(email)) {
                 Text(
-                    text = "Gunakan email valid (mis. Gmail, Yahoo, atau email instansi seperti polban.ac.id)",
+                    text = "Gunakan email dari penyedia seperti Gmail, Yahoo, Outlook, atau email instansi",
                     color = Color.Red,
                     style = AppTypography.bodySmall,
                     modifier = Modifier.padding(start = 16.dp, top = 4.dp)
@@ -172,7 +172,7 @@ fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
             AlertDialog(
                 onDismissRequest = { showDialog = false },
                 title = { Text("Email Tidak Valid") },
-                text = { Text("Gunakan email dari penyedia seperti Gmail, Yahoo, Outlook, atau email instansi seperti polban.ac.id.") },
+                text = { Text("Gunakan email dari penyedia seperti Gmail, Yahoo, Outlook, atau email instansi") },
                 confirmButton = {
                     TextButton(onClick = { showDialog = false }) {
                         Text("OK")
