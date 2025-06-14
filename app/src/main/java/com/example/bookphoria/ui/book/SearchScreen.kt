@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
@@ -25,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -61,85 +66,72 @@ import com.example.bookphoria.ui.viewmodel.SearchViewModel
 fun SearchScreen(viewModel: SearchViewModel = hiltViewModel(), navController: NavController) {
     val query by viewModel.searchQuery.collectAsState()
     val results = viewModel.searchResults.collectAsLazyPagingItems()
-    val searchHistory by viewModel.searchHistory.collectAsState()
-    val navBackStackEntry = navController.currentBackStackEntry
 
-    val scannedQuery = navBackStackEntry?.savedStateHandle?.get<String>("search_query")
+    val navQuery = navController.currentBackStackEntry?.arguments?.getString("query")?.takeIf { it.isNotEmpty() }
 
-    LaunchedEffect(scannedQuery) {
-        scannedQuery?.let { scanResult ->
-            navBackStackEntry.savedStateHandle.remove<String>("search_query")
-            viewModel.setSearchQuery(scanResult)
-            viewModel.addToHistory(scanResult)
+    LaunchedEffect(navQuery) {
+        navQuery?.let { queryFromNav ->
+            viewModel.setSearchQuery(queryFromNav)
         }
     }
 
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column {
-            SearchBarCustom(
-                query = query,
-                onQueryChange = { viewModel.setSearchQuery(it) },
-                onSearch = { if (query.isNotBlank()) viewModel.addToHistory(query) },
-                searchHistory = searchHistory,
-                onClearHistory = { viewModel.clearHistory() }
-            )
+        SearchBarCustom(
+            query = query,
+            onQueryChange = { viewModel.setSearchQuery(it) },
+            onSearch = { if (query.isNotBlank()) viewModel.setSearchQuery(query) } // Trigger search
+        )
 
-            LazyColumn(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                if (query.isNotEmpty()) {
-                    items(results.itemCount) { index ->
-                        val data = results[index]
-                        if (data != null) {
-                            BookSearchItem(
-                                title = data.title,
-                                author = data.authors?.joinToString(", ") { it.name }.orEmpty(),
-                                imageUrl = data.cover,
-                                onClick = {
-                                    navController.navigate("detail/search/${data.id}")
-                                }
-                            )
-                        }
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            if (query.isNotEmpty()) {
+                items(results.itemCount) { index ->
+                    val data = results[index]
+                    if (data != null) {
+                        BookSearchItem(
+                            title = data.title,
+                            author = data.authors?.joinToString(", ") { it.name }.orEmpty(),
+                            imageUrl = data.cover,
+                            onClick = {
+                                navController.navigate("detail/search/${data.id}")
+                            }
+                        )
                     }
+                }
 
-                    results.apply {
-                        when {
-                            loadState.refresh is LoadState.Loading -> {
-                                item {
-                                    LoadingState()
-                                }
-                            }
-
-                            loadState.append is LoadState.Loading -> {
-                                item {
-                                    LoadingState()
-                                }
-                            }
-
-                            loadState.refresh is LoadState.Error -> {
-                                val e = loadState.refresh as LoadState.Error
-                                item {
-                                    Text(
-                                        "Error: ${e.error.message}",
-                                        color = MaterialTheme.colorScheme.error,
-                                        modifier = Modifier.padding(16.dp)
-                                    )
-                                }
+                results.apply {
+                    when {
+                        loadState.refresh is LoadState.Loading -> {
+                            item { LoadingState() }
+                        }
+                        loadState.append is LoadState.Loading -> {
+                            item { LoadingState() }
+                        }
+                        loadState.refresh is LoadState.Error -> {
+                            val e = loadState.refresh as LoadState.Error
+                            item {
+                                Text(
+                                    "Error: ${e.error.message}",
+                                    color = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.padding(16.dp)
+                                )
                             }
                         }
                     }
-                } else {
-                    item {
-                        Box(
-                            modifier = Modifier.fillParentMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("Silakan ketik untuk mencari buku")
-                        }
+                }
+            } else {
+                item {
+                    Box(
+                        modifier = Modifier.fillParentMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Silakan ketik untuk mencari buku")
                     }
                 }
             }
@@ -204,85 +196,53 @@ fun BookSearchItem(
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchBarCustom(
     query: String,
     onQueryChange: (String) -> Unit,
     onSearch: () -> Unit,
-    searchHistory: List<String>,
-    onClearHistory: () -> Unit
+    modifier: Modifier = Modifier
 ) {
-    var active by remember { mutableStateOf(false) }
-
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
-    ) {
-        DockedSearchBar(
-            query = query,
-            onQueryChange = onQueryChange,
-            onSearch = {
-                onSearch()
-                active = false
-            },
-            active = active,
-            onActiveChange = { active = it },
-            placeholder = { Text("Search") },
-            colors = SearchBarDefaults.colors(
-                containerColor = Color.White,
-                dividerColor = Color.Transparent
-            ),
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-            trailingIcon = if (active) {
-                {
-                    IconButton(onClick = {
-                        if (query.isNotEmpty()) onQueryChange("") else active = false
-                    }) {
-                        Icon(Icons.Default.Close, contentDescription = "Close")
-                    }
-                }
-            } else null
-        ) {
-            if (searchHistory.isEmpty()) {
-                Text(
-                    "No search history",
-                    modifier = Modifier.padding(16.dp)
-                )
-            } else {
-                Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Recent searches",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        TextButton(onClick = onClearHistory) {
-                            Text("Clear all")
-                        }
-                    }
-
-                    searchHistory.take(5).forEach { item ->
-                        ListItem(
-                            modifier = Modifier.clickable {
-                                onQueryChange(item)
-                                onSearch()
-                                active = false
-                            },
-                            headlineContent = { Text(item) },
-                            leadingContent = {
-                                Icon(Icons.Default.History, contentDescription = "History")
-                            }
-                        )
-                    }
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp),
+        placeholder = {
+            Text(text = "Search", color = Color.Gray)
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Search Icon",
+                tint = Color.Gray
+            )
+        },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(
+                    onClick = { onQueryChange("") }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Clear Icon",
+                        tint = Color.Gray
+                    )
                 }
             }
-        }
-    }
+        },
+        singleLine = true,
+        shape = RoundedCornerShape(25.dp),
+        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Color(0xFFE0E0E0),
+            unfocusedBorderColor = Color(0xFFE0E0E0),
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White
+        ),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(
+            onSearch = { onSearch() }
+        )
+    )
 }

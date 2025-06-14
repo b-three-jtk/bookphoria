@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
@@ -38,6 +40,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,6 +58,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -64,6 +68,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.viewmodel.HomeViewModel
+import com.example.bookphoria.ui.viewmodel.SearchViewModel
 
 @Composable
 fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
@@ -145,69 +150,59 @@ fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchBarHome(navCon: NavController) {
+fun SearchBarHome(navController: NavController) {
     var query by remember { mutableStateOf("") }
-    var active by remember { mutableStateOf(false) }
-    val searchHistory = listOf("")
 
-    DockedSearchBar(
+    OutlinedTextField(
+        value = query,
+        onValueChange = { query = it },
         modifier = Modifier
+            .fillMaxWidth()
             .padding(horizontal = 20.dp)
             .offset(y = 170.dp)
-            .clickable { navCon.navigate("search") },
-        colors = SearchBarDefaults.colors(
-            containerColor = Color.White
-        ),
-        query = query,
-        onQueryChange = { query = it },
-        onSearch = {
-            println("do search with query $query")
-            active = false
-        },
-        active = active,
-        onActiveChange = { active = it },
+            .clickable {
+                // Navigate to search screen immediately
+                navController.navigate("search?query=$query")
+            },
         placeholder = {
             Text(text = "Search", color = Color.Gray)
         },
         leadingIcon = {
-            Icon(imageVector = Icons.Default.Search, contentDescription = "Search Icon")
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Search Icon",
+                tint = Color.Gray
+            )
         },
         trailingIcon = {
-            if (active) {
+            if (query.isNotEmpty()) {
                 IconButton(
-                    onClick = {
-                        if (query.isNotEmpty()) query = "" else active = false
-                    }
+                    onClick = { query = "" }
                 ) {
-                    Icon(imageVector = Icons.Default.Close, contentDescription = "Close Icon")
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Clear Icon",
+                        tint = Color.Gray
+                    )
                 }
             }
         },
-        tonalElevation = 4.dp,
-        shape = RoundedCornerShape(25.dp)
-    ) {
-        Column(modifier = Modifier.padding(8.dp)) {
-            searchHistory.takeLast(3).forEach { item ->
-                ListItem(
-                    modifier = Modifier.clickable {
-                        query = item
-                        active = false
-                    },
-                    headlineContent = {
-                        Text(text = item)
-                    },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Default.History,
-                            contentDescription = null
-                        )
-                    }
-                )
+        singleLine = true,
+        shape = RoundedCornerShape(25.dp),
+        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Color(0xFFE0E0E0),
+            unfocusedBorderColor = Color(0xFFE0E0E0),
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White
+        ),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(
+            onSearch = {
+                navController.navigate("search?query=$query")
             }
-        }
-    }
+        )
+    )
 }
 
 @Composable

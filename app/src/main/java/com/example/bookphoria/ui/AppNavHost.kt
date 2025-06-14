@@ -115,8 +115,14 @@ fun AppNavHost(
             composable("home") {
                 MainScreen(navController = navController, viewModel = homeViewModel)
             }
-            composable("search") {
-                SearchScreen(navController = navController)
+            composable(
+                route = "search?query={query}",
+                arguments = listOf(navArgument("query") { defaultValue = "" })
+            ) { backStackEntry ->
+                SearchScreen(
+                    navController = navController,
+                    viewModel = hiltViewModel()
+                )
             }
             composable("friend-list") {
                 FriendScreen(viewModel = friendViewModel, navController = navController)
