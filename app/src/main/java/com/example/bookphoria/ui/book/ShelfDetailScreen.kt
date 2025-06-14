@@ -1,10 +1,13 @@
 package com.example.bookphoria.ui.book
 
+import android.net.Uri
 import android.util.Log
-import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,9 +15,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,6 +25,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,23 +35,25 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.example.bookphoria.DeepLinkHolder.token
+import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
 import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.ShelfEntity
+import com.example.bookphoria.ui.helper.uriToFile
 import com.example.bookphoria.ui.theme.AppTypography
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.viewmodel.MyShelfViewModel
 import com.example.bookphoria.ui.viewmodel.ShelfDetailViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.io.File
 
 @Composable
 fun ShelfDetailScreen(
@@ -57,18 +63,44 @@ fun ShelfDetailScreen(
     viewModel: ShelfDetailViewModel = hiltViewModel(),
     myShelfViewModel: MyShelfViewModel = hiltViewModel()
 ) {
-
+    val context = LocalContext.current
     val shelfWithBooks by viewModel.shelfWithBooks.collectAsState()
     val booksWithAuthors by myShelfViewModel.booksWithAuthors.collectAsState()
     val addResult by viewModel.addBookResult.collectAsState()
     var showBookPicker by remember { mutableStateOf(false) }
     val deleteResult by viewModel.deleteResult.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
+    var showEditShelf by remember { mutableStateOf(false) }
+    var shelfName by remember { mutableStateOf("") }
+    var shelfDescription by remember { mutableStateOf("") }
+    val coroutineScope = rememberCoroutineScope()
+    var imageFile by remember { mutableStateOf<File?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.loadShelfWithBooks(userId, shelfId)
         myShelfViewModel.loadUserBooks()
     }
+
+    LaunchedEffect(showEditShelf) {
+        if (showEditShelf) {
+            shelfWithBooks?.shelf?.let {
+                shelfName = it.name
+                shelfDescription = it.description ?: ""
+            }
+        }
+    }
+
+    val imageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            val file = uriToFile(context, it)
+            imageFile = file
+            shelfWithBooks?.shelf?.imagePath = uri.toString()
+            Log.d("ShelfDetailScreen", "Image URI: $uri")
+        }
+    }
+
 
     LaunchedEffect(addResult) {
         addResult?.let {
@@ -97,13 +129,32 @@ fun ShelfDetailScreen(
             .fillMaxSize()
             .background(SoftCream)
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back"
+                )
+            }
+
+            Text(
+                text = "Your Books",
+                style = AppTypography.titleSmall
+            )
+
+            Spacer(modifier = Modifier.width(48.dp))
+        }
         shelfWithBooks?.let { shelf ->
-            // Call ShelfHeader with proper parameters
             ShelfHeader(
                 shelf = shelf.shelf,
                 bookCount = shelf.books.size,
                 onAddClick = { showBookPicker = true },
-                onRemoveClick =  { showDialog = true }
+                onRemoveClick =  { showDialog = true },
+                showEditShelf = { showEditShelf = true }
             )
 
             BookCollection(
@@ -194,6 +245,143 @@ fun ShelfDetailScreen(
                 }
             }
         }
+
+        if (showEditShelf) {
+            Dialog(onDismissRequest = { showBookPicker = false }) {
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = SoftCream,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(top = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(start = 24.dp, end = 24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            if (shelfWithBooks?.shelf?.imagePath != null) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(model = imageFile ?: shelfWithBooks?.shelf?.imagePath),
+                                    contentDescription = "Selected Image",
+                                    modifier = Modifier
+                                        .size(72.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .border(BorderStroke(1.dp, Color.Gray))
+                                        .clickable { imageLauncher.launch("image/*") }
+                                )
+
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(72.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .border(BorderStroke(1.dp, Color.Gray))
+                                        .clickable { imageLauncher.launch("image/*") },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        painter = rememberAsyncImagePainter(model = shelfWithBooks?.shelf?.imagePath),
+                                        contentDescription = "Select Image"
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "Give your shelf a name",
+                                style = AppTypography.headlineSmall,
+                                textAlign = TextAlign.Left
+                            )
+
+                            shelfWithBooks?.shelf?.let {
+                                OutlinedTextField(
+                                    value = shelfName,
+                                    onValueChange = { shelfName = it },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    colors = TextFieldDefaults.colors(
+                                        focusedContainerColor = SoftCream,
+                                        unfocusedContainerColor = SoftCream,
+                                        focusedIndicatorColor = Color.Black,
+                                        unfocusedIndicatorColor = Color.Black,
+                                        focusedTextColor = Color.Black,
+                                        unfocusedTextColor = Color.Black
+                                    ),
+                                    singleLine = true,
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "Give your shelf description",
+                                style = AppTypography.headlineSmall,
+                                textAlign = TextAlign.Left
+                            )
+
+                            OutlinedTextField(
+                                value = shelfDescription ?: "",
+                                onValueChange = { shelfDescription = it },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = SoftCream,
+                                    unfocusedContainerColor = SoftCream,
+                                    focusedIndicatorColor = Color.Black,
+                                    unfocusedIndicatorColor = Color.Black,
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black
+                                ),
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(72.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.Bottom,
+                            horizontalArrangement = Arrangement.spacedBy(0.dp)
+                        ) {
+                            Button(
+                                onClick = { showEditShelf = false },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Gray,
+                                    contentColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(bottomStart = 20.dp),
+                            ) {
+                                Text("Batal")
+                            }
+
+                            Button(
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(bottomEnd = 20.dp),
+                                onClick = {
+                                    coroutineScope.launch {
+                                        viewModel.updateShelf(
+                                            name = shelfName,
+                                            desc = shelfDescription.takeIf { it.isNotBlank() },
+                                            imageUri = shelfWithBooks?.shelf?.imagePath,
+                                            imageFile = imageFile
+                                        )
+                                        showEditShelf = false
+                                    }
+                                }
+                            ) {
+                                Text("Simpan")
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -202,9 +390,10 @@ fun ShelfHeader(
     shelf: ShelfEntity,
     bookCount: Int,
     onAddClick: () -> Unit,
-    onRemoveClick: () -> Unit
+    onRemoveClick: () -> Unit,
+    showEditShelf: () -> Unit
 )
-    {
+{
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -254,7 +443,7 @@ fun ShelfHeader(
                 ) {
                     IconButton(
                         onClick = { onAddClick() },
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(32.dp)
                     ){
                         Icon(
                             Icons.Default.Add,
@@ -264,8 +453,22 @@ fun ShelfHeader(
                     }
                     Spacer(modifier = Modifier.width(4.dp))
                     IconButton(
+                        onClick = {
+                            showEditShelf()
+                        },
+                        modifier = Modifier.size(32.dp)
+                    ){
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Edit Shelf",
+                            tint = Color.Gray
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(4.dp))
+                    IconButton(
                         onClick = { onRemoveClick() },
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(32.dp)
                     ){
                         Icon(
                             Icons.Default.Delete,
@@ -300,7 +503,8 @@ fun ShelfHeader(
                         text = it,
                         fontSize = 14.sp,
                         color = Color.DarkGray,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.align(Alignment.CenterHorizontally
+                        )
                     )
                 }
             }
@@ -337,13 +541,15 @@ fun BookCollection(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(books, key = { it.id }) { book ->
-            var authorName by remember { mutableStateOf("Unknown Author") }
+            var authorName by remember { mutableStateOf("") }
             var isFinished by remember(book.id) { mutableStateOf(false) }
 
             LaunchedEffect(book.id) {
                 try {
                     val bookId = book.id
-                    authorName = viewModel.getBookAuthor(bookId)
+                    authorName =
+                        viewModel.getBookAuthor(bookId)?.authors?.joinToString(", ") { it.name ?: "Unknown" }
+                            .toString()
                     isFinished = viewModel.getReadingProgress(userId, bookId)
                 } catch (e: Exception) {
                     authorName = "Unknown Author"

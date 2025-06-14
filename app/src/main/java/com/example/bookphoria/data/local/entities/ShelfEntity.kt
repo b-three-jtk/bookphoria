@@ -21,8 +21,8 @@ data class ShelfEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val userId: Int,
     val serverId: String?,
-    val name: String,
-    val description: String?,
-    val imagePath: String?,
+    var name: String,
+    var description: String?,
+    var imagePath: String?,
     val createdAt: Long = System.currentTimeMillis()
 )

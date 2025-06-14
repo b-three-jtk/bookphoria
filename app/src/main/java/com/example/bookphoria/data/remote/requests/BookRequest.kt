@@ -38,3 +38,11 @@ data class AddReviewRequest(
     @SerializedName("rate") val rate: Int,
     @SerializedName("desc") val desc: String
 )
+
+data class AddUserBookRequest(
+    @SerializedName("book_id") val bookId: String,
+    @SerializedName("status") val status: String,
+    @SerializedName("page_count") val pagesCount: Int,
+    @SerializedName("start_date") val startDate: Date?,
+    @SerializedName("finish_date") val finishDate: Date?
+)

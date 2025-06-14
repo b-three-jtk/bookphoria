@@ -25,7 +25,6 @@ import javax.inject.Inject
 
 class UserRepository @Inject constructor (
     private val userDao: UserDao,
-    private val userApiService: FriendApiService,
     private val apiService: AuthApiService,
     private val userPreferences: UserPreferences
 ) {

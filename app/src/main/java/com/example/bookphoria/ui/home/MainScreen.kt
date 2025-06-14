@@ -86,12 +86,13 @@ fun MainScreen(navController: NavController, viewModel: HomeViewModel) {
             NavHost(
                 navController = childNavController,
                 startDestination = "home-tab",
-                modifier = Modifier.padding(innerPadding)
+//                modifier = Modifier.padding(innerPadding)
             ) {
                 composable("home-tab") {
                     HomeScreen(
                         viewModel = viewModel,
-                        navController = navController
+                        navController = navController,
+                        innerPadding = innerPadding
                     )
                 }
                 composable("search-tab") { SearchScreen(navController = navController) }

@@ -26,7 +26,7 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val userRepository: UserRepository,
-    private val userPreferences: UserPreferences
+    private val userPreferences: UserPreferences,
 ) : ViewModel() {
 
     private val _userData = MutableStateFlow<UserEntity?>(null)
@@ -47,11 +47,7 @@ class ProfileViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    init {
-        fetchUserData()
-    }
-
-    private fun fetchUserData() {
+    fun fetchUserData() {
         viewModelScope.launch {
             _loading.value = true
             try {

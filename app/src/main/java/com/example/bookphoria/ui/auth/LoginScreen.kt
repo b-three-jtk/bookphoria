@@ -49,6 +49,7 @@ import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.theme.PrimaryOrange
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
+import com.example.bookphoria.ui.viewmodel.BookViewModel
 
 @Composable
 fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
@@ -178,18 +179,6 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
                         }
                     )
                 }
-            )
-
-            Text(
-                text = "Atau masuk menggunakan",
-                style = AppTypography.bodyMedium,
-                color = Color.Gray,
-                modifier = Modifier.padding(top = 24.dp, bottom = 16.dp)
-            )
-
-            GoogleButton(
-                iconRes = R.drawable.ic_google,
-                contentDesc = "Google Login"
             )
 
             Row(

@@ -57,7 +57,8 @@ class AuthViewModel @Inject constructor(
                         userPreferences.clearCredentials()
                     }
 
-                    val remoteBooks = result.let { bookRepository.getYourBooksRemote(it.id) }
+                    val remoteBooks = bookRepository.getYourBooksRemote(result.id)
+                    Log.d("Login", "Remote Books: $remoteBooks")
                     bookRepository.saveBooksToLocal(remoteBooks)
 
                     onSuccess()
@@ -112,17 +113,6 @@ class AuthViewModel @Inject constructor(
             val result = authRepository.resetPassword(token, email, password, confirmPassword)
             _resetPasswordState.value = result
             _isLoading.value = false
-        }
-    }
-
-    fun logout(onLogoutSuccess: () -> Unit, onError: (Throwable) -> Unit) {
-        viewModelScope.launch {
-            val result = authRepository.logout()
-            result.onSuccess {
-                onLogoutSuccess()
-            }.onFailure {
-                onError(it)
-            }
         }
     }
 

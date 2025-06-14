@@ -30,10 +30,12 @@ import com.example.bookphoria.ui.book.ShelfDetailScreen
 import com.example.bookphoria.ui.book.YourBooksScreen
 import com.example.bookphoria.ui.home.MainScreen
 import com.example.bookphoria.ui.onboarding.OnboardingScreen
+import com.example.bookphoria.ui.profile.AboutScreen
 import com.example.bookphoria.ui.profile.EditProfileScreen
 import com.example.bookphoria.ui.profile.FriendScreen
 import com.example.bookphoria.ui.profile.ProfileFriendScreen
 import com.example.bookphoria.ui.profile.ProfileScreen
+import com.example.bookphoria.ui.profile.SettingScreen
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
 import com.example.bookphoria.ui.viewmodel.BookViewModel
 import com.example.bookphoria.ui.viewmodel.DetailBookViewModel
@@ -42,6 +44,7 @@ import com.example.bookphoria.ui.viewmodel.EntryBookViewModel
 import com.example.bookphoria.ui.viewmodel.FriendViewModel
 import com.example.bookphoria.ui.viewmodel.HomeViewModel
 import com.example.bookphoria.ui.viewmodel.OnboardingViewModel
+import com.example.bookphoria.ui.viewmodel.ProfileFriendViewModel
 import com.example.bookphoria.ui.viewmodel.ProfileViewModel
 import com.example.bookphoria.ui.viewmodel.ShelfDetailViewModel
 
@@ -58,6 +61,7 @@ fun AppNavHost(
     val detailBookViewModel: DetailBookViewModel = hiltViewModel()
     val homeViewModel: HomeViewModel = hiltViewModel()
     val friendViewModel: FriendViewModel = hiltViewModel()
+    val profileFriendViewModel: ProfileFriendViewModel = hiltViewModel()
     val profilViewModel: ProfileViewModel = hiltViewModel()
 
     val isOnboardingCompleteState = onboardingViewModel
@@ -77,7 +81,7 @@ fun AppNavHost(
         !isOnboardingComplete -> "onboarding"
         startDestination == "home" -> "home"
         startDestination == "login" -> "login"
-        else -> "register"
+        else -> "login"
     }
 
     Scaffold { innerPadding ->
@@ -111,11 +115,23 @@ fun AppNavHost(
             composable("home") {
                 MainScreen(navController = navController, viewModel = homeViewModel)
             }
-            composable("search") {
-                SearchScreen(navController = navController)
+            composable(
+                route = "search?query={query}",
+                arguments = listOf(navArgument("query") { defaultValue = "" })
+            ) { backStackEntry ->
+                SearchScreen(
+                    navController = navController,
+                    viewModel = hiltViewModel()
+                )
             }
             composable("friend-list") {
                 FriendScreen(viewModel = friendViewModel, navController = navController)
+            }
+            composable("settings") {
+                SettingScreen(navController = navController)
+            }
+            composable("about") {
+                AboutScreen(navController = navController)
             }
 
             composable(
@@ -146,7 +162,7 @@ fun AppNavHost(
                 arguments = listOf(navArgument("userId") { type = NavType.IntType })
             ) { backStackEntry ->
                 val userId = backStackEntry.arguments?.getInt("userId") ?: 0
-                ProfileFriendScreen(userId = userId, viewModel = friendViewModel, navController = navController)
+                ProfileFriendScreen(userId = userId, viewModel = profileFriendViewModel, friendViewModel = friendViewModel, navController = navController)
             }
 
             composable(
@@ -200,7 +216,7 @@ fun AppNavHost(
                 )
             }
 
-            composable("myshelf") {
+                    composable("myshelf") {
                 MyShelfScreen(navController = navController)
             }
             composable("your_books") {
@@ -217,10 +233,10 @@ fun AppNavHost(
                 val shelfId = backStackEntry.arguments?.getInt("shelfId") ?: 0
                 val viewModel: ShelfDetailViewModel = hiltViewModel()
                 ShelfDetailScreen(
-                    navController = navController,
                     userId = userId,
                     shelfId = shelfId,
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    navController = navController
                 )
             }
             composable("change") {

@@ -55,6 +55,7 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.bookphoria.R
 import com.example.bookphoria.ui.components.ConfirmationDialog
+import com.example.bookphoria.ui.components.LoadingState
 import com.example.bookphoria.ui.theme.SubTitleExtraSmall
 import com.example.bookphoria.ui.theme.TitleExtraSmall
 import com.example.bookphoria.ui.viewmodel.FriendViewModel
@@ -68,28 +69,10 @@ fun FriendRequestListContent(
     var showApproveDialog by remember { mutableStateOf<Int?>(null) }
     var showRejectDialog by remember { mutableStateOf<Int?>(null) }
     val isLoading by viewModel.isLoading.collectAsState()
-
-    val requests by viewModel.friendRequest
+    val requests by viewModel.friendRequest.collectAsState()
 
     if (isLoading) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            val composition by rememberLottieComposition(
-                LottieCompositionSpec.RawRes(R.raw.splashbuku)
-            )
-            val progress by animateLottieCompositionAsState(
-                composition = composition,
-                iterations = LottieConstants.IterateForever
-            )
-
-            LottieAnimation(
-                composition = composition,
-                progress = { progress },
-                modifier = Modifier.size(200.dp)
-            )
-        }
+        LoadingState()
         return
     }
 
@@ -131,6 +114,7 @@ fun FriendRequestListContent(
                         viewModel.approveRequest(
                             request.user.id,
                             onSuccess = {
+                                viewModel.removeRequestLocally(request.user.id)
                                 Toast.makeText(
                                     context,
                                     "Permintaan pertemanan diterima",
@@ -157,6 +141,7 @@ fun FriendRequestListContent(
                     title = "Konfirmasi Penolakan",
                     message = "Anda yakin ingin menolak permintaan pertemanan dari ${request.user.username}?",
                     onConfirm = {
+                        viewModel.removeRequestLocally(request.user.id)
                         viewModel.rejectRequest(
                             request.user.id,
                             onSuccess = {

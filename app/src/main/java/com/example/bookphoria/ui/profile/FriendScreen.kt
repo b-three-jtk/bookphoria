@@ -37,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.bookphoria.ui.theme.DarkIndigo
-import com.example.bookphoria.ui.theme.DeepBlue
 import com.example.bookphoria.ui.theme.PrimaryOrange
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.theme.SubTitleExtraSmall
@@ -50,7 +49,6 @@ fun FriendScreen(
     navController: NavController
 ) {
     LaunchedEffect(Unit) {
-        viewModel.loadFriends()
         viewModel.loadRequests()
     }
 

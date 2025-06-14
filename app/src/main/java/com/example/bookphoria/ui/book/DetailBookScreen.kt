@@ -41,12 +41,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.bookphoria.R
+import com.example.bookphoria.ui.components.LoadingState
 import com.example.bookphoria.ui.theme.AppTypography
 import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.theme.PrimaryOrange
@@ -65,6 +61,7 @@ fun DetailBookScreen(
     val readingProgressState = bookViewModel.readingProgress.collectAsState()
     val bookStatusState = bookViewModel.bookStatus.collectAsState()
     val statusUpdateSuccess = bookViewModel.statusUpdateSuccess.collectAsState()
+    val reviewUpdateSuccess = bookViewModel.reviewUpdateSuccess.collectAsState()
     val book = selectedBookState.value
     var showCreateDialog by remember { mutableStateOf(false) }
     var showAddReview by remember { mutableStateOf(false) }
@@ -85,22 +82,15 @@ fun DetailBookScreen(
         }
     }
 
-    if (book == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            val composition by rememberLottieComposition(
-                LottieCompositionSpec.RawRes(R.raw.splashbuku)
-            )
-            val progress by animateLottieCompositionAsState(
-                composition = composition,
-                iterations = LottieConstants.IterateForever
-            )
-
-            LottieAnimation(
-                composition = composition,
-                progress = { progress },
-                modifier = Modifier.size(200.dp)
-            )
+    LaunchedEffect(reviewUpdateSuccess.value) {
+        if (reviewUpdateSuccess.value) {
+            bookViewModel.getReviews(bookId)
+            bookViewModel.updateStatusReview(false)
         }
+    }
+
+    if (book == null) {
+        LoadingState()
     } else {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -228,7 +218,7 @@ fun DetailBookScreen(
                     previousProgress = readingProgressState.value
                 )
             }
-                if (showCreateDialog && book != null) {
+                if (showCreateDialog) {
                     CreateProgressDialog(
                         onDismiss = { showCreateDialog = false },
                         onSave = { pagesRead ->
@@ -284,13 +274,37 @@ fun DetailBookScreen(
 
                 Text("Review", style = MaterialTheme.typography.titleMedium)
 
-                reviewsState.value.forEach { review ->
-                    ReviewSection(
-                        reviewerAvatar = review.user.avatar,
-                        reviewerName = review.user.username,
-                        reviewText = review.desc,
-                        rating = review.rate
+                Button(
+                    onClick = { showAddReview = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(36.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PrimaryOrange.copy(alpha = 0.1f),
+                        contentColor = PrimaryOrange
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                ) {
+                    Text(
+                        text = "+ Add a Review",
+                        style = SubTitleExtraSmall,
+                        fontWeight = FontWeight.Medium
                     )
+                }
+
+                if (reviewsState.value.isEmpty()) {
+                    Text("Belum ada review.", style = MaterialTheme.typography.bodySmall)
+                } else {
+                    reviewsState.value.forEach { review ->
+                        ReviewSection(
+                            reviewerAvatar = review.user.avatar,
+                            reviewerName = review.user.username,
+                            reviewText = review.desc,
+                            rating = review.rate
+                        )
+                    }
                 }
             }
             if (showStatusBottomSheet) {
@@ -349,57 +363,25 @@ fun DetailBookScreen(
                         // Remove from collection option
                         if (bookStatusState.value?.isNotEmpty() == true) {
                             Spacer(modifier = Modifier.height(8.dp))
-//                            Button(
-//                                onClick = {
-//                                    bookViewModel.updateBookStatus(bookId, "none")
-//                                    showStatusBottomSheet = false
-//                                },
-//                                modifier = Modifier.fillMaxWidth(),
-//                                colors = ButtonDefaults.buttonColors(
-//                                    containerColor = Color.White,
-//                                    contentColor = Color.Red
-//                                ),
-//                                border = BorderStroke(1.dp, Color.Red)
-//                            ) {
-//                                Text("Hapus dari Koleksi")
-//                            }
+                            Button(
+                                onClick = {
+                                    bookViewModel.deleteUserBook(bookId)
+                                    showStatusBottomSheet = false
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.White,
+                                    contentColor = Color.Red
+                                ),
+                                border = BorderStroke(1.dp, Color.Red)
+                            ) {
+                                Text("Hapus dari Koleksi")
+                            }
                         }
                     }
                 }
             }
 
-            Button(
-                onClick = { showAddReview = true },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(36.dp),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = PrimaryOrange.copy(alpha = 0.1f),
-                    contentColor = PrimaryOrange
-                ),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
-            ) {
-                Text(
-                    text = "+ Add a Review",
-                    style = SubTitleExtraSmall,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            if (reviewsState.value.isEmpty()) {
-                Text("Belum ada review.", style = MaterialTheme.typography.bodySmall)
-            } else {
-                reviewsState.value.forEach { review ->
-                    ReviewSection(
-                        reviewerAvatar = review.user.avatar,
-                        reviewerName = review.user.username,
-                        reviewText = review.desc,
-                        rating = review.rate
-                    )
-                }
-            }
         }
     }
 }

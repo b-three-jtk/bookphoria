@@ -1,19 +1,17 @@
 package com.example.bookphoria.ui.viewmodel
 
-import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bookphoria.data.local.AppDatabase
 import com.example.bookphoria.data.local.entities.ShelfEntity
-import com.example.bookphoria.data.local.preferences.UserPreferences
-import com.example.bookphoria.data.remote.api.ShelfApiServices
 import com.example.bookphoria.data.repository.ShelfRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -26,12 +24,11 @@ class ShelfViewModel @Inject constructor(
     val uiState: StateFlow<ShelfUiState> = _uiState
     val localShelves: Flow<List<ShelfEntity>> = database.ShelfDao().getAllShelves()
 
-
-    fun createShelf(name: String, desc: String?, imageUri: Uri?) {
+    fun createShelf(name: String, desc: String?, imageUri: String?, imageFile: File?) {
         _uiState.value = ShelfUiState.Loading
 
         viewModelScope.launch {
-            repository.createShelf(name, desc, imageUri)
+            repository.createShelf(name, desc, imageUri, imageFile)
                 .onSuccess {
                     _uiState.value = ShelfUiState.Success
                 }

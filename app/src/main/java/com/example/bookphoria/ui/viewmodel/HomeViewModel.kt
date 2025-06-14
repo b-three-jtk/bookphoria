@@ -35,6 +35,9 @@ class HomeViewModel @Inject constructor(
     private val _avatar = MutableStateFlow("...")
     val avatar: StateFlow<String> = _avatar
 
+    private val _isLoadingBooks = MutableStateFlow(false)
+    val isLoadingBooks = _isLoadingBooks
+
     fun loadUserProfile() {
         viewModelScope.launch(Dispatchers.IO) {
             val userName = userPreferences.getUserName().firstOrNull() ?: return@launch
@@ -42,10 +45,8 @@ class HomeViewModel @Inject constructor(
 
             Log.d("HomeViewModel", "User: $user")
 
-            withContext(Dispatchers.Main) {
-                _userName.value = user?.firstName ?: user?.username ?: ""
-                _avatar.value = user?.profilePicture ?: ""
-            }
+            _userName.value = user?.firstName ?: user?.username ?: ""
+            _avatar.value = user?.profilePicture ?: ""
         }
     }
 
@@ -57,9 +58,18 @@ class HomeViewModel @Inject constructor(
                 _yourBooks.value = books
             }
 
+            Log.d("HomeViewModel", "Your Books: ${_yourBooks.value}")
+        }
+    }
+
+    fun loadCurrentlyReading() {
+        viewModelScope.launch {
+            val userId = userPreferences.getUserId().first() ?: return@launch
+
             repository.getCurrentlyReadingLocal(userId, "reading").collect { books ->
                 _currentlyReading.value = books
             }
+            Log.d("HomeViewModel", "Currently Reading: $_currentlyReading")
         }
     }
 }

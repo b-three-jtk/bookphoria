@@ -1,5 +1,6 @@
 package com.example.bookphoria.data.remote.api
 
+import com.example.bookphoria.data.remote.responses.updateShelfResponse
 import com.example.bookphoria.data.remote.responses.AddBookToShelfResponse
 import com.example.bookphoria.data.remote.responses.BookIdRequest
 import com.google.gson.JsonObject
@@ -38,4 +39,15 @@ interface ShelfApiServices {
         @Header("Authorization") token: String,
         @Path("shelf_id") shelfId: String
     ): AddBookToShelfResponse
+
+    @Multipart
+    @POST("shelves/update/{shelf_id}")
+    suspend fun updateShelf(
+        @Header("Authorization") token: String,
+        @Path("shelf_id") shelfId: String,
+        @Part("name") name: RequestBody,
+        @Part("desc") description: RequestBody?,
+        @Part image: MultipartBody.Part?
+    ): updateShelfResponse
+
 }

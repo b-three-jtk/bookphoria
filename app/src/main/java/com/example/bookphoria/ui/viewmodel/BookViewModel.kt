@@ -37,6 +37,9 @@ class BookViewModel @Inject constructor(
     private val _statusUpdateSuccess = MutableStateFlow(false)
     val statusUpdateSuccess: StateFlow<Boolean> = _statusUpdateSuccess.asStateFlow()
 
+    private val _reviewUpdateSuccess = MutableStateFlow(false)
+    val reviewUpdateSuccess: StateFlow<Boolean> = _reviewUpdateSuccess.asStateFlow()
+
     fun getBookById(bookId: Int) {
         viewModelScope.launch {
             val bookWithRelations = bookRepository.getBookById(bookId)
@@ -63,7 +66,7 @@ class BookViewModel @Inject constructor(
         viewModelScope.launch {
             val userId = userPreferences.getUserId().first() ?: return@launch
             val book = selectedBook.value?.book
-            val status = if (book != null && pagesRead >= book.pages) "Selesai" else "Sedang dibaca"
+            val status = if (book != null && pagesRead >= book.pages) "owned" else "reading"
 
             bookRepository.updateReadingProgress(
                 UserBookCrossRef(
@@ -72,10 +75,11 @@ class BookViewModel @Inject constructor(
                     status = status,
                     pagesRead = pagesRead,
                     startDate = null,
-                    endDate = if (status == "Selesai") LocalDate.now().toString() else null
+                    endDate = if (status == "owned") LocalDate.now().toString() else null
                 )
             )
             _readingProgress.value = pagesRead
+            _bookStatus.value = "reading"
         }
     }
 
@@ -83,6 +87,7 @@ class BookViewModel @Inject constructor(
         viewModelScope.launch {
             Log.d("BookViewModel", "Adding review: bookId=$bookId, desc=$desc, rate=$rate")
             bookRepository.addReview(bookId, desc, rate)
+            _reviewUpdateSuccess.value = true
         }
     }
 
@@ -114,8 +119,23 @@ class BookViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val userId = userPreferences.getUserId().first() ?: return@launch
-                bookRepository.updateBookStatus(userId, bookId, newStatus)
+                _readingProgress.value?.let {
+                    bookRepository.updateBookStatus(userId, bookId, newStatus,
+                        it
+                    )
+                }
                 _bookStatus.value = newStatus
+                _statusUpdateSuccess.value = true
+            } catch (e: Exception) {
+                _statusUpdateSuccess.value = false
+            }
+        }
+    }
+
+    fun deleteUserBook(bookId: Int) {
+        viewModelScope.launch {
+            try {
+                bookRepository.deleteUserBook(bookId)
                 _statusUpdateSuccess.value = true
             } catch (e: Exception) {
                 _statusUpdateSuccess.value = false
@@ -125,6 +145,10 @@ class BookViewModel @Inject constructor(
 
     fun updateStatusUpdateSuccess(success: Boolean) {
         _statusUpdateSuccess.value = success
+    }
+
+    fun updateStatusReview(success: Boolean) {
+        _reviewUpdateSuccess.value = success
     }
 
     data class BookDetailUIState(

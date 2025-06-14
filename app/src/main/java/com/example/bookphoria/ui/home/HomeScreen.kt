@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
@@ -38,6 +40,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,6 +58,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -62,20 +66,27 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
+import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.theme.SoftCream
+import com.example.bookphoria.ui.theme.SoftOrange
 import com.example.bookphoria.ui.viewmodel.HomeViewModel
+import com.example.bookphoria.ui.viewmodel.SearchViewModel
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
+fun HomeScreen(viewModel: HomeViewModel, navController: NavController, innerPadding: PaddingValues) {
     val userName by viewModel.userName.collectAsState()
     val avatar by viewModel.avatar.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadBooks()
         viewModel.loadUserProfile()
+        viewModel.loadCurrentlyReading()
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(SoftCream)) {
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .padding(0.dp, 0.dp, 0.dp, 0.dp)
+        .background(SoftCream)) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -131,7 +142,7 @@ fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
             }
         }
 
-        SearchBarHome()
+        SearchBarHome(navController)
 
         Column(
             modifier = Modifier
@@ -143,68 +154,58 @@ fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchBarHome() {
+fun SearchBarHome(navController: NavController) {
     var query by remember { mutableStateOf("") }
-    var active by remember { mutableStateOf(false) }
-    val searchHistory = listOf("")
 
-    DockedSearchBar(
+    OutlinedTextField(
+        value = query,
+        onValueChange = { query = it },
         modifier = Modifier
+            .fillMaxWidth()
             .padding(horizontal = 20.dp)
-            .offset(y = 170.dp),
-        colors = SearchBarDefaults.colors(
-            containerColor = Color.White
-        ),
-        query = query,
-        onQueryChange = { query = it },
-        onSearch = {
-            println("do search with query $query")
-            active = false
-        },
-        active = active,
-        onActiveChange = { active = it },
+            .offset(y = 170.dp)
+            .clickable {
+                navController.navigate("search?query=$query")
+            },
         placeholder = {
             Text(text = "Search", color = Color.Gray)
         },
         leadingIcon = {
-            Icon(imageVector = Icons.Default.Search, contentDescription = "Search Icon")
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Search Icon",
+                tint = Color.Gray
+            )
         },
         trailingIcon = {
-            if (active) {
+            if (query.isNotEmpty()) {
                 IconButton(
-                    onClick = {
-                        if (query.isNotEmpty()) query = "" else active = false
-                    }
+                    onClick = { query = "" }
                 ) {
-                    Icon(imageVector = Icons.Default.Close, contentDescription = "Close Icon")
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Clear Icon",
+                        tint = Color.Gray
+                    )
                 }
             }
         },
-        tonalElevation = 4.dp,
-        shape = RoundedCornerShape(25.dp)
-    ) {
-        Column(modifier = Modifier.padding(8.dp)) {
-            searchHistory.takeLast(3).forEach { item ->
-                ListItem(
-                    modifier = Modifier.clickable {
-                        query = item
-                        active = false
-                    },
-                    headlineContent = {
-                        Text(text = item)
-                    },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Default.History,
-                            contentDescription = null
-                        )
-                    }
-                )
+        singleLine = true,
+        shape = RoundedCornerShape(25.dp),
+        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Color(0xFFE0E0E0),
+            unfocusedBorderColor = Color(0xFFE0E0E0),
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White
+        ),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(
+            onSearch = {
+                navController.navigate("search?query=$query")
             }
-        }
-    }
+        )
+    )
 }
 
 @Composable
@@ -215,106 +216,127 @@ fun BookSection(
     val yourBooks by viewModel.yourBooks.collectAsState()
     val yourCurrentlyReadingBooks by viewModel.currentlyReading.collectAsState()
 
-    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "Your Books",
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
-            )
-            Text(
-                text = "Lainnya",
-                style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
-                modifier = Modifier.clickable { /* Handle "Lainnya" click */ }
-            )
-        }
+    LaunchedEffect(yourCurrentlyReadingBooks) {
+        viewModel.loadCurrentlyReading()
+    }
 
-        Spacer(modifier = Modifier.height(12.dp))
-        if (yourBooks.isNotEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
+    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                Text(
+                    text = "Your Books",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                )
+                if (yourBooks.size > 5) {
+                    Text(
+                        text = "Lainnya",
+                        style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
+                        modifier = Modifier.clickable { navController.navigate("your_books") }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            if (yourBooks.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                ) {
                     Row(
                         modifier = Modifier.wrapContentWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         yourBooks.take(5).forEach { bookWithDetails ->
-                            val authorNames = bookWithDetails.authors.joinToString(", ") { it.name }
-                            BookItem(
-                                title = bookWithDetails.book.title,
+                            val authorNames = bookWithDetails.authors?.joinToString(", ") { it.name }
+                            if (authorNames != null) {
+                                BookItem(
+                                    title = bookWithDetails.book.title,
+                                    author = authorNames,
+                                    imageUrl = bookWithDetails.book.imageUrl,
+                                    onClick = {
+                                        navController.navigate("detail/${bookWithDetails.book.id}")
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color.White)
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.book),
+                        contentDescription = "Bookshelf",
+                        modifier = Modifier
+                            .height(140.dp)
+                            .padding(10.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(text = "Belum ada buku yang ditambahkan ke koleksi", color = Color.Gray)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text(
+                text = "Currently Reading",
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (yourCurrentlyReadingBooks.isNotEmpty()) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    yourCurrentlyReadingBooks.forEach { currentBook ->
+                        val authorNames = currentBook.authors?.joinToString(", ") { it.name }
+                        val progress =
+                            currentBook.userBookCrossRefs.pagesRead.toFloat() / currentBook.book.pages
+
+                        if (authorNames != null) {
+                            CurrentReadingItem(
+                                title = currentBook.book.title,
                                 author = authorNames,
-                                imageUrl = bookWithDetails.book.imageUrl,
+                                progress = progress,
+                                imageUrl = currentBook.book.imageUrl,
                                 onClick = {
-                                    navController.navigate("detail/${bookWithDetails.book.id}")
+                                    navController.navigate("detail/${currentBook.book.id}")
                                 }
                             )
                         }
                     }
-            }
-        } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color.White)
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.book),
-                    contentDescription = "Bookshelf",
+                }
+            } else {
+                Row(
                     modifier = Modifier
-                        .height(140.dp)
-                        .padding(10.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(text = "Belum ada buku yang ditambahkan ke koleksi", color = Color.Gray)
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color.White)
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.bookshelf),
+                        contentDescription = "Bookshelf",
+                        modifier = Modifier
+                            .height(140.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Belum ada buku yang sedang dibaca", color = Color.Gray)
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Text(
-            text = "Currently Reading",
-            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        if (yourCurrentlyReadingBooks.isNotEmpty()) {
-            val currentBook = yourCurrentlyReadingBooks.first()
-            val authorNames = currentBook.authors.joinToString(", ") { it.name }
-
-            CurrentReadingItem(
-                title = currentBook.book.title,
-                author = authorNames,
-                progress = 0.5f,
-                imageUrl = currentBook.book.imageUrl
-            )
-        } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color.White)
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.bookshelf),
-                    contentDescription = "Bookshelf",
-                    modifier = Modifier
-                        .height(140.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Belum ada buku yang sedang dibaca", color = Color.Gray)
-            }
-        }
-    }
 }
 
 @Composable
@@ -345,7 +367,8 @@ fun BookItem(
             )
         } else {
             Box(
-                modifier = Modifier.height(160.dp)
+                modifier = Modifier
+                    .height(160.dp)
                     .width(120.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color.White),
@@ -386,7 +409,8 @@ fun CurrentReadingItem(
     title: String,
     author: String,
     progress: Float,
-    imageUrl: String? // Ubah dari imageRes: Int ke imageUrl: String?
+    imageUrl: String?,
+    onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -395,12 +419,15 @@ fun CurrentReadingItem(
             .background(Color.White)
             .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(24.dp))
             .padding(16.dp)
+            .height(150.dp)
+            .clickable(onClick = onClick)
     ) {
         AsyncImage(
             model = imageUrl ?: R.drawable.bookshelf,
             contentDescription = title,
             modifier = Modifier
-                .height(120.dp)
+                .height(140.dp)
+                .width(110.dp)
                 .clip(RoundedCornerShape(12.dp)),
             contentScale = ContentScale.Crop
         )
@@ -412,18 +439,7 @@ fun CurrentReadingItem(
             Text(text = title, fontWeight = FontWeight.Bold)
             Text(text = author, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Button(
-                onClick = {},
-                shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD3F1DE)),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
-            ) {
-                Text(text = "Reading", color = Color(0xFF228B22))
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             LinearProgressIndicator(
                 progress = { progress },
@@ -431,7 +447,7 @@ fun CurrentReadingItem(
                     .fillMaxWidth()
                     .height(6.dp)
                     .clip(RoundedCornerShape(50)),
-                color = Color(0xFF4F46E5),
+                color = DarkIndigo,
                 trackColor = Color(0xFFEAEAEA),
             )
             Text(text = "${(progress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)

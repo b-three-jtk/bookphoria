@@ -46,7 +46,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -56,62 +58,49 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
+import coil.compose.AsyncImage
 import com.example.bookphoria.R
+import com.example.bookphoria.data.remote.responses.BookNetworkModel
+import com.example.bookphoria.data.remote.responses.BookStatusNetworkModel
+import com.example.bookphoria.data.remote.responses.ShelfNetworkModel
+import com.example.bookphoria.ui.book.BookSearchItem
 import com.example.bookphoria.ui.components.ConfirmationDialog
+import com.example.bookphoria.ui.components.LoadingState
 import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.theme.PrimaryOrange
 import com.example.bookphoria.ui.theme.SubTitleExtraSmall
 import com.example.bookphoria.ui.theme.TitleExtraSmall
 import com.example.bookphoria.ui.viewmodel.FriendViewModel
+import com.example.bookphoria.ui.viewmodel.ProfileFriendViewModel
+import com.example.bookphoria.ui.viewmodel.isContains
 
 @Composable
 fun ProfileFriendScreen(
     userId: Int,
     navController: NavController,
-    viewModel: FriendViewModel
+    viewModel: ProfileFriendViewModel,
+    friendViewModel: FriendViewModel
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    val friendDetail = viewModel.friendDetail.value
-    val profileName = friendDetail?.username.takeIf {
-        friendDetail?.firstName.isNullOrBlank() && friendDetail?.lastName.isNullOrBlank()
-    } ?: "${friendDetail?.firstName.orEmpty()} ${friendDetail?.lastName.orEmpty()}".trim()
+    val friendDetail by viewModel.friendDetail.collectAsState()
     val profileUserName = friendDetail?.username
-    val bookCount by remember { mutableStateOf("0") }
-    val listCount by remember { mutableStateOf("0") }
-    val friendCount by remember { mutableStateOf("0") }
-    val tabsList = listOf("Collection", "Readlist", "Borrow Rules")
-    val selectedTabIndex = remember { mutableStateOf(0) }
+    val bookCount by viewModel.bookCount.collectAsState()
+    val listCount by viewModel.listCount.collectAsState()
+    val friendCount by viewModel.friendCount.collectAsState()
+    val tabsList = listOf("Collection", "Readlist")
+    val selectedTabIndex = remember { mutableIntStateOf(0) }
     var showRequestDialog by remember { mutableStateOf<Int?>(null) }
+    val friends by viewModel.friends.collectAsState()
+    val friendBooks by viewModel.friendBooks.collectAsState()
+    val friendReadlist by viewModel.shelfBooks.collectAsState()
 
     LaunchedEffect(userId) {
         viewModel.getFriendById(userId)
     }
 
     if (friendDetail == null) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            val composition by rememberLottieComposition(
-                LottieCompositionSpec.RawRes(R.raw.splashbuku)
-            )
-            val progress by animateLottieCompositionAsState(
-                composition = composition,
-                iterations = LottieConstants.IterateForever
-            )
-
-            LottieAnimation(
-                composition = composition,
-                progress = { progress },
-                modifier = Modifier.size(200.dp)
-            )
-        }
+        LoadingState()
         return
     }
 
@@ -140,15 +129,17 @@ fun ProfileFriendScreen(
                         contentDescription = "Kembali"
                     )
                 }
-                Text(
-                    text = profileName,
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
+                friendDetail?.username?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
             }
 
-            Image(
-                painter = painterResource(id = R.drawable.user),
+            AsyncImage(
+                model = friendDetail?.profilePicture ?: R.drawable.user,
                 contentDescription = "Profile",
                 modifier = Modifier
                     .size(96.dp)
@@ -170,15 +161,15 @@ fun ProfileFriendScreen(
             Row {
                 Button(
                     onClick = {
-                        if (!viewModel.friends.value.contains(friendDetail)) {
-                            showRequestDialog = friendDetail.id
+                        if (!friends.any { it.username == friendDetail?.username }) {
+                            showRequestDialog = friendDetail!!.id
                         }
                     },
                     modifier = Modifier
                         .wrapContentWidth(),
                     shape = RoundedCornerShape(20.dp),
                     colors =
-                    if (viewModel.friends.value.contains(friendDetail)) {
+                    if (friends.isContains(friendDetail!!.username.orEmpty())) {
                         ButtonDefaults.buttonColors(containerColor = Color(0xFFE45758))
                     } else {
                         ButtonDefaults.buttonColors(containerColor = Color.White)
@@ -188,7 +179,7 @@ fun ProfileFriendScreen(
                     Row (
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (viewModel.friends.value.contains(friendDetail)) {
+                        if (friends.any { it.username == friendDetail?.username }) {
                             Text(
                                 text = "Friends",
                                 color = Color.White,
@@ -222,10 +213,10 @@ fun ProfileFriendScreen(
             if (showRequestDialog != null) {
                 ConfirmationDialog(
                     title = "Konfirmasi Permintaan",
-                    message = "Anda yakin ingin mengirim permintaan pertemanan ke ${friendDetail.username}?",
+                    message = "Anda yakin ingin mengirim permintaan pertemanan ke ${friendDetail!!.username}?",
                     onConfirm = {
-                        friendDetail.username?.let {
-                            viewModel.sendFriendRequest(
+                        friendDetail!!.username?.let {
+                            friendViewModel.sendFriendRequest(
                                 it,
                                 onSuccess = {
                                     Toast.makeText(
@@ -238,7 +229,7 @@ fun ProfileFriendScreen(
                                 onError = { error ->
                                     Toast.makeText(
                                         context,
-                                        "Gagal: ${error ?: "Terjadi kesalahan."}",
+                                        "Gagal: $error",
                                         Toast.LENGTH_LONG
                                     ).show()
                                     showRequestDialog = null
@@ -250,7 +241,6 @@ fun ProfileFriendScreen(
                 )
             }
 
-
             Row(
                 modifier = Modifier
                     .padding(16.dp),
@@ -259,7 +249,7 @@ fun ProfileFriendScreen(
                 Row {
                     Text(
                         modifier = Modifier.padding(end = 3.dp),
-                        text = bookCount,
+                        text = "$bookCount",
                         style = TitleExtraSmall,
                         color = Color.Black
                     )
@@ -276,7 +266,7 @@ fun ProfileFriendScreen(
                 Row {
                     Text(
                         modifier = Modifier.padding(end = 3.dp),
-                        text = listCount,
+                        text = "$listCount",
                         style = TitleExtraSmall,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
@@ -294,7 +284,7 @@ fun ProfileFriendScreen(
                 Row {
                     Text(
                         modifier = Modifier.padding(end = 3.dp),
-                        text = friendCount,
+                        text = "$friendCount",
                         style = TitleExtraSmall,
                         color = Color.Black
                     )
@@ -314,16 +304,15 @@ fun ProfileFriendScreen(
                 contentAlignment = Alignment.Center
             ) {
                 ClickableTabsProfile(
-                    selectedItem = selectedTabIndex.value,
+                    selectedItem = selectedTabIndex.intValue,
                     tabsList = tabsList,
-                    onClick = { index -> selectedTabIndex.value = index }
+                    onClick = { index -> selectedTabIndex.intValue = index }
                 )
             }
 
-            when (selectedTabIndex.value) {
-                0 -> CollectionContent()
-                1 -> ReadlistContent()
-                2 -> RulesContent()
+            when (selectedTabIndex.intValue) {
+                0 -> CollectionContent(friendBooks, navController)
+                1 -> ReadlistContent(friendReadlist, navController)
             }
         }
 
@@ -331,39 +320,62 @@ fun ProfileFriendScreen(
 }
 
 @Composable
-fun CollectionContent() {
-    Text(text = "Collection")
+fun CollectionContent(books: List<BookStatusNetworkModel>, navController: NavController) {
+    Spacer(modifier = Modifier.height(10.dp))
+    Column {
+        if (books.isEmpty()) {
+            Text(
+                text = "No books available",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(16.dp)
+            )
+        } else {
+            books.forEach { data ->
+                BookSearchItem(
+                    title = data.book.title ?: "Unknown Title",
+                    author = data.book.authors?.joinToString(", ") { it.name ?: "Unknown Author" } ?: "No Authors",
+                    imageUrl = data.book.cover ?: "",
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    onClick = {
+                        navController.navigate("detail/search/${data.book.id}")
+                    }
+                )
+            }
+        }
+    }
 }
 
 @Composable
-fun ReadlistContent() {
-    Text("Readlist")
-}
-
-@Composable
-fun RulesContent() {
-    Text("Rules")
+fun ReadlistContent(friendReadlist: List<ShelfNetworkModel>, navController: NavController) {
+    Spacer(modifier = Modifier.height(10.dp))
+    Column {
+        friendReadlist.forEach { shelf ->
+            BookSearchItem(
+                title = shelf.name,
+                author = shelf.desc,
+                imageUrl = shelf.image,
+                modifier = Modifier.padding(vertical = 8.dp),
+                onClick = {
+                    navController.navigate("search")
+                }
+            )
+        }
+    }
 }
 
 @Composable
 fun ClickableTabsProfile(selectedItem: Int, tabsList: List<String>, onClick: (Int) -> Unit) {
-    val selectedItemIndex = remember {
-        mutableStateOf(selectedItem)
-    }
-    Box(
-        modifier = Modifier
-            .fillMaxWidth(),
-        contentAlignment = Alignment.Center
+    Row(
+        modifier = Modifier.fillMaxSize(),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            tabsList.forEachIndexed { index, s ->
-                TabItemProfile(isSelected = index == selectedItemIndex.value, text = s, Modifier.weight(0.5f)) {
-                    selectedItemIndex.value = index
-                    onClick.invoke(selectedItemIndex.value)
-                }
+        tabsList.forEachIndexed { index, s ->
+            TabItemProfile(
+                isSelected = index == selectedItem,
+                text = s,
+                modifier = Modifier.weight(1f)
+            ) {
+                onClick(index)
             }
         }
     }
@@ -372,7 +384,7 @@ fun ClickableTabsProfile(selectedItem: Int, tabsList: List<String>, onClick: (In
 @Composable
 fun TabItemProfile(isSelected: Boolean, text: String, modifier: Modifier, onClick: () -> Unit) {
     val tabTextColor: Color by animateColorAsState(
-        targetValue = DarkIndigo,
+        targetValue = if (isSelected) DarkIndigo else Color.Gray,
         animationSpec = tween(easing = LinearEasing), label = ""
     )
 

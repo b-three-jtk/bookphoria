@@ -1,6 +1,6 @@
 package com.example.bookphoria.ui.profile
 
-import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,18 +19,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.bookphoria.ui.theme.PrimaryOrange
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
+import com.example.bookphoria.ui.theme.AppTypography
 import com.example.bookphoria.ui.theme.SoftCream
+import com.example.bookphoria.ui.theme.SoftOrange
+import com.example.bookphoria.ui.viewmodel.FriendViewModel
 import com.example.bookphoria.ui.viewmodel.ProfileViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(
     navController: NavController,
-    viewModel: ProfileViewModel = hiltViewModel()
+    viewModel: ProfileViewModel = hiltViewModel(),
+    friendViewModel: FriendViewModel = hiltViewModel()
 ) {
     val userData by viewModel.userData.collectAsState()
     val loading by viewModel.loading.collectAsState()
@@ -40,12 +45,10 @@ fun ProfileScreen(
     val friendCount by viewModel.friendCount.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
 
-    // Log untuk debugging
-    LaunchedEffect(userData, bookCount, readingListCount, friendCount) {
-        Log.d("ProfileScreen", "userData=$userData, bookCount=$bookCount, readingListCount=$readingListCount, friendCount=$friendCount")
+    LaunchedEffect(Unit) {
+        viewModel.fetchUserData()
     }
 
-    // Handle error with a snackbar
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -78,7 +81,6 @@ fun ProfileScreen(
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Edit Profile Button
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -101,6 +103,7 @@ fun ProfileScreen(
                     Image(
                         painter = rememberAsyncImagePainter(model = userData?.profilePicture?.ifBlank { R.drawable.user }),
                         contentDescription = "Profile Picture",
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(140.dp)
                             .clip(CircleShape)
@@ -116,33 +119,21 @@ fun ProfileScreen(
                         )
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                    // Stats Row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                    Button(
+                        onClick = { navController.navigate("friend-list") },
+                        shape = RoundedCornerShape(24.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = PrimaryOrange,
+                            contentColor = LocalContentColor.current
+                        )
                     ) {
-                        StatColumn(
-                            value = bookCount.toString(),
-                            label = "Total Buku",
-                            onClick = { navController.navigate("book-list") }
-                        )
-                        StatColumn(
-                            value = readingListCount.toString(),
-                            label = "List Bacaan",
-                            onClick = { navController.navigate("shelves") }
-                        )
-                        StatColumn(
-                            value = friendCount.toString(),
-                            label = "Teman",
-                            onClick = { navController.navigate("friend-list") }
-                        )
+                        Text("List Teman", style = AppTypography.bodyMedium, color = Color.White)
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                    // Profile Info Card
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -166,7 +157,7 @@ fun ProfileScreen(
 
                             // Change Password Button
                             Button(
-                                onClick = { navController.navigate("change") },
+                                onClick = { navController.navigate("settings") },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(48.dp),
@@ -174,17 +165,16 @@ fun ProfileScreen(
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Key,
-                                    contentDescription = "Password Icon",
+                                    imageVector = Icons.Default.Settings,
+                                    contentDescription = "Settings Icon",
                                     tint = Color.White
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Reset Password", color = Color.White)
+                                Text("Pengaturan", color = Color.White)
                             }
 
                             Spacer(modifier = Modifier.height(10.dp))
 
-                            // Logout Button
                             Button(
                                 onClick = { showDialog = true },
                                 modifier = Modifier
@@ -228,27 +218,6 @@ fun ProfileScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun StatColumn(value: String, label: String, onClick: () -> Unit) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable(onClick = onClick)
-    ) {
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Bold
-            )
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall.copy(
-                color = Color.Gray
-            )
-        )
     }
 }
 
