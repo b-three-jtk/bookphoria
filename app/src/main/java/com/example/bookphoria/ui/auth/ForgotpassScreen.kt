@@ -41,6 +41,20 @@ fun ForgotpassScreen(viewModel: AuthViewModel, navController: NavController) {
         }
     }
 
+    LaunchedEffect(forgotPasswordState) {
+        forgotPasswordState?.let { result ->
+            if (result.isSuccess) {
+                message = "Link reset telah dikirim ke $email"
+                navController.navigate("login") {
+                    popUpTo(navController.graph.startDestinationId) { inclusive = false }
+                    launchSingleTop = true
+                }
+            } else {
+                message = result.exceptionOrNull()?.message ?: "Gagal mengirim email reset"
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -60,7 +74,6 @@ fun ForgotpassScreen(viewModel: AuthViewModel, navController: NavController) {
                 .clip(CircleShape),
             contentScale = ContentScale.Crop
         )
-
 
         Spacer(modifier = Modifier.height(20.dp))
 
