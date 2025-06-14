@@ -59,6 +59,12 @@ class HomeViewModel @Inject constructor(
             }
 
             Log.d("HomeViewModel", "Your Books: ${_yourBooks.value}")
+        }
+    }
+
+    fun loadCurrentlyReading() {
+        viewModelScope.launch {
+            val userId = userPreferences.getUserId().first() ?: return@launch
 
             repository.getCurrentlyReadingLocal(userId, "reading").collect { books ->
                 _currentlyReading.value = books

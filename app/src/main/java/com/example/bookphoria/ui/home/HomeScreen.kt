@@ -66,22 +66,26 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
+import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.theme.SoftCream
+import com.example.bookphoria.ui.theme.SoftOrange
 import com.example.bookphoria.ui.viewmodel.HomeViewModel
 import com.example.bookphoria.ui.viewmodel.SearchViewModel
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
+fun HomeScreen(viewModel: HomeViewModel, navController: NavController, innerPadding: PaddingValues) {
     val userName by viewModel.userName.collectAsState()
     val avatar by viewModel.avatar.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadBooks()
         viewModel.loadUserProfile()
+        viewModel.loadCurrentlyReading()
     }
 
     Box(modifier = Modifier
         .fillMaxSize()
+        .padding(0.dp, 0.dp, 0.dp, 0.dp)
         .background(SoftCream)) {
         Box(
             modifier = Modifier
@@ -162,7 +166,6 @@ fun SearchBarHome(navController: NavController) {
             .padding(horizontal = 20.dp)
             .offset(y = 170.dp)
             .clickable {
-                // Navigate to search screen immediately
                 navController.navigate("search?query=$query")
             },
         placeholder = {
@@ -212,6 +215,10 @@ fun BookSection(
 ) {
     val yourBooks by viewModel.yourBooks.collectAsState()
     val yourCurrentlyReadingBooks by viewModel.currentlyReading.collectAsState()
+
+    LaunchedEffect(yourCurrentlyReadingBooks) {
+        viewModel.loadCurrentlyReading()
+    }
 
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
             Row(
@@ -288,21 +295,31 @@ fun BookSection(
             Spacer(modifier = Modifier.height(12.dp))
 
             if (yourCurrentlyReadingBooks.isNotEmpty()) {
-                val currentBook = yourCurrentlyReadingBooks.first()
-                val authorNames = currentBook.authors?.joinToString(", ") { it.name }
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    yourCurrentlyReadingBooks.forEach { currentBook ->
+                        val authorNames = currentBook.authors?.joinToString(", ") { it.name }
+                        val progress =
+                            currentBook.userBookCrossRefs.pagesRead.toFloat() / currentBook.book.pages
 
-                if (authorNames != null) {
-                    CurrentReadingItem(
-                        title = currentBook.book.title,
-                        author = authorNames,
-                        progress = 0.5f,
-                        imageUrl = currentBook.book.imageUrl
-                    )
+                        if (authorNames != null) {
+                            CurrentReadingItem(
+                                title = currentBook.book.title,
+                                author = authorNames,
+                                progress = progress,
+                                imageUrl = currentBook.book.imageUrl,
+                                onClick = {
+                                    navController.navigate("detail/${currentBook.book.id}")
+                                }
+                            )
+                        }
+                    }
                 }
             } else {
                 Row(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
                         .clip(RoundedCornerShape(20.dp))
                         .background(Color.White)
                         .padding(12.dp),
@@ -392,7 +409,8 @@ fun CurrentReadingItem(
     title: String,
     author: String,
     progress: Float,
-    imageUrl: String? // Ubah dari imageRes: Int ke imageUrl: String?
+    imageUrl: String?,
+    onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -401,12 +419,15 @@ fun CurrentReadingItem(
             .background(Color.White)
             .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(24.dp))
             .padding(16.dp)
+            .height(150.dp)
+            .clickable(onClick = onClick)
     ) {
         AsyncImage(
             model = imageUrl ?: R.drawable.bookshelf,
             contentDescription = title,
             modifier = Modifier
-                .height(120.dp)
+                .height(140.dp)
+                .width(110.dp)
                 .clip(RoundedCornerShape(12.dp)),
             contentScale = ContentScale.Crop
         )
@@ -418,18 +439,7 @@ fun CurrentReadingItem(
             Text(text = title, fontWeight = FontWeight.Bold)
             Text(text = author, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Button(
-                onClick = {},
-                shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD3F1DE)),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
-            ) {
-                Text(text = "Reading", color = Color(0xFF228B22))
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             LinearProgressIndicator(
                 progress = { progress },
@@ -437,7 +447,7 @@ fun CurrentReadingItem(
                     .fillMaxWidth()
                     .height(6.dp)
                     .clip(RoundedCornerShape(50)),
-                color = Color(0xFF4F46E5),
+                color = DarkIndigo,
                 trackColor = Color(0xFFEAEAEA),
             )
             Text(text = "${(progress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)

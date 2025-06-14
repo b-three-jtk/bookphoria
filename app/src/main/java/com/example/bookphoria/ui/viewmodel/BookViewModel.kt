@@ -66,7 +66,7 @@ class BookViewModel @Inject constructor(
         viewModelScope.launch {
             val userId = userPreferences.getUserId().first() ?: return@launch
             val book = selectedBook.value?.book
-            val status = if (book != null && pagesRead >= book.pages) "Selesai" else "Sedang dibaca"
+            val status = if (book != null && pagesRead >= book.pages) "owned" else "reading"
 
             bookRepository.updateReadingProgress(
                 UserBookCrossRef(
@@ -75,7 +75,7 @@ class BookViewModel @Inject constructor(
                     status = status,
                     pagesRead = pagesRead,
                     startDate = null,
-                    endDate = if (status == "Selesai") LocalDate.now().toString() else null
+                    endDate = if (status == "owned") LocalDate.now().toString() else null
                 )
             )
             _readingProgress.value = pagesRead
