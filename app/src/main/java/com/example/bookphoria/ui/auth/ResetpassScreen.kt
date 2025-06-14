@@ -42,9 +42,21 @@ fun ResetpassScreen(viewModel: AuthViewModel, navController: NavController, toke
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showDialog by remember { mutableStateOf(false) }
     var displayedEmail by remember { mutableStateOf(email) }
 
     val resetPasswordState by viewModel.resetPasswordState.collectAsState()
+
+    fun isValidEmail(email: String): Boolean {
+        val emailRegex = "^[A-Za-z0-9+_.-]+@([a-zA-Z0-9.-]+\\.)+[a-zA-Z]{2,}$".toRegex()
+        val allowedDomains = listOf(
+            "gmail.com", "yahoo.com", "outlook.com", "hotmail.com",
+            "aol.com", "icloud.com", "protonmail.com", "polban.ac.id"
+        )
+        if (!email.matches(emailRegex)) return false
+        val domain = email.substringAfter("@")
+        return allowedDomains.contains(domain) || domain.matches("^[a-zA-Z0-9.-]+\\.edu\\.[a-zA-Z]{2,}$".toRegex())
+    }
 
     LaunchedEffect(resetPasswordState) {
         when {
