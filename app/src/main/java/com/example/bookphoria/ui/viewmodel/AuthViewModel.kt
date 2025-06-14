@@ -57,7 +57,8 @@ class AuthViewModel @Inject constructor(
                         userPreferences.clearCredentials()
                     }
 
-                    val remoteBooks = result.let { bookRepository.getYourBooksRemote(it.id) }
+                    val remoteBooks = bookRepository.getYourBooksRemote(result.id)
+                    Log.d("Login", "Remote Books: $remoteBooks")
                     bookRepository.saveBooksToLocal(remoteBooks)
 
                     onSuccess()

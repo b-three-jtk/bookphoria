@@ -32,6 +32,10 @@ object NetworkModule {
     fun provideOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
+            .addInterceptor { chain ->
+                chain.proceed(chain.request().newBuilder().header("Accept-Encoding", "identity").build())
+            }
+            .addInterceptor(HttpLoggingInterceptor().apply { setLevel(HttpLoggingInterceptor.Level.BODY) })
             .build()
     }
 

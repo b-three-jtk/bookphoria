@@ -23,10 +23,11 @@ import com.example.bookphoria.data.remote.requests.AddUserBookRequest
 import com.example.bookphoria.data.remote.requests.EditBookRequest
 import com.example.bookphoria.data.remote.responses.BookNetworkModel
 import com.example.bookphoria.data.remote.responses.ReviewNetworkModel
-import com.example.bookphoria.data.remote.responses.toBookWithGenresAndAuthors
 import com.example.bookphoria.data.remote.responses.toFullBookData
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -305,22 +306,40 @@ class BookRepository @Inject constructor(
     }
 
     suspend fun getYourBooksRemote(userId: Int): List<FullBookDataWithUserInfo> {
-        val accessToken = userPreferences.getAccessToken().first()
-            ?: throw Exception("Access token not available")
+        return withContext(Dispatchers.IO) {
+            try {
+                // Fetch JSON from API
+                val accessToken = userPreferences.getAccessToken().first()
 
-        val response = apiService.getYourBooks("Bearer $accessToken")
-        val books = response.data
+                val response = apiService.getYourBooks("Bearer $accessToken")
 
-        return books.map { book ->
-            val bookId = bookDao.getBookIdByServerId(book.id)
-            if (bookId != null) {
-                addToUserBooks(bookId, "owned")
+                val bookStatusModels = response.data ?: emptyList()
+
+                bookStatusModels.mapIndexedNotNull { index, model ->
+                    val bookId = bookDao.getBookIdByServerId(model.id)
+                    if (bookId != null) {
+                        // Book exists locally, update user-book relationship
+                        addToUserBooks(bookId, "owned")
+                        Log.d("BookRepository", "Existing book: ${model.id}, bookId: $bookId, skipped")
+                        null // Skip this book in the returned list
+                    } else {
+                        // New book, map to FullBookDataWithUserInfo with index-based bookId
+                        model.toFullBookData(userId, bookId = index + 1).also {
+                            Log.d("BookRepository", "Mapped new book: ${model.id}, index: $index, $it")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                when (e) {
+                    is NullPointerException -> {
+                        emptyList()
+                    }
+                    else -> throw e
+                }
             }
-            val localUserBook = bookId?.let { bookDao.getUserBookCrossRef(userId, it) }
-
-            localUserBook?.let { book.toFullBookData(userId, it.bookId) }!!
         }
     }
+
 
     fun getYourBooksLocal(userId: Int): Flow<List<FullBookDataWithUserInfo>> {
         return bookDao.getYourBooks(userId)
