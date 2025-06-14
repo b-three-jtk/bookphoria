@@ -115,17 +115,6 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun logout(onLogoutSuccess: () -> Unit, onError: (Throwable) -> Unit) {
-        viewModelScope.launch {
-            val result = authRepository.logout()
-            result.onSuccess {
-                onLogoutSuccess()
-            }.onFailure {
-                onError(it)
-            }
-        }
-    }
-
     fun getSavedCredentials(): Flow<Pair<String?, String?>> {
         return userPreferences.getSavedCredentials()
     }

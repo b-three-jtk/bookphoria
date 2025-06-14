@@ -97,6 +97,10 @@ fun FriendListContent(
         }
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.loadFriends()
+    }
+
     if (isLoading) {
         LoadingState()
         return

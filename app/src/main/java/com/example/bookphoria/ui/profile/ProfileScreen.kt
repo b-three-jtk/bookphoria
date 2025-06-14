@@ -27,13 +27,15 @@ import com.example.bookphoria.R
 import com.example.bookphoria.ui.theme.AppTypography
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.theme.SoftOrange
+import com.example.bookphoria.ui.viewmodel.FriendViewModel
 import com.example.bookphoria.ui.viewmodel.ProfileViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(
     navController: NavController,
-    viewModel: ProfileViewModel = hiltViewModel()
+    viewModel: ProfileViewModel = hiltViewModel(),
+    friendViewModel: FriendViewModel = hiltViewModel()
 ) {
     val userData by viewModel.userData.collectAsState()
     val loading by viewModel.loading.collectAsState()
@@ -171,7 +173,10 @@ fun ProfileScreen(
 
                             // Logout Button
                             Button(
-                                onClick = { viewModel.logout { navController.navigate("login") } },
+                                onClick = { viewModel.logout {
+                                    friendViewModel.clearFriendData()
+                                    navController.navigate("login")
+                                } },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(48.dp),

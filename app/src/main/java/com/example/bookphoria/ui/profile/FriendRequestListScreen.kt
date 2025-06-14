@@ -69,8 +69,7 @@ fun FriendRequestListContent(
     var showApproveDialog by remember { mutableStateOf<Int?>(null) }
     var showRejectDialog by remember { mutableStateOf<Int?>(null) }
     val isLoading by viewModel.isLoading.collectAsState()
-
-    val requests by viewModel.friendRequest
+    val requests by viewModel.friendRequest.collectAsState()
 
     if (isLoading) {
         LoadingState()
@@ -115,6 +114,7 @@ fun FriendRequestListContent(
                         viewModel.approveRequest(
                             request.user.id,
                             onSuccess = {
+                                viewModel.removeRequestLocally(request.user.id)
                                 Toast.makeText(
                                     context,
                                     "Permintaan pertemanan diterima",
@@ -141,6 +141,7 @@ fun FriendRequestListContent(
                     title = "Konfirmasi Penolakan",
                     message = "Anda yakin ingin menolak permintaan pertemanan dari ${request.user.username}?",
                     onConfirm = {
+                        viewModel.removeRequestLocally(request.user.id)
                         viewModel.rejectRequest(
                             request.user.id,
                             onSuccess = {
