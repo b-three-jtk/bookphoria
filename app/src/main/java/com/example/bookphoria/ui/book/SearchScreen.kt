@@ -126,9 +126,6 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel(), navController: Na
                                 }
                             }
                         }
-                        query.isNotEmpty() && itemCount == 0 -> {
-                            item { NotFoundState("Tidak ditemukan hasil untuk ditampilkan") }
-                        }
                     }
                 }
             } else {

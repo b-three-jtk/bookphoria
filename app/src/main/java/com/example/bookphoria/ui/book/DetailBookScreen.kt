@@ -48,6 +48,7 @@ import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.theme.PrimaryOrange
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.theme.SubTitleExtraSmall
+import com.example.bookphoria.ui.theme.TitleExtraSmall
 import com.example.bookphoria.ui.viewmodel.BookViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -112,7 +113,7 @@ fun DetailBookScreen(
                     }
                     Text(
                         text = "Detail Buku",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = TitleExtraSmall,
                         modifier = Modifier.padding(start = 8.dp)
                     )
                 }
@@ -272,7 +273,7 @@ fun DetailBookScreen(
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-                Text("Review", style = MaterialTheme.typography.titleMedium)
+                Text("Review", style = TitleExtraSmall)
 
                 Button(
                     onClick = { showAddReview = true },

@@ -24,6 +24,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import retrofit2.Response
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
@@ -39,203 +40,42 @@ class ShelfRepository @Inject constructor(
     private val shelfDao: ShelfDao,
     private val bookDao: BookDao
 ) {
-    companion object {
-        private const val MAX_COMPRESS_QUALITY = 90
-        private const val MIN_COMPRESS_QUALITY = 30
-        private const val QUALITY_STEP = 15
-        private const val DEFAULT_MAX_SIZE_KB = 300
-        private const val MAX_IMAGE_DIMENSION = 2048
-    }
-
     suspend fun createShelf(
         name: String,
         desc: String?,
         imageUri: String?,
         imageFile: File?
-    ): Result<Unit> {
-        return try {
-            // Get the token first
+    ) {
+         try {
             val token = userPreferences.getAccessToken().first()
-            if (token.isNullOrEmpty()) {
-                return Result.failure(Exception("Authentication required"))
-            }
             val coverPart = imageFile?.let {
                 val requestFile = it.asRequestBody("image/*".toMediaTypeOrNull())
-                MultipartBody.Part.createFormData("cover", it.name, requestFile)
+                MultipartBody.Part.createFormData("image", it.name, requestFile)
             }
 
-            val response = try {
-                api.createShelf(
-                    token = "Bearer $token",  // Add Bearer prefix
-                    name = name.toRequestBody("text/plain".toMediaType()),
-                    description = desc?.toRequestBody("text/plain".toMediaType()),
-                    image = coverPart
-                )
-            } catch (e: IOException) {
-                return Result.failure(Exception("Network error: ${e.message}"))
-            } catch (e: Exception) {
-                return Result.failure(Exception("API error: ${e.message}"))
+            val response = api.createShelf(
+                                token = "Bearer $token",
+                                name = name.toRequestBody("text/plain".toMediaType()),
+                                description = desc?.toRequestBody("text/plain".toMediaType()),
+                                image = coverPart
+                            )
+             Log.d("ShelfRepository","Response: $response")
+            if (response.message == "Shelf created successfully") {
+                saveToLocalDatabase(
+                    name, desc, response.data.image, response.data.id)
             }
-
-            if (response.isSuccessful) {
-                // Simpan ke database lokal
-                saveToLocalDatabase(name, desc, imageUri, response.body())
-            }
-
-            handleApiResponse(response, DEFAULT_MAX_SIZE_KB)
         } catch (e: Exception) {
-            Result.failure(Exception("Unexpected error: ${e.message}"))
+            Log.d("ShelfRepository","Unexpected error: ${e.message}")
         }
     }
-
-    private fun Uri.compressImage(maxFileSizeKB: Int): File {
-        // First verify we can open the URI
-        val inputStream = try {
-            context.contentResolver.openInputStream(this)
-                ?: throw Exception("Tidak dapat membuka file gambar")
-        } catch (e: SecurityException) {
-            throw Exception("Izin akses gambar ditolak")
-        } catch (e: FileNotFoundException) {
-            throw Exception("File gambar tidak ditemukan")
-        }
-
-        // Read image dimensions
-        val options = BitmapFactory.Options().apply {
-            inJustDecodeBounds = true
-        }
-
-        try {
-            BitmapFactory.decodeStream(inputStream, null, options)
-            inputStream.close()
-        } catch (e: Exception) {
-            inputStream.close()
-            throw Exception("Format gambar tidak didukung")
-        }
-
-        // Verify we got valid dimensions
-        if (options.outWidth <= 0 || options.outHeight <= 0) {
-            throw Exception("File bukan gambar yang valid")
-        }
-
-        // Calculate sampling
-        options.inSampleSize = calculateInSampleSize(
-            options.outWidth,
-            options.outHeight,
-            MAX_IMAGE_DIMENSION
-        )
-        options.inJustDecodeBounds = false
-
-        // Load the bitmap with sampling
-        val bitmap = try {
-            val sampledInputStream = context.contentResolver.openInputStream(this)
-                ?: throw Exception("Tidak dapat membaca ulang gambar")
-
-            try {
-                BitmapFactory.decodeStream(sampledInputStream, null, options)?.also {
-                    sampledInputStream.close()
-                } ?: throw Exception("Gagal memproses gambar")
-            } catch (e: Exception) {
-                sampledInputStream.close()
-                throw e
-            }
-        } catch (e: OutOfMemoryError) {
-            throw Exception("Gambar terlalu besar")
-        } catch (e: Exception) {
-            throw Exception("Gagal memuat gambar: ${e.message ?: "Unknown error"}")
-        }
-
-        // Prepare output file
-        val outputFile = createTempFile(context)
-        var quality = MAX_COMPRESS_QUALITY
-        var outputSize: Long
-
-        return try {
-            do {
-                FileOutputStream(outputFile).use { fos ->
-                    if (!bitmap.compress(Bitmap.CompressFormat.JPEG, quality, fos)) {
-                        throw Exception("Gagal mengkompres gambar")
-                    }
-                }
-                outputSize = outputFile.length() / 1024
-
-                if (outputSize <= maxFileSizeKB) break
-                quality -= QUALITY_STEP
-            } while (quality >= MIN_COMPRESS_QUALITY)
-
-            if (outputSize > maxFileSizeKB) {
-                throw Exception("Gambar terlalu besar setelah kompresi")
-            }
-
-            outputFile
-        } catch (e: Exception) {
-            outputFile.delete() // Clean up
-            throw e
-        } finally {
-            bitmap.recycle()
-        }
-    }
-
-    private fun calculateInSampleSize(
-        width: Int,
-        height: Int,
-        reqSize: Int
-    ): Int {
-        var inSampleSize = 1
-        while (width / inSampleSize > reqSize || height / inSampleSize > reqSize) {
-            inSampleSize *= 2
-        }
-        return inSampleSize
-    }
-
-    private fun File.toMultipartPart(): MultipartBody.Part {
-        return MultipartBody.Part.createFormData(
-            "image",
-            this.name,
-            this.asRequestBody("image/*".toMediaType())
-        )
-    }
-
-    private fun createTempFile(context: Context): File {
-        return File.createTempFile(
-            "img_${System.currentTimeMillis()}",
-            ".jpg",
-            context.cacheDir
-        ).apply { deleteOnExit() }
-    }
-
-    private fun handleApiResponse(
-        response: retrofit2.Response<*>,
-        maxSize: Int
-    ): Result<Unit> {
-        return when {
-            response.isSuccessful -> Result.success(Unit)
-            response.code() == 413 -> Result.failure(
-                Exception("Image size exceeds limit of $maxSize KB")
-            )
-            else -> {
-                val errorMsg = try {
-                    response.errorBody()?.string() ?: "Unknown error"
-                } catch (e: IOException) {
-                    "Failed to read error response"
-                }
-                Result.failure(Exception("Server error (${response.code()}): $errorMsg"))
-            }
-        }
-    }
-
-    private fun File.sizeInKB() = length() / 1024
 
     private suspend fun saveToLocalDatabase(
         name: String,
         desc: String?,
         imageUri: String?,
-        response: JsonObject?
+        serverId: String
     ) {
         try {
-            val serverId = response
-                ?.getAsJsonObject("data")
-                ?.get("id")
-                ?.asString
 
             val userId = userPreferences.getUserId().first() ?: throw IllegalStateException("User ID is null")
 
@@ -251,32 +91,6 @@ class ShelfRepository @Inject constructor(
         } catch (e: Exception) {
             Log.e("LocalSave", "Failed to save shelf locally", e)
             throw e
-        }
-    }
-
-    private suspend fun saveImageToInternalStorage(uri: Uri): String {
-        return withContext(Dispatchers.IO) {
-            val inputStream = context.contentResolver.openInputStream(uri)
-                ?: throw Exception("Cannot open image stream")
-
-            val directory = File(context.filesDir, "shelf_images")
-            if (!directory.exists()) {
-                directory.mkdirs()
-            }
-
-            val fileName = "shelf_${System.currentTimeMillis()}.jpg"
-            val file = File(directory, fileName)
-
-            try {
-                FileOutputStream(file).use { output ->
-                    inputStream.copyTo(output)
-                }
-                file.absolutePath
-            } catch (e: Exception) {
-                throw Exception("Failed to save image: ${e.message}")
-            } finally {
-                inputStream.close()
-            }
         }
     }
 
@@ -374,17 +188,10 @@ class ShelfRepository @Inject constructor(
         }
     }
 
-    fun getShelvesWithBooks(userId: Int, shelfId: Int): Flow<ShelfWithBooks?> {
-        return database.ShelfDao().getShelvesWithBooks(userId, shelfId)
-    }
-
     fun getAllShelvesWithBooks(userId: Int): Flow<List<ShelfWithBooks>> {
         return database.ShelfDao().getAllShelvesWithBooks(userId)
     }
 
-    //    suspend fun deleteShelf(token: String, shelfId: String): Response<JsonObject> {
-//        return api.deleteShelf("Bearer $token", shelfId)
-//    }
     suspend fun deleteShelf(shelfId: Int): Boolean {
         return try {
             val accessToken = withContext(Dispatchers.IO) {

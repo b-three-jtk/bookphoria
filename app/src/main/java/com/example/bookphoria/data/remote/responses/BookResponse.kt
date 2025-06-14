@@ -203,6 +203,16 @@ data class AddBookToShelfResponse(
     @SerializedName("message") val message: String
 )
 
+data class AddShelfResponse(
+    @SerializedName("message") val message: String,
+    @SerializedName("data") val data: ShelfImageResponse
+)
+
+data class ShelfImageResponse(
+    @SerializedName("id") val id: String,
+    @SerializedName("image") val image: String
+)
+
 data class BookIdRequest(
     @SerializedName("book_id") val bookId: String
 )

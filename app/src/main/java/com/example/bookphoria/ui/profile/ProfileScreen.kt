@@ -35,14 +35,10 @@ import kotlinx.coroutines.launch
 fun ProfileScreen(
     navController: NavController,
     viewModel: ProfileViewModel = hiltViewModel(),
-    friendViewModel: FriendViewModel = hiltViewModel()
 ) {
     val userData by viewModel.userData.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
-    val bookCount by viewModel.bookCount.collectAsState()
-    val readingListCount by viewModel.readingListCount.collectAsState()
-    val friendCount by viewModel.friendCount.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -155,7 +151,6 @@ fun ProfileScreen(
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // Change Password Button
                             Button(
                                 onClick = { navController.navigate("settings") },
                                 modifier = Modifier
