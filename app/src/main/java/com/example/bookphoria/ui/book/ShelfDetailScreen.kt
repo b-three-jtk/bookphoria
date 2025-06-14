@@ -157,7 +157,12 @@ fun ShelfDetailScreen(
                 showEditShelf = { showEditShelf = true }
             )
 
-            BookCollection(books = shelf.books, userId = userId, viewModel = viewModel)
+            BookCollection(
+                books = shelf.books,
+                userId = userId,
+                viewModel = viewModel,
+                navController = navController
+            )
         } ?: run {
             Box(
                 modifier = Modifier
@@ -511,7 +516,8 @@ fun ShelfHeader(
 fun BookCollection(
     books: List<BookEntity>,
     userId: Int,
-    viewModel: ShelfDetailViewModel
+    viewModel: ShelfDetailViewModel,
+    navController: NavController
 ) {
     if (books.isEmpty()) {
         Box(
@@ -556,7 +562,10 @@ fun BookCollection(
                 coverUrl = book.imageUrl,
                 title = book.title,
                 author = authorName,
-                isFinished = isFinished
+                isFinished = isFinished,
+                onClick = {
+                    navController.navigate("detail/{id}")
+                }
             )
         }
     }
@@ -567,15 +576,18 @@ fun BookItem(
     coverUrl: String?,
     title: String,
     author: String,
-    isFinished: Boolean
+    isFinished: Boolean,
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(150.dp),
+            .height(150.dp)
+            .clickable(onClick = onClick),
         border = BorderStroke(1.dp, color = Color.Gray),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
+
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),

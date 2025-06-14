@@ -40,6 +40,10 @@ fun ProfileScreen(
     val userData by viewModel.userData.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val bookCount by viewModel.bookCount.collectAsState()
+    val readingListCount by viewModel.readingListCount.collectAsState()
+    val friendCount by viewModel.friendCount.collectAsState()
+    var showDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.fetchUserData()
@@ -171,25 +175,43 @@ fun ProfileScreen(
 
                             Spacer(modifier = Modifier.height(10.dp))
 
-                            // Logout Button
                             Button(
-                                onClick = { viewModel.logout {
-                                    friendViewModel.clearFriendData()
-                                    navController.navigate("login")
-                                } },
+                                onClick = { showDialog = true },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(48.dp),
-                                colors = ButtonDefaults.buttonColors(PrimaryOrange.copy(0.1f)),
+                                colors = ButtonDefaults.buttonColors(PrimaryOrange),
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                                     contentDescription = "Logout Icon",
-                                    tint = PrimaryOrange
+                                    tint = Color.White
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Keluar", color = PrimaryOrange)
+                                Text("Logout", color = Color.White)
+                            }
+                            if (showDialog) {
+                                AlertDialog(
+                                    onDismissRequest = { showDialog = false },
+                                    title = { Text("Confirm Logout") },
+                                    text = {Text("Apakah anda yakin untuk logout?") },
+                                    confirmButton = {
+                                        TextButton(
+                                            onClick = {
+                                                viewModel.logout { navController.navigate("login") }
+                                                showDialog =false
+                                            }
+                                        ) {
+                                            Text("Ya")
+                                        }
+                                    },
+                                    dismissButton = {
+                                        TextButton(onClick = { showDialog = false }) {
+                                            Text("Tidak")
+                                        }
+                                    }
+                                )
                             }
                         }
                     }
