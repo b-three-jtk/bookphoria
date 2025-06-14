@@ -1,5 +1,7 @@
 package com.example.bookphoria.ui.auth
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -26,6 +28,7 @@ import com.example.bookphoria.R
 import com.example.bookphoria.ui.theme.PrimaryOrange
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun ChangePasswordScreen(viewModel: AuthViewModel, navController: NavController) {
@@ -33,7 +36,19 @@ fun ChangePasswordScreen(viewModel: AuthViewModel, navController: NavController)
     var email by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
+    var showDialog by remember { mutableStateOf(false) }
     val forgotPasswordState by viewModel.forgotPasswordState.collectAsState()
+
+    fun isValidEmail(email: String): Boolean {
+        val emailRegex = "^[A-Za-z0-9+_.-]+@([a-zA-Z0-9.-]+\\.)+[a-zA-Z]{2,}$".toRegex()
+        val allowedDomains = listOf(
+            "gmail.com", "yahoo.com", "outlook.com", "hotmail.com",
+            "aol.com", "icloud.com", "protonmail.com", "polban.ac.id"
+        )
+        if (!email.matches(emailRegex)) return false
+        val domain = email.substringAfter("@")
+        return allowedDomains.contains(domain) || domain.matches("^[a-zA-Z0-9.-]+\\.edu\\.[a-zA-Z]{2,}$".toRegex())
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.isLoading.collect { loading ->
@@ -61,12 +76,11 @@ fun ChangePasswordScreen(viewModel: AuthViewModel, navController: NavController)
             contentScale = ContentScale.Crop
         )
 
-
         Spacer(modifier = Modifier.height(20.dp))
 
         // Title
         Text(
-            text = "Reset Password",
+            text = "Lupa Password ?",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = Color.Black,
@@ -86,7 +100,6 @@ fun ChangePasswordScreen(viewModel: AuthViewModel, navController: NavController)
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Email Input Field
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -106,8 +119,32 @@ fun ChangePasswordScreen(viewModel: AuthViewModel, navController: NavController)
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent
             ),
-            singleLine = true
+            singleLine = true,
+            isError = email.isNotBlank() && !isValidEmail(email)
         )
+        if (email.isNotBlank() && !isValidEmail(email)) {
+            Text(
+                text = "Gunakan email dari penyedia seperti Gmail, Yahoo, Outlook, atau email instansi",
+                color = Color.Red,
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, top = 4.dp)
+            )
+        }
+
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Email Tidak Valid") },
+                text = { Text("Gunakan email dari penyedia seperti Gmail, Yahoo, Outlook, atau email instansi") },
+                confirmButton = {
+                    TextButton(onClick = { showDialog = false }) {
+                        Text("OK")
+                    }
+                }
+            )
+        }
 
         Spacer(modifier = Modifier.height(40.dp))
 
@@ -115,6 +152,11 @@ fun ChangePasswordScreen(viewModel: AuthViewModel, navController: NavController)
             forgotPasswordState?.let { result ->
                 if (result.isSuccess) {
                     message = "Link reset telah dikirim ke $email"
+                    delay(10000L)
+                    navController.navigate("login") {
+                        popUpTo(navController.graph.startDestinationId) { inclusive = false }
+                        launchSingleTop = true
+                    }
                 } else {
                     message = result.exceptionOrNull()?.message ?: "Gagal mengirim email reset"
                 }
@@ -124,7 +166,14 @@ fun ChangePasswordScreen(viewModel: AuthViewModel, navController: NavController)
         // Reset Button
         Button(
             onClick = {
-                viewModel.forgotPassword(email)
+                when {
+                    email.isBlank() -> Toast.makeText(context, "Email harus diisi!", Toast.LENGTH_SHORT).show()
+                    !isValidEmail(email) -> {
+                        Log.d("ForgotpassScreen", "Invalid email: $email")
+                        showDialog = true
+                    }
+                    else -> viewModel.forgotPassword(email)
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()
