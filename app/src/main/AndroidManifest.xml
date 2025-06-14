@@ -38,7 +38,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="bookphoria"
-                    android:host="reset-password" />
+                    android:host="login" />
             </intent-filter>
         </activity>
     </application>
