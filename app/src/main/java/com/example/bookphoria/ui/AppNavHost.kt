@@ -30,10 +30,12 @@ import com.example.bookphoria.ui.book.ShelfDetailScreen
 import com.example.bookphoria.ui.book.YourBooksScreen
 import com.example.bookphoria.ui.home.MainScreen
 import com.example.bookphoria.ui.onboarding.OnboardingScreen
+import com.example.bookphoria.ui.profile.AboutScreen
 import com.example.bookphoria.ui.profile.EditProfileScreen
 import com.example.bookphoria.ui.profile.FriendScreen
 import com.example.bookphoria.ui.profile.ProfileFriendScreen
 import com.example.bookphoria.ui.profile.ProfileScreen
+import com.example.bookphoria.ui.profile.SettingScreen
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
 import com.example.bookphoria.ui.viewmodel.BookViewModel
 import com.example.bookphoria.ui.viewmodel.DetailBookViewModel
@@ -119,6 +121,12 @@ fun AppNavHost(
             composable("friend-list") {
                 FriendScreen(viewModel = friendViewModel, navController = navController)
             }
+            composable("settings") {
+                SettingScreen(navController = navController)
+            }
+            composable("about") {
+                AboutScreen(navController = navController)
+            }
 
             composable(
                 route = "edit_book/{bookId}",
@@ -202,7 +210,7 @@ fun AppNavHost(
                 )
             }
 
-            composable("myshelf") {
+                    composable("myshelf") {
                 MyShelfScreen(navController = navController)
             }
             composable("your_books") {

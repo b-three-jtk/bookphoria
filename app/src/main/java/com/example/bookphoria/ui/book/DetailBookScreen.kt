@@ -41,11 +41,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.bookphoria.R
 import com.example.bookphoria.ui.components.LoadingState
 import com.example.bookphoria.ui.theme.AppTypography
@@ -66,6 +61,7 @@ fun DetailBookScreen(
     val readingProgressState = bookViewModel.readingProgress.collectAsState()
     val bookStatusState = bookViewModel.bookStatus.collectAsState()
     val statusUpdateSuccess = bookViewModel.statusUpdateSuccess.collectAsState()
+    val reviewUpdateSuccess = bookViewModel.reviewUpdateSuccess.collectAsState()
     val book = selectedBookState.value
     var showCreateDialog by remember { mutableStateOf(false) }
     var showAddReview by remember { mutableStateOf(false) }
@@ -83,6 +79,13 @@ fun DetailBookScreen(
         if (statusUpdateSuccess.value) {
             bookViewModel.getBookStatus(bookId)
             bookViewModel.updateStatusUpdateSuccess(false)
+        }
+    }
+
+    LaunchedEffect(reviewUpdateSuccess.value) {
+        if (reviewUpdateSuccess.value) {
+            bookViewModel.getReviews(bookId)
+            bookViewModel.updateStatusReview(false)
         }
     }
 

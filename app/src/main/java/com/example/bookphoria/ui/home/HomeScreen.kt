@@ -75,7 +75,9 @@ fun HomeScreen(viewModel: HomeViewModel, navController: NavController) {
         viewModel.loadUserProfile()
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(SoftCream)) {
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(SoftCream)) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -225,11 +227,13 @@ fun BookSection(
                 text = "Your Books",
                 style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
             )
-            Text(
-                text = "Lainnya",
-                style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
-                modifier = Modifier.clickable { /* Handle "Lainnya" click */ }
-            )
+            if (yourBooks.size > 5) {
+                Text(
+                    text = "Lainnya",
+                    style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
+                    modifier = Modifier.clickable { navController.navigate("your_books") }
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -346,7 +350,8 @@ fun BookItem(
             )
         } else {
             Box(
-                modifier = Modifier.height(160.dp)
+                modifier = Modifier
+                    .height(160.dp)
                     .width(120.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(Color.White),

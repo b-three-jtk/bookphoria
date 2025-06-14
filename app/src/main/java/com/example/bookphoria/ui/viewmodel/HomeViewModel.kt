@@ -42,10 +42,8 @@ class HomeViewModel @Inject constructor(
 
             Log.d("HomeViewModel", "User: $user")
 
-            withContext(Dispatchers.Main) {
-                _userName.value = user?.firstName ?: user?.username ?: ""
-                _avatar.value = user?.profilePicture ?: ""
-            }
+            _userName.value = user?.firstName ?: user?.username ?: ""
+            _avatar.value = user?.profilePicture ?: ""
         }
     }
 

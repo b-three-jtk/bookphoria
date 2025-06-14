@@ -149,7 +149,6 @@ fun ShelfDetailScreen(
             Spacer(modifier = Modifier.width(48.dp))
         }
         shelfWithBooks?.let { shelf ->
-            // Call ShelfHeader with proper parameters
             ShelfHeader(
                 shelf = shelf.shelf,
                 bookCount = shelf.books.size,
@@ -439,7 +438,7 @@ fun ShelfHeader(
                 ) {
                     IconButton(
                         onClick = { onAddClick() },
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(32.dp)
                     ){
                         Icon(
                             Icons.Default.Add,
@@ -452,7 +451,7 @@ fun ShelfHeader(
                         onClick = {
                             showEditShelf()
                         },
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(32.dp)
                     ){
                         Icon(
                             Icons.Default.Edit,
@@ -464,7 +463,7 @@ fun ShelfHeader(
                     Spacer(modifier = Modifier.width(4.dp))
                     IconButton(
                         onClick = { onRemoveClick() },
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(32.dp)
                     ){
                         Icon(
                             Icons.Default.Delete,
@@ -499,7 +498,8 @@ fun ShelfHeader(
                         text = it,
                         fontSize = 14.sp,
                         color = Color.DarkGray,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier.align(Alignment.CenterHorizontally
+                        )
                     )
                 }
             }

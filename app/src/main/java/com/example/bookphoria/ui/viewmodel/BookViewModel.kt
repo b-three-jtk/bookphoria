@@ -37,6 +37,9 @@ class BookViewModel @Inject constructor(
     private val _statusUpdateSuccess = MutableStateFlow(false)
     val statusUpdateSuccess: StateFlow<Boolean> = _statusUpdateSuccess.asStateFlow()
 
+    private val _reviewUpdateSuccess = MutableStateFlow(false)
+    val reviewUpdateSuccess: StateFlow<Boolean> = _reviewUpdateSuccess.asStateFlow()
+
     fun getBookById(bookId: Int) {
         viewModelScope.launch {
             val bookWithRelations = bookRepository.getBookById(bookId)
@@ -84,6 +87,7 @@ class BookViewModel @Inject constructor(
         viewModelScope.launch {
             Log.d("BookViewModel", "Adding review: bookId=$bookId, desc=$desc, rate=$rate")
             bookRepository.addReview(bookId, desc, rate)
+            _reviewUpdateSuccess.value = true
         }
     }
 
@@ -141,6 +145,10 @@ class BookViewModel @Inject constructor(
 
     fun updateStatusUpdateSuccess(success: Boolean) {
         _statusUpdateSuccess.value = success
+    }
+
+    fun updateStatusReview(success: Boolean) {
+        _reviewUpdateSuccess.value = success
     }
 
     data class BookDetailUIState(

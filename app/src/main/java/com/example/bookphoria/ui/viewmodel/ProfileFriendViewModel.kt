@@ -54,25 +54,29 @@ class ProfileFriendViewModel @Inject constructor(
                 val result = repository.getFriendById(friendId)
                 _friendDetail.value = UserEntity(
                     id = 0,
-                    username = result.username,
+                    username = result.username ?: "",
                     firstName = result.firstName,
                     lastName = result.lastName,
-                    email = result.email,
+                    email = result.email ?: "",
                     profilePicture = result.avatar
                 )
-                _friends.value = result.friends
-                _friendBooks.value = result.books
-                _shelfBooks.value = result.shelves
-                _friendCount.value = result.friends.size
-                _bookCount.value = result.books.size
-                _listCount.value = result.shelves.size
-
+                _friends.value = result.friends ?: emptyList()
+                _friendBooks.value = result.books.filter { true } ?: emptyList()
+                _shelfBooks.value = result.shelves ?: emptyList()
+                _friendCount.value = result.friends.size ?: 0
+                _bookCount.value = result.books.size ?: 0
+                _listCount.value = result.shelves.size ?: 0
             } catch (e: Exception) {
                 Log.e("FriendViewModel", "Error: ${e.message}")
+                _friendBooks.value = emptyList()
+                _shelfBooks.value = emptyList()
+                _friends.value = emptyList()
+                _friendCount.value = 0
+                _bookCount.value = 0
+                _listCount.value = 0
             }
         }
     }
-
 }
 
 fun List<UserNetworkModel>.isContains(userName: String): Boolean {

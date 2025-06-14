@@ -47,11 +47,7 @@ class ProfileViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    init {
-        fetchUserData()
-    }
-
-    private fun fetchUserData() {
+    fun fetchUserData() {
         viewModelScope.launch {
             _loading.value = true
             try {
