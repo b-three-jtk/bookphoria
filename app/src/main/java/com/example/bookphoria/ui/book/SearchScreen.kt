@@ -60,6 +60,7 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.bookphoria.R
 import com.example.bookphoria.ui.components.LoadingState
+import com.example.bookphoria.ui.components.NotFoundState
 import com.example.bookphoria.ui.viewmodel.SearchViewModel
 
 @Composable
@@ -86,6 +87,8 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel(), navController: Na
             onQueryChange = { viewModel.setSearchQuery(it) },
             onSearch = { if (query.isNotBlank()) viewModel.setSearchQuery(query) } // Trigger search
         )
+
+        Spacer(modifier = Modifier.height(10.dp))
 
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -116,12 +119,15 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel(), navController: Na
                         loadState.refresh is LoadState.Error -> {
                             val e = loadState.refresh as LoadState.Error
                             item {
-                                Text(
-                                    "Error: ${e.error.message}",
-                                    color = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.padding(16.dp)
-                                )
+                                if (e.error.message == "HTTP 404 NOT FOUND") {
+                                    NotFoundState(caption = "Tidak ditemukan hasil untuk ditampilkan")
+                                } else {
+                                    NotFoundState(caption = "Terjadi Kesalahan. Coba lagi nanti.")
+                                }
                             }
+                        }
+                        query.isNotEmpty() && itemCount == 0 -> {
+                            item { NotFoundState("Tidak ditemukan hasil untuk ditampilkan") }
                         }
                     }
                 }
