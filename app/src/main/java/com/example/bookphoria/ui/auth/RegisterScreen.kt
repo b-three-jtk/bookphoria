@@ -142,30 +142,6 @@ fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
             }
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "atau lanjutkan dengan",
-            style = AppTypography.bodyMedium,
-            color = Color.Gray,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier
-            .height(8.dp)
-        )
-//        Row(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(8.dp),
-//            horizontalArrangement = Arrangement.Center
-//        ) {
-//            GoogleButton(
-//                iconRes = R.drawable.ic_google,
-//                contentDesc = "Google Register"
-//            )
-//        }
-
         // Login area
         Spacer(modifier = Modifier.height(16.dp))
         Row(

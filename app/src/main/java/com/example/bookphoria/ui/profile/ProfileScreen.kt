@@ -1,6 +1,6 @@
 package com.example.bookphoria.ui.profile
 
-import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,7 +24,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.bookphoria.R
+import com.example.bookphoria.ui.theme.AppTypography
 import com.example.bookphoria.ui.theme.SoftCream
+import com.example.bookphoria.ui.theme.SoftOrange
 import com.example.bookphoria.ui.viewmodel.ProfileViewModel
 import kotlinx.coroutines.launch
 
@@ -36,15 +38,11 @@ fun ProfileScreen(
     val userData by viewModel.userData.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val error by viewModel.error.collectAsState()
-    val bookCount by viewModel.bookCount.collectAsState()
-    val readingListCount by viewModel.readingListCount.collectAsState()
-    val friendCount by viewModel.friendCount.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.fetchUserData()
     }
 
-    // Handle error with a snackbar
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -77,7 +75,6 @@ fun ProfileScreen(
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Edit Profile Button
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -116,9 +113,21 @@ fun ProfileScreen(
                         )
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                    // Profile Info Card
+                    Button(
+                        onClick = { navController.navigate("friend-list") },
+                        shape = RoundedCornerShape(24.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = PrimaryOrange,
+                            contentColor = LocalContentColor.current
+                        )
+                    ) {
+                        Text("List Teman", style = AppTypography.bodyMedium, color = Color.White)
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -166,16 +175,16 @@ fun ProfileScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(48.dp),
-                                colors = ButtonDefaults.buttonColors(PrimaryOrange),
+                                colors = ButtonDefaults.buttonColors(PrimaryOrange.copy(0.1f)),
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                                     contentDescription = "Logout Icon",
-                                    tint = Color.White
+                                    tint = PrimaryOrange
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Logout", color = Color.White)
+                                Text("Keluar", color = PrimaryOrange)
                             }
                         }
                     }

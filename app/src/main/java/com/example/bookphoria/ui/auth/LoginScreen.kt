@@ -180,18 +180,6 @@ fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {
                 }
             )
 
-            Text(
-                text = "Atau masuk menggunakan",
-                style = AppTypography.bodyMedium,
-                color = Color.Gray,
-                modifier = Modifier.padding(top = 24.dp, bottom = 16.dp)
-            )
-
-//            GoogleButton(
-//                iconRes = R.drawable.ic_google,
-//                contentDesc = "Google Login"
-//            )
-
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                 horizontalArrangement = Arrangement.Center,
