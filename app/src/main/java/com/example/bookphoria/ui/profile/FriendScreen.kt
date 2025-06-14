@@ -50,6 +50,7 @@ fun FriendScreen(
 ) {
     LaunchedEffect(Unit) {
         viewModel.loadRequests()
+        viewModel.loadFriends()
     }
 
     Box(modifier = Modifier.fillMaxSize().background(SoftCream)) {

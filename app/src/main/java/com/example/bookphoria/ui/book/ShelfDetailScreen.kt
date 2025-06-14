@@ -101,7 +101,6 @@ fun ShelfDetailScreen(
         }
     }
 
-
     LaunchedEffect(addResult) {
         addResult?.let {
             if (it.isSuccess) {
@@ -117,7 +116,6 @@ fun ShelfDetailScreen(
             if (it.isSuccess) {
                 navController.popBackStack() // kembali setelah hapus sukses
             } else {
-                // tampilkan error
                 Log.e("ShelfDelete", "Error: ${it.exceptionOrNull()}")
             }
             viewModel.resetDeleteResult()
@@ -141,21 +139,117 @@ fun ShelfDetailScreen(
                 )
             }
 
-            Text(
-                text = "Your Books",
-                style = AppTypography.titleSmall
-            )
+            shelfWithBooks?.shelf?.let {
+                Text(
+                    text = it.name,
+                    style = AppTypography.titleSmall
+                )
+            }
 
             Spacer(modifier = Modifier.width(48.dp))
         }
         shelfWithBooks?.let { shelf ->
-            ShelfHeader(
-                shelf = shelf.shelf,
-                bookCount = shelf.books.size,
-                onAddClick = { showBookPicker = true },
-                onRemoveClick =  { showDialog = true },
-                showEditShelf = { showEditShelf = true }
-            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+            ) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Column {
+                    Box(
+                        modifier = Modifier
+                            .size(150.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.LightGray)
+                    ) {
+                        shelf.shelf.imagePath?.let { imagePath ->
+                            AsyncImage(
+                                model = imagePath,
+                                contentDescription = "Shelf Image",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.size(150.dp)
+                            )
+                        } ?: Image(
+                            painter = painterResource(id = R.drawable.sample_koleksi),
+                            contentDescription = "Shelf Image",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(150.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Add & book count
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.align(Alignment.Start)
+                    ) {
+                        IconButton(
+                            onClick = { showBookPicker = true },
+                            modifier = Modifier.size(32.dp)
+                        ){
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = "Add Book",
+                                tint = Color.Gray
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        IconButton(
+                            onClick = {
+                                showEditShelf = true
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ){
+                            Icon(
+                                Icons.Default.Edit,
+                                contentDescription = "Edit Shelf",
+                                tint = Color.Gray
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(4.dp))
+                        IconButton(
+                            onClick = { showDialog = true },
+                            modifier = Modifier.size(32.dp)
+                        ){
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Delete Shelf",
+                                tint = Color.Red
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "${shelf.books.size} Books",
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Shelf title
+                    Text(
+                        text = shelf.shelf.name,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        modifier = Modifier.align(Alignment.Start)
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    shelf.shelf.description?.let {
+                        Text(
+                            text = it,
+                            fontSize = 14.sp,
+                            color = Color.DarkGray,
+                        )
+                    }
+                }
+            }
 
             BookCollection(
                 books = shelf.books,
@@ -193,7 +287,6 @@ fun ShelfDetailScreen(
             )
         }
 
-        // Dialog popup untuk pilih buku
         if (showBookPicker) {
             Dialog(onDismissRequest = { showBookPicker = false }) {
                 Surface(
@@ -386,133 +479,6 @@ fun ShelfDetailScreen(
 }
 
 @Composable
-fun ShelfHeader(
-    shelf: ShelfEntity,
-    bookCount: Int,
-    onAddClick: () -> Unit,
-    onRemoveClick: () -> Unit,
-    showEditShelf: () -> Unit
-)
-{
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(20.dp)
-    ) {
-        Spacer(modifier = Modifier.height(50.dp))
-
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = SoftCream)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                // Shelf Image
-                Box(
-                    modifier = Modifier
-                        .size(150.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.LightGray)
-                        .align(Alignment.CenterHorizontally)
-                ) {
-                    shelf.imagePath?.let { imagePath ->
-                        AsyncImage(
-                            model = imagePath,
-                            contentDescription = "Shelf Image",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.size(150.dp)
-                        )
-                    } ?: Image(
-                        painter = painterResource(id = R.drawable.sample_koleksi),
-                        contentDescription = "Shelf Image",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(150.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Add & book count
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.align(Alignment.Start)
-                ) {
-                    IconButton(
-                        onClick = { onAddClick() },
-                        modifier = Modifier.size(32.dp)
-                    ){
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = "Add Book",
-                            tint = Color.Gray
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(4.dp))
-                    IconButton(
-                        onClick = {
-                            showEditShelf()
-                        },
-                        modifier = Modifier.size(32.dp)
-                    ){
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Edit Shelf",
-                            tint = Color.Gray
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(4.dp))
-                    IconButton(
-                        onClick = { onRemoveClick() },
-                        modifier = Modifier.size(32.dp)
-                    ){
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Delete Shelf",
-                            tint = Color.Red
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "$bookCount Books",
-                        color = Color.Gray,
-                        fontSize = 14.sp
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Shelf title
-                Text(
-                    text = shelf.name,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    modifier = Modifier.align(Alignment.Start)
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Shelf description
-                shelf.description?.let {
-                    Text(
-                        text = it,
-                        fontSize = 14.sp,
-                        color = Color.DarkGray,
-                        modifier = Modifier.align(Alignment.CenterHorizontally
-                        )
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun BookCollection(
     books: List<BookEntity>,
     userId: Int,
@@ -564,7 +530,7 @@ fun BookCollection(
                 author = authorName,
                 isFinished = isFinished,
                 onClick = {
-                    navController.navigate("detail/{id}")
+                    navController.navigate("detail/${book.id}")
                 }
             )
         }
@@ -590,14 +556,13 @@ fun BookItem(
 
     ) {
         Row(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Spacer(modifier = Modifier.width(50.dp))
             // Book Cover
             Card(
                 shape = RoundedCornerShape(6.dp),
-                modifier = Modifier.size(80.dp),
+                modifier = Modifier.width(100.dp).height(110.dp ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 coverUrl?.let {

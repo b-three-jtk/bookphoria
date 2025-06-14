@@ -128,10 +128,4 @@ class FriendViewModel @Inject constructor(
             }
         }
     }
-
-    fun clearFriendData() {
-        _friends.value = emptyList()
-        _friendRequest.value = emptyList()
-        _friendSearchDetail.value = null
-    }
 }

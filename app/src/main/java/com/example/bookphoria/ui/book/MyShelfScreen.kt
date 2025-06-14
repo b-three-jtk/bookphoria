@@ -197,13 +197,7 @@ fun CreateCollectionDialog(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var imageFile by remember { mutableStateOf<File?>(null) }
-    var imagePath by remember { mutableStateOf<String?>(null) }
-
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        imageUri.value = uri
-    }
+    var imagePath by remember { mutableStateOf<String?>("") }
 
     // Handle UI state changes
     LaunchedEffect(uiState) {
@@ -235,6 +229,7 @@ fun CreateCollectionDialog(
             imageFile = file
             imagePath = uri.toString()
             Log.d("ShelfDetailScreen", "Image URI: $uri")
+            Log.d("ShelfDetailScreen", "Image File: $file")
         }
     }
 
@@ -269,12 +264,11 @@ fun CreateCollectionDialog(
                                 .clickable { imageLauncher.launch("image/*") },
                         ) {
                             Image(
-                                painter = rememberAsyncImagePainter(model = imagePath!!.ifBlank { R.drawable.user }),
+                                painter = rememberAsyncImagePainter(model = imagePath!!.ifBlank {  }),
                                 contentDescription = "Profile",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
                                     .size(96.dp)
-                                    .border(1.dp, Color.LightGray, CircleShape)
                                     .clickable { imageLauncher.launch("image/*") }
                             )
                         }
@@ -393,12 +387,6 @@ fun CreateCollectionDialog(
         }
     }
 }
-
-/*@Preview(showBackground = true)
-@Composable
-fun MyShelfScreenPreview() {
-    MyShelfScreen()
-}*/
 
 @Preview
 @Composable
