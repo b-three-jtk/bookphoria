@@ -13,7 +13,7 @@ data class DetailFriendResponse(
     @SerializedName("email") val email: String,
     @SerializedName("joined_at") val joinedAt: String,
     @SerializedName("avatar") val avatar: String?,
-    @SerializedName("books") val books: List<BookNetworkModel>,
+    @SerializedName("books") val books: List<BookStatusNetworkModel>,
     @SerializedName("friends") val friends: List<UserNetworkModel>,
     @SerializedName("shelves") val shelves: List<ShelfNetworkModel>,
 //    @SerializedName("borrow") val borrow: List<BorrowNetworkModel>,

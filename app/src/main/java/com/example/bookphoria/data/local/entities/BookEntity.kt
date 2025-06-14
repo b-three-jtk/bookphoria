@@ -86,7 +86,7 @@ data class FullBookDataWithUserInfo(
             entityColumn = "authorId"
         )
     )
-    val authors: List<AuthorEntity>,
+    val authors: List<AuthorEntity>?,
 
     @Relation(
         parentColumn = "id",
@@ -97,7 +97,7 @@ data class FullBookDataWithUserInfo(
             entityColumn = "genreId"
         )
     )
-    val genres: List<GenreEntity>,
+    val genres: List<GenreEntity>?,
 
     @Relation(
         parentColumn = "id",

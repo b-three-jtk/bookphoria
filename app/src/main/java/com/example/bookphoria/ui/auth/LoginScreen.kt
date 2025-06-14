@@ -49,6 +49,7 @@ import com.example.bookphoria.ui.theme.DarkIndigo
 import com.example.bookphoria.ui.theme.PrimaryOrange
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
+import com.example.bookphoria.ui.viewmodel.BookViewModel
 
 @Composable
 fun LoginScreen(viewModel: AuthViewModel, navController: NavController) {

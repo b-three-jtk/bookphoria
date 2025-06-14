@@ -1,17 +1,14 @@
 package com.example.bookphoria.ui.viewmodel
 
 import android.util.Log
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.bookphoria.data.local.entities.FullBookDataWithUserInfo
 import com.example.bookphoria.data.local.entities.UserEntity
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.responses.BookNetworkModel
+import com.example.bookphoria.data.remote.responses.BookStatusNetworkModel
 import com.example.bookphoria.data.remote.responses.ShelfNetworkModel
 import com.example.bookphoria.data.remote.responses.UserNetworkModel
-import com.example.bookphoria.data.remote.responses.toFullBookData
 import com.example.bookphoria.data.repository.FriendRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,8 +24,8 @@ class ProfileFriendViewModel @Inject constructor(
 ) : ViewModel() {
     private val _friendDetail = MutableStateFlow<UserEntity?>(null)
     val friendDetail: StateFlow<UserEntity?> = _friendDetail
-    private val _friendBooks = MutableStateFlow<List<BookNetworkModel>>(emptyList())
-    val friendBooks: StateFlow<List<BookNetworkModel>> = _friendBooks
+    private val _friendBooks = MutableStateFlow<List<BookStatusNetworkModel>>(emptyList())
+    val friendBooks: StateFlow<List<BookStatusNetworkModel>> = _friendBooks
     private val _shelfBooks = MutableStateFlow<List<ShelfNetworkModel>>(emptyList())
     val shelfBooks: StateFlow<List<ShelfNetworkModel>> = _shelfBooks
     private val _friends = MutableStateFlow<List<UserNetworkModel>>(emptyList())

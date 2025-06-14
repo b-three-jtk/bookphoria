@@ -1,7 +1,9 @@
 package com.example.bookphoria.data.remote.responses
 
+import android.util.Log
 import com.example.bookphoria.data.local.entities.AuthorEntity
 import com.example.bookphoria.data.local.entities.BookEntity
+import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.data.local.entities.FullBookDataWithUserInfo
 import com.example.bookphoria.data.local.entities.GenreEntity
 import com.example.bookphoria.data.local.entities.UserBookCrossRef
@@ -23,8 +25,8 @@ data class BookStatusNetworkModel(
     @SerializedName("user_book_id") val id: String,
     @SerializedName("status") val status: String,
     @SerializedName("page_count") val pagesRead: Int,
-    @SerializedName("start_date") val startDate: String,
-    @SerializedName("finish_date") val endDate: String,
+    @SerializedName("start_date") val startDate: String?,
+    @SerializedName("finish_date") val endDate: String?,
     @SerializedName("book") val book: BookNetworkModel,
 )
 
@@ -40,29 +42,71 @@ fun BookStatusNetworkModel.toFullBookData(userId: Int, bookId: Int): FullBookDat
             pages = this.book.pages,
             imageUrl = this.book.cover,
         ),
-        authors = this.book.authors.map {
-            AuthorEntity(
-                serverId = it.id,
-                name = it.name,
-                desc = it.desc?: ""
-            )
-            },
-
-        genres = this.book.genres.map {
-            GenreEntity(
-                serverId = it.id,
-                name = it.name
-            )
+        authors = if (this.book.authors.isNotEmpty()) {
+            this.book.authors.map {
+                AuthorEntity(
+                    serverId = it.id,
+                    name = it.name,
+                    desc = it.desc ?: ""
+                )
+            }
+        } else {
+            emptyList()
+        },
+        genres = if (this.book.genres.isNotEmpty()) {
+            this.book.genres.map {
+                GenreEntity(
+                    serverId = it.id,
+                    name = it.name
+                )
+            }
+        } else {
+            emptyList()
         },
         userBookCrossRefs = UserBookCrossRef(
             userId = userId,
             bookId = bookId,
             status = this.status,
             pagesRead = this.pagesRead,
-            startDate = this.startDate,
-            endDate = this.endDate
+            startDate = this.startDate ?: "",
+            endDate = this.endDate ?: ""
         )
+    )
+}
 
+fun BookStatusNetworkModel.toBookWithGenresAndAuthors(bookId: Int): BookWithGenresAndAuthors {
+    return BookWithGenresAndAuthors(
+        book = BookEntity(
+            serverId = this.id,
+            isbn = this.book.isbn,
+            title = this.book.title,
+            publisher = this.book.publisher,
+            publishedDate = this.book.publishedDate,
+            synopsis = this.book.synopsis,
+            pages = this.book.pages,
+            imageUrl = this.book.cover,
+        ),
+        authors = if (this.book.authors.isNotEmpty()) {
+            this.book.authors.map {
+                AuthorEntity(
+                    serverId = it.id,
+                    name = it.name,
+                    desc = it.desc ?: ""
+                )
+            }
+        } else {
+            emptyList()
+        },
+        genres = if (this.book.genres.isNotEmpty()) {
+            this.book.genres.map {
+                GenreEntity(
+                    serverId = it.id,
+                    name = it.name
+                )
+            }
+        } else {
+            emptyList()
+        },
     )
 }
 
@@ -111,7 +155,7 @@ data class EditBookResponse(
 data class AuthorNetworkModel(
     @SerializedName("id") val id: String,
     @SerializedName("name") val name: String,
-    @SerializedName("desc") val desc: String
+    @SerializedName("desc") val desc: String?
 )
 
 data class GenreNetworkModel(

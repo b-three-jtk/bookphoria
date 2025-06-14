@@ -23,6 +23,7 @@ import com.example.bookphoria.data.remote.requests.AddUserBookRequest
 import com.example.bookphoria.data.remote.requests.EditBookRequest
 import com.example.bookphoria.data.remote.responses.BookNetworkModel
 import com.example.bookphoria.data.remote.responses.ReviewNetworkModel
+import com.example.bookphoria.data.remote.responses.toBookWithGenresAndAuthors
 import com.example.bookphoria.data.remote.responses.toFullBookData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first

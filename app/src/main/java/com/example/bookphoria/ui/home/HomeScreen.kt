@@ -219,107 +219,112 @@ fun BookSection(
     val yourCurrentlyReadingBooks by viewModel.currentlyReading.collectAsState()
 
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = "Your Books",
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
-            )
-            if (yourBooks.size > 5) {
-                Text(
-                    text = "Lainnya",
-                    style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
-                    modifier = Modifier.clickable { navController.navigate("your_books") }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-        if (yourBooks.isNotEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                Text(
+                    text = "Your Books",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                )
+                if (yourBooks.size > 5) {
+                    Text(
+                        text = "Lainnya",
+                        style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
+                        modifier = Modifier.clickable { navController.navigate("your_books") }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            if (yourBooks.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                ) {
                     Row(
                         modifier = Modifier.wrapContentWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         yourBooks.take(5).forEach { bookWithDetails ->
-                            val authorNames = bookWithDetails.authors.joinToString(", ") { it.name }
-                            BookItem(
-                                title = bookWithDetails.book.title,
-                                author = authorNames,
-                                imageUrl = bookWithDetails.book.imageUrl,
-                                onClick = {
-                                    navController.navigate("detail/${bookWithDetails.book.id}")
-                                }
-                            )
+                            val authorNames = bookWithDetails.authors?.joinToString(", ") { it.name }
+                            if (authorNames != null) {
+                                BookItem(
+                                    title = bookWithDetails.book.title,
+                                    author = authorNames,
+                                    imageUrl = bookWithDetails.book.imageUrl,
+                                    onClick = {
+                                        navController.navigate("detail/${bookWithDetails.book.id}")
+                                    }
+                                )
+                            }
                         }
                     }
-            }
-        } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color.White)
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.book),
-                    contentDescription = "Bookshelf",
+                }
+            } else {
+                Row(
                     modifier = Modifier
-                        .height(140.dp)
-                        .padding(10.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(text = "Belum ada buku yang ditambahkan ke koleksi", color = Color.Gray)
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color.White)
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.book),
+                        contentDescription = "Bookshelf",
+                        modifier = Modifier
+                            .height(140.dp)
+                            .padding(10.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(text = "Belum ada buku yang ditambahkan ke koleksi", color = Color.Gray)
+                }
             }
-        }
 
-        Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-        Text(
-            text = "Currently Reading",
-            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        if (yourCurrentlyReadingBooks.isNotEmpty()) {
-            val currentBook = yourCurrentlyReadingBooks.first()
-            val authorNames = currentBook.authors.joinToString(", ") { it.name }
-
-            CurrentReadingItem(
-                title = currentBook.book.title,
-                author = authorNames,
-                progress = 0.5f,
-                imageUrl = currentBook.book.imageUrl
+            Text(
+                text = "Currently Reading",
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
             )
-        } else {
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(Color.White)
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.bookshelf),
-                    contentDescription = "Bookshelf",
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            if (yourCurrentlyReadingBooks.isNotEmpty()) {
+                val currentBook = yourCurrentlyReadingBooks.first()
+                val authorNames = currentBook.authors?.joinToString(", ") { it.name }
+
+                if (authorNames != null) {
+                    CurrentReadingItem(
+                        title = currentBook.book.title,
+                        author = authorNames,
+                        progress = 0.5f,
+                        imageUrl = currentBook.book.imageUrl
+                    )
+                }
+            } else {
+                Row(
                     modifier = Modifier
-                        .height(140.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Belum ada buku yang sedang dibaca", color = Color.Gray)
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Color.White)
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.bookshelf),
+                        contentDescription = "Bookshelf",
+                        modifier = Modifier
+                            .height(140.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Belum ada buku yang sedang dibaca", color = Color.Gray)
+                }
             }
         }
-    }
+
 }
 
 @Composable

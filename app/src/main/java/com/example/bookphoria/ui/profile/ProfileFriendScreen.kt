@@ -61,6 +61,7 @@ import androidx.compose.ui.text.style.TextAlign
 import coil.compose.AsyncImage
 import com.example.bookphoria.R
 import com.example.bookphoria.data.remote.responses.BookNetworkModel
+import com.example.bookphoria.data.remote.responses.BookStatusNetworkModel
 import com.example.bookphoria.data.remote.responses.ShelfNetworkModel
 import com.example.bookphoria.ui.book.BookSearchItem
 import com.example.bookphoria.ui.components.ConfirmationDialog
@@ -83,16 +84,11 @@ fun ProfileFriendScreen(
     val context = LocalContext.current
     val scrollState = rememberScrollState()
     val friendDetail by viewModel.friendDetail.collectAsState()
-    val profileName = if (friendDetail?.firstName.isNullOrBlank() && friendDetail?.lastName.isNullOrBlank()) {
-        friendDetail?.username.orEmpty()
-    } else {
-        "${friendDetail?.firstName.orEmpty()} ${friendDetail?.lastName.orEmpty()}".trim()
-    }
     val profileUserName = friendDetail?.username
-    val bookCount = viewModel.bookCount
-    val listCount = viewModel.listCount
-    val friendCount = viewModel.friendCount
-    val tabsList = listOf("Collection", "Readlist", "Borrow Rules")
+    val bookCount by viewModel.bookCount.collectAsState()
+    val listCount by viewModel.listCount.collectAsState()
+    val friendCount by viewModel.friendCount.collectAsState()
+    val tabsList = listOf("Collection", "Readlist")
     val selectedTabIndex = remember { mutableIntStateOf(0) }
     var showRequestDialog by remember { mutableStateOf<Int?>(null) }
     val friends by viewModel.friends.collectAsState()
@@ -133,11 +129,13 @@ fun ProfileFriendScreen(
                         contentDescription = "Kembali"
                     )
                 }
-                Text(
-                    text = profileName,
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
+                friendDetail?.username?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
             }
 
             AsyncImage(
@@ -243,7 +241,6 @@ fun ProfileFriendScreen(
                 )
             }
 
-
             Row(
                 modifier = Modifier
                     .padding(16.dp),
@@ -316,7 +313,6 @@ fun ProfileFriendScreen(
             when (selectedTabIndex.intValue) {
                 0 -> CollectionContent(friendBooks, navController)
                 1 -> ReadlistContent(friendReadlist, navController)
-                2 -> RulesContent()
             }
         }
 
@@ -324,8 +320,8 @@ fun ProfileFriendScreen(
 }
 
 @Composable
-fun CollectionContent(books: List<BookNetworkModel>, navController: NavController) {
-    Text(text = "Collection")
+fun CollectionContent(books: List<BookStatusNetworkModel>, navController: NavController) {
+    Spacer(modifier = Modifier.height(10.dp))
     Column {
         if (books.isEmpty()) {
             Text(
@@ -334,13 +330,14 @@ fun CollectionContent(books: List<BookNetworkModel>, navController: NavControlle
                 modifier = Modifier.padding(16.dp)
             )
         } else {
-            books.forEach { book ->
+            books.forEach { data ->
                 BookSearchItem(
-                    title = book.title ?: "Unknown Title",
-                    author = book.authors?.joinToString(", ") { it.name ?: "Unknown Author" } ?: "No Authors",
-                    imageUrl = book.cover ?: "",
+                    title = data.book.title ?: "Unknown Title",
+                    author = data.book.authors?.joinToString(", ") { it.name ?: "Unknown Author" } ?: "No Authors",
+                    imageUrl = data.book.cover ?: "",
+                    modifier = Modifier.padding(vertical = 8.dp),
                     onClick = {
-                        navController.navigate("detail/search/${book.id}")
+                        navController.navigate("detail/search/${data.book.id}")
                     }
                 )
             }
@@ -350,24 +347,20 @@ fun CollectionContent(books: List<BookNetworkModel>, navController: NavControlle
 
 @Composable
 fun ReadlistContent(friendReadlist: List<ShelfNetworkModel>, navController: NavController) {
-    Text(text = "Readlist")
+    Spacer(modifier = Modifier.height(10.dp))
     Column {
         friendReadlist.forEach { shelf ->
             BookSearchItem(
                 title = shelf.name,
                 author = shelf.desc,
                 imageUrl = shelf.image,
+                modifier = Modifier.padding(vertical = 8.dp),
                 onClick = {
                     navController.navigate("search")
                 }
             )
         }
     }
-}
-
-@Composable
-fun RulesContent() {
-    Text("Rules")
 }
 
 @Composable

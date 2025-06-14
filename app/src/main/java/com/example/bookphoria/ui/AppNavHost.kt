@@ -81,7 +81,7 @@ fun AppNavHost(
         !isOnboardingComplete -> "onboarding"
         startDestination == "home" -> "home"
         startDestination == "login" -> "login"
-        else -> "register"
+        else -> "login"
     }
 
     Scaffold { innerPadding ->
