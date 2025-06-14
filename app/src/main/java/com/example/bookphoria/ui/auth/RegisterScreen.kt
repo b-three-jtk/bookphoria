@@ -1,5 +1,6 @@
 package com.example.bookphoria.ui.auth
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -41,7 +42,19 @@ fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var showDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+
+    fun isValidEmail(email: String): Boolean {
+        val emailRegex = "^[A-Za-z0-9+_.-]+@([a-zA-Z0-9.-]+\\.)+[a-zA-Z]{2,}$".toRegex()
+        val allowedDomains = listOf(
+            "gmail.com", "yahoo.com", "outlook.com", "hotmail.com",
+            "aol.com", "icloud.com", "protonmail.com", "polban.ac.id"
+        )
+        if (!email.matches(emailRegex)) return false
+        val domain = email.substringAfter("@")
+        return allowedDomains.contains(domain) || domain.matches("^[a-zA-Z0-9.-]+\\.edu\\.[a-zA-Z]{2,}$".toRegex())
+    }
 
     Column(
         modifier = Modifier
@@ -98,14 +111,24 @@ fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
             contentDescription = "Username Icon",
             modifier = Modifier.padding(top = 20.dp)
         )
-        AuthTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = "Email",
-            leadingIcon = Icons.Default.Email,
-            contentDescription = "Email Icon",
-            modifier = Modifier.padding(top = 20.dp)
-        )
+        Column {
+            AuthTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = "Email",
+                leadingIcon = Icons.Default.Email,
+                contentDescription = "Email Icon",
+                modifier = Modifier.padding(top = 20.dp)
+            )
+            if (email.isNotBlank() && !isValidEmail(email)) {
+                Text(
+                    text = "Gunakan email valid (mis. Gmail, Yahoo, atau email instansi seperti polban.ac.id)",
+                    color = Color.Red,
+                    style = AppTypography.bodySmall,
+                    modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                )
+            }
+        }
         AuthTextField(
             value = password,
             onValueChange = { password = it },
@@ -123,7 +146,10 @@ fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
                 if (!isLoading) {
                     when {
                         username.isBlank() -> Toast.makeText(context, "Username harus diisi!", Toast.LENGTH_SHORT).show()
-                        email.isBlank() -> Toast.makeText(context, "Email harus diisi!", Toast.LENGTH_SHORT).show()
+                        !isValidEmail(email) -> {
+                            Log.d("RegisterScreen", "Invalid email: $email")
+                            showDialog = true
+                        }
                         password.isBlank() -> Toast.makeText(context, "Password harus diisi!", Toast.LENGTH_SHORT).show()
                         else -> viewModel.register(
                             name = username,
@@ -141,6 +167,19 @@ fun RegisterScreen(viewModel: AuthViewModel, navController: NavController) {
                 }
             }
         )
+
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Email Tidak Valid") },
+                text = { Text("Gunakan email dari penyedia seperti Gmail, Yahoo, Outlook, atau email instansi seperti polban.ac.id.") },
+                confirmButton = {
+                    TextButton(onClick = { showDialog = false }) {
+                        Text("OK")
+                    }
+                }
+            )
+        }
 
         // Login area
         Spacer(modifier = Modifier.height(16.dp))
