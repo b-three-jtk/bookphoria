@@ -226,6 +226,7 @@ fun AppNavHost(
             composable("change") {
                 ChangePasswordScreen(viewModel = authViewModel, navController = navController)
             }
+
         }
     }
 }
