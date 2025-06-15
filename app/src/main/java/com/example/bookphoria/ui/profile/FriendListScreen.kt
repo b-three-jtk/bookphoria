@@ -47,11 +47,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.animateLottieCompositionAsState
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.bookphoria.R
 import com.example.bookphoria.ui.theme.SubTitleExtraSmall
 import com.example.bookphoria.ui.theme.TitleExtraSmall
@@ -185,6 +180,7 @@ fun FriendListContent(
                                     val fullName = listOfNotNull(data.user.firstName, data.user.lastName).joinToString(" ")
                                     Log.d("FriendListContent", "User: $data.user")
                                     val username = data.user.username ?: ""
+                                    val isNotFriend = friends.any { it.username == data.user.username }
 
                                     if (username != "") {
                                         FriendListItem(
@@ -194,7 +190,7 @@ fun FriendListContent(
                                                 navController.navigate("user-profile/${data.user.id}")
                                                 showDialog.value = false
                                             },
-                                            isNotFriend = true,
+                                            isNotFriend = !isNotFriend,
                                             onAdd = {
                                                 showRequestDialog = data.user.id
                                             }

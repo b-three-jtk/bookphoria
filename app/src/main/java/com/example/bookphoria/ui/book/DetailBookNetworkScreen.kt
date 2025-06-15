@@ -155,6 +155,7 @@ fun DetailBookNetworkScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 InfoItem(label = "Penerbit", value = book.publisher)
+                InfoItem(label = "ISBN", value = book.isbn)
                 InfoItem(label = "Tanggal Terbit", value = book.publishedDate)
                 InfoItem(label = "Jumlah Halaman", value = "${book.pages} halaman")
             }

@@ -241,17 +241,7 @@ fun DetailBookScreen(
                 )
 
             }
-
-            Text(
-                text = book.book.synopsis,
-                fontSize = 14.sp,
-                lineHeight = 20.sp
-            )
-                Text(
-                    text = book.book.synopsis,
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp
-                )
+                InfoItem(label = "Sinopsis", value = book.book.synopsis)
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     book.genres.forEach { genre ->
@@ -267,6 +257,7 @@ fun DetailBookScreen(
 
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     InfoItem(label = "Penerbit", value = book.book.publisher)
+                    InfoItem(label = "ISBN", value = book.book.isbn)
                     InfoItem(label = "Tanggal Terbit", value = book.book.publishedDate)
                     InfoItem(label = "Jumlah Halaman", value = "${book.book.pages} halaman")
                 }
