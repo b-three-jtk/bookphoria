@@ -60,6 +60,7 @@ fun EntryBookScreen(
     var showConfirmDialog by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
+    var validationErrors by remember { mutableStateOf(emptyList<String>()) } // Inisialisasi kosong
 
     val imageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -117,7 +118,7 @@ fun EntryBookScreen(
             ) {
                 if (viewModel.coverFile != null) {
                     Image(
-                        painter = rememberAsyncImagePainter(model = viewModel.coverUrl!!.ifBlank {  }),
+                        painter = rememberAsyncImagePainter(model = viewModel.coverUrl!!.ifBlank { "" }),
                         contentDescription = "Book Cover",
                         modifier = Modifier.matchParentSize(),
                         contentScale = ContentScale.Crop,
@@ -153,33 +154,61 @@ fun EntryBookScreen(
             BookTextField(
                 label = "Judul Buku",
                 value = viewModel.title,
-                onValueChange = {
-                    viewModel.title = it
+                onValueChange = { newValue ->
+                    viewModel.title = newValue
+                    if (newValue.isNotBlank()) {
+                        validationErrors = validationErrors.filter { it != "Judul buku belum diisi" }
+                    }
                 },
+                errorMessage = if (validationErrors.contains("Judul buku belum diisi")) "Judul buku harus diisi" else null
             )
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            BookTextField(label = "Penerbit", value = viewModel.publisher, onValueChange = {
-                viewModel.publisher = it
-            })
+            BookTextField(
+                label = "Penerbit",
+                value = viewModel.publisher,
+                onValueChange = { newValue ->
+                    if (newValue.isEmpty() || newValue.matches(Regex("^[a-zA-Z\\s]*$"))) {
+                        viewModel.publisher = newValue
+                        if (newValue.isNotBlank()) {
+                            validationErrors = validationErrors.filter { it != "Penerbit belum diisi" }
+                        }
+                    }
+                },
+                errorMessage = if (validationErrors.contains("Penerbit belum diisi")) "Penerbit harus diisi" else null
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
 
             BookTextField(
                 value = viewModel.authorInput,
-                onValueChange = { viewModel.authorInput = it },
+                onValueChange = { newValue ->
+                    if (newValue.isEmpty() || newValue.matches(Regex("^[a-zA-Z\\s]*$"))) {
+                        viewModel.authorInput = newValue
+                        if (newValue.isNotEmpty() && newValue.matches(Regex("^[a-zA-Z\\s]*$"))) {
+                            validationErrors = validationErrors.filter { it != "Penulis belum ditambahkan" }
+                        }
+                    }
+                },
                 label = "Penulis",
                 trailingIcon = {
                     IconButton(onClick = {
-                        if (viewModel.authorInput.isNotBlank()) {
+                        if (viewModel.authorInput.isNotBlank() && viewModel.authorInput.matches(Regex("^[a-zA-Z\\s]*$"))) {
                             viewModel.authors.add(viewModel.authorInput.trim())
                             viewModel.authorInput = ""
+                            if (viewModel.authors.isNotEmpty()) {
+                                validationErrors = validationErrors.filter { it != "Penulis belum ditambahkan" }
+                            }
                         }
                     }) {
                         Icon(Icons.Default.Add, contentDescription = "Tambah Penulis")
                     }
                 },
+                keyboardType = KeyboardType.Text,
+                errorMessage = if (viewModel.authorInput.isNotEmpty() && !viewModel.authorInput.matches(Regex("^[a-zA-Z\\s]*$"))) {
+                    "Hanya huruf dan spasi yang diperbolehkan"
+                } else if (validationErrors.contains("Penulis belum ditambahkan")) "Penulis harus ditambahkan" else null
             )
 
             if (viewModel.authors.isNotEmpty()) {
@@ -201,6 +230,9 @@ fun EntryBookScreen(
                                         .size(18.dp)
                                         .clickable {
                                             viewModel.authors.remove(name)
+                                            if (viewModel.authors.isEmpty()) {
+                                                validationErrors = validationErrors + "Penulis belum ditambahkan"
+                                            }
                                         }
                                 )
                             }
@@ -212,33 +244,46 @@ fun EntryBookScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                BookTextField(
-                    label = "Tanggal Terbit",
-                    value = viewModel.publishedDate,
-                    onValueChange = { viewModel.publishedDate = it },
-                    modifier = Modifier.weight(1f),
-                    readOnly = true,
-                    trailingIcon = {
-                        IconButton(onClick = { showDatePicker = true }) {
-                            Icon(Icons.Default.DateRange, contentDescription = "Pilih Tanggal")
-                        }
-                    },
-                )
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                BookTextField(
-                    label = "Jumlah Halaman",
-                    value = viewModel.pageCount,
-                    onValueChange = {
-                        viewModel.pageCount = it
-                    },
-                    modifier = Modifier.weight(1f),
-                    keyboardType = KeyboardType.Number,
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    BookTextField(
+                        label = "Tanggal Terbit",
+                        value = viewModel.publishedDate,
+                        onValueChange = { newValue ->
+                            viewModel.publishedDate = newValue
+                            if (newValue.isNotBlank()) {
+                                validationErrors = validationErrors.filter { it != "Tanggal terbit belum diisi" }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        readOnly = true,
+                        trailingIcon = {
+                            IconButton(onClick = { showDatePicker = true }) {
+                                Icon(Icons.Default.DateRange, contentDescription = "Pilih Tanggal")
+                            }
+                        },
+                        errorMessage = if (validationErrors.contains("Tanggal terbit belum diisi")) "Tanggal terbit harus diisi" else null
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    BookTextField(
+                        label = "Jumlah Halaman",
+                        value = viewModel.pageCount,
+                        onValueChange = { newValue ->
+                            if (newValue.isEmpty() || newValue.matches(Regex("^\\d+$"))) {
+                                viewModel.pageCount = newValue
+                                if (newValue.isNotBlank()) {
+                                    validationErrors = validationErrors.filter { it != "Jumlah halaman belum diisi" }
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardType = KeyboardType.Number,
+                        errorMessage = if (validationErrors.contains("Jumlah halaman belum diisi")) "Jumlah halaman harus diisi" else null
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -246,10 +291,16 @@ fun EntryBookScreen(
             BookTextField(
                 label = "ISBN",
                 value = viewModel.isbn,
-                onValueChange = {
-                    viewModel.isbn = it
+                onValueChange = { newValue ->
+                    if (newValue.isEmpty() || newValue.matches(Regex("^\\d+$"))) {
+                        viewModel.isbn = newValue
+                        if (newValue.isNotBlank()) {
+                            validationErrors = validationErrors.filter { it != "ISBN belum diisi" }
+                        }
+                    }
                 },
                 keyboardType = KeyboardType.Number,
+                errorMessage = if (validationErrors.contains("ISBN belum diisi")) "ISBN harus diisi" else null
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -257,9 +308,15 @@ fun EntryBookScreen(
             BookTextField(
                 label = "Sinopsis",
                 value = viewModel.synopsis,
-                onValueChange = { viewModel.synopsis = it },
+                onValueChange = { newValue ->
+                    viewModel.synopsis = newValue
+                    if (newValue.isNotBlank()) {
+                        validationErrors = validationErrors.filter { it != "Sinopsis belum diisi" }
+                    }
+                },
                 maxLines = 6,
-                modifier = Modifier.height(120.dp)
+                modifier = Modifier.height(120.dp),
+                errorMessage = if (validationErrors.contains("Sinopsis belum diisi")) "Sinopsis harus diisi" else null
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -267,17 +324,31 @@ fun EntryBookScreen(
             BookTextField(
                 label = "Genre",
                 value = viewModel.genreInput,
-                onValueChange = { viewModel.genreInput = it },
+                onValueChange = { newValue ->
+                    if (newValue.isEmpty() || newValue.matches(Regex("^[a-zA-Z\\s]*$"))) {
+                        viewModel.genreInput = newValue
+                        if (newValue.isNotEmpty() && newValue.matches(Regex("^[a-zA-Z\\s]*$"))) {
+                            validationErrors = validationErrors.filter { it != "Genre belum ditambahkan" }
+                        }
+                    }
+                },
                 trailingIcon = {
                     IconButton(onClick = {
-                        if (viewModel.genreInput.isNotBlank()) {
+                        if (viewModel.genreInput.isNotBlank() && viewModel.genreInput.matches(Regex("^[a-zA-Z\\s]*$"))) {
                             viewModel.genres.add(viewModel.genreInput.trim())
                             viewModel.genreInput = ""
+                            if (viewModel.genres.isNotEmpty()) {
+                                validationErrors = validationErrors.filter { it != "Genre belum ditambahkan" }
+                            }
                         }
                     }) {
                         Icon(Icons.Default.Add, contentDescription = "Tambah Genre")
                     }
                 },
+                keyboardType = KeyboardType.Text,
+                errorMessage = if (viewModel.genreInput.isNotEmpty() && !viewModel.genreInput.matches(Regex("^[a-zA-Z\\s]*$"))) {
+                    "Hanya huruf dan spasi yang diperbolehkan"
+                } else if (validationErrors.contains("Genre belum ditambahkan")) "Genre harus ditambahkan" else null
             )
 
             if (viewModel.genres.isNotEmpty()) {
@@ -299,6 +370,9 @@ fun EntryBookScreen(
                                         .size(18.dp)
                                         .clickable {
                                             viewModel.genres.remove(g)
+                                            if (viewModel.genres.isEmpty()) {
+                                                validationErrors = validationErrors + "Genre belum ditambahkan"
+                                            }
                                         }
                                 )
                             }
@@ -311,11 +385,11 @@ fun EntryBookScreen(
 
             Button(
                 onClick = {
-                    if (viewModel.isValid()) {
+                    validationErrors = viewModel.validateForm()
+                    if (validationErrors.isEmpty()) {
                         showConfirmDialog = true
                     } else {
-                        Toast.makeText(context, "Mohon lengkapi semua data.", Toast.LENGTH_SHORT)
-                            .show()
+                        Toast.makeText(context, "Mohon lengkapi data yang kurang atau perbaiki kesalahan.", Toast.LENGTH_SHORT).show()
                     }
                 },
                 modifier = Modifier
@@ -349,11 +423,11 @@ fun EntryBookScreen(
                                 ).show()
                                 navController.navigate("detail/$newBookId")
                             },
-                            onError = {
+                            onError = { errorMessage ->
                                 Toast.makeText(
                                     context,
-                                    "Terjadi kesalahan saat menambahkan buku!",
-                                    Toast.LENGTH_SHORT
+                                    "Gagal menyimpan: ${errorMessage ?: "Alasan tidak diketahui"}",
+                                    Toast.LENGTH_LONG
                                 ).show()
                             },
                             context = context
@@ -370,7 +444,6 @@ fun EntryBookScreen(
                 }
             )
         }
-
     }
 
     if (showDatePicker) {
@@ -381,6 +454,7 @@ fun EntryBookScreen(
                     datePickerState.selectedDateMillis?.let {
                         val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                         viewModel.publishedDate = formatter.format(Date(it))
+                        validationErrors = validationErrors.filter { it != "Tanggal terbit belum diisi" }
                     }
                     showDatePicker = false
                 }) {
