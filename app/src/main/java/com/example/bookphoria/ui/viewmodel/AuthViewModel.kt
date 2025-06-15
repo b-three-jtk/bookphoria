@@ -44,7 +44,11 @@ class AuthViewModel @Inject constructor(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        validateLoginInput(email, password)
+        val validationErrors = validateLoginForm(email, password)
+        if (validationErrors.isNotEmpty()) {
+            onError(validationErrors.joinToString(", ") { it })
+            return
+        }
 
         viewModelScope.launch {
             try {
@@ -81,13 +85,27 @@ class AuthViewModel @Inject constructor(
         onError: (String) -> Unit
     ) {
         viewModelScope.launch {
-            _isLoading.value = true
-            val result = authRepository.register(name, email, password)
-            _isLoading.value = false
-            result.onSuccess {
-                onSuccess()
-            }.onFailure { exception ->
-                onError(exception.message ?: "Registration failed")
+            try {
+                _isLoading.value = true
+                val validationErrors = validateLoginForm(email, password) +
+                        listOfNotNull(if (name.isBlank()) "Username belum diisi" else null)
+                if (validationErrors.isNotEmpty()) {
+                    onError(validationErrors.joinToString(", "))
+                    _isLoading.value = false
+                    return@launch
+                }
+
+                val result = authRepository.register(name, email, password)
+                result.onSuccess {
+                    onSuccess()
+                }.onFailure { exception ->
+                    onError(exception.message ?: "Registrasi gagal")
+                }
+            } catch (e: Exception) {
+                Log.e("RegisterError", "Error during register: ${e.message}")
+                onError(e.message ?: "Registrasi gagal")
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -120,11 +138,28 @@ class AuthViewModel @Inject constructor(
         return userPreferences.getSavedCredentials()
     }
 
-    private fun validateLoginInput(email: String, password: String) {
-        val emailError = InputValidator.validateEmail(email)
-        val passwordError = InputValidator.validatePassword(password)
-        _emailError.value = emailError
-        _passwordError.value = passwordError
+    fun validateLoginForm(email: String, password: String): List<String> {
+        val errors = mutableListOf<String>()
+        if (email.isBlank()) errors.add("Email belum diisi")
+        else if (!isValidEmail(email)) errors.add("Email tidak valid")
+        if (password.isBlank()) errors.add("Password belum diisi")
+        else if (!isValidPassword(password)) errors.add("Password tidak valid")
+        return errors
     }
 
+    fun isValidEmail(email: String): Boolean {
+        val emailRegex = "^[A-Za-z0-9+_.-]+@([a-zA-Z0-9.-]+\\.)+[a-zA-Z]{2,}$".toRegex()
+        val allowedDomains = listOf(
+            "gmail.com", "yahoo.com", "outlook.com", "hotmail.com",
+            "aol.com", "icloud.com", "protonmail.com", "polban.ac.id"
+        )
+        if (!email.matches(emailRegex)) return false
+        val domain = email.substringAfter("@")
+        return allowedDomains.contains(domain) || domain.matches("^[a-zA-Z0-9.-]+\\.edu\\.[a-zA-Z]{2,}$".toRegex())
+    }
+
+    fun isValidPassword(password: String): Boolean {
+        val passwordRegex = "^(?=.*[0-9])(?=.*[!@#\$%^&*])(?=.*[A-Za-z]).{8,}$".toRegex()
+        return password.matches(passwordRegex)
+    }
 }
