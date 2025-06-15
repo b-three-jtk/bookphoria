@@ -199,26 +199,59 @@ fun CreateCollectionDialog(
     var imageFile by remember { mutableStateOf<File?>(null) }
     var imagePath by remember { mutableStateOf<String?>("") }
 
-    // Handle UI state changes
+    var showAlert by remember { mutableStateOf(false) }
+    var alertMessage by remember { mutableStateOf("") }
+    var isSuccess by remember { mutableStateOf(false) }
+
     LaunchedEffect(uiState) {
         when (uiState) {
             is ShelfUiState.Success -> {
-                Toast.makeText(
-                    context,
-                    "Shelf berhasil dibuat!",
-                    Toast.LENGTH_SHORT
-                ).show()
-                onSaveSuccess()
-                onDismiss()
+                alertMessage = "Shelf berhasil dibuat!"
+                isSuccess = true
+                showAlert = true
                 viewModel.resetState()
             }
             is ShelfUiState.Error -> {
                 val errorState = uiState as ShelfUiState.Error
-                Toast.makeText(context, errorState.message, Toast.LENGTH_LONG).show()
+                alertMessage = errorState.message
+                isSuccess = false
+                showAlert = true
                 viewModel.resetState()
             }
             else -> {}
         }
+    }
+    if (showAlert) {
+        AlertDialog(
+            onDismissRequest = {
+                showAlert = false
+                if (isSuccess) {
+                    onSaveSuccess()
+                    onDismiss() // Tutup dialog utama setelah alert sukses
+                }
+            },
+            title = {
+                Text(text = if (isSuccess) "Berhasil" else "Gagal")
+            },
+            text = {
+                Text(text = alertMessage)
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showAlert = false
+                        if (isSuccess) {
+                            onSaveSuccess()
+                            onDismiss() // Tutup dialog utama setelah alert sukses
+                        }
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            containerColor = SoftCream,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 
     val imageLauncher = rememberLauncherForActivityResult(
