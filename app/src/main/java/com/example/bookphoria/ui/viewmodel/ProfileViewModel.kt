@@ -55,7 +55,6 @@ class ProfileViewModel @Inject constructor(
                 Log.d("ProfileViewModel", "Fetched userId: $userId")
                 if (userId != null) {
                     val user = userRepository.getUserById(userId)
-                    Log.d("ProfileViewModel", "Fetched user: id=${user?.id}, username=${user?.username}, email=${user?.email}, profilePicture=${user?.profilePicture}")
                     _userData.value = user
                 } else {
                     _error.value = "User not logged in"

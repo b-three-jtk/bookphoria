@@ -64,6 +64,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.ui.platform.LocalContext
 import com.example.bookphoria.data.remote.api.UserWrapperResponse
 import com.example.bookphoria.ui.components.LoadingState
+import com.example.bookphoria.ui.components.NotFoundState
 import com.example.bookphoria.ui.components.SearchBar
 import com.example.bookphoria.ui.theme.SoftCream
 import com.example.bookphoria.ui.theme.SoftOrange
@@ -97,10 +98,6 @@ fun FriendListContent(
         }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.loadFriends()
-    }
-
     if (isLoading) {
         LoadingState()
         return
@@ -111,22 +108,7 @@ fun FriendListContent(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                val composition by rememberLottieComposition(
-                    LottieCompositionSpec.RawRes(R.raw.no_data)
-                )
-                LottieAnimation(
-                    composition = composition,
-                    iterations = LottieConstants.IterateForever,
-                    modifier = Modifier.size(200.dp)
-                )
-                Text(
-                    text = "Kamu tidak punya teman:(",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-            }
+            NotFoundState(caption = "Tidak ada teman untuk ditampilkan")
             Box(
                 modifier = Modifier
                     .fillMaxSize()

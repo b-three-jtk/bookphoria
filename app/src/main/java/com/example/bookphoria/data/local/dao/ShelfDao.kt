@@ -48,7 +48,7 @@ interface ShelfDao {
     suspend fun  getShelfById(id: Int): String?
 
     @Query("DELETE FROM shelves WHERE id = :shelfId")
-    suspend fun deleteShelf(shelfId: Int)
+    suspend fun deleteShelf(shelfId:Int)
 
     @Query("UPDATE shelves SET name = :name, description = :description, imagePath = :imagePath WHERE id = :id")
     suspend fun update(name: String, description: String?, imagePath: String?, id: Int)

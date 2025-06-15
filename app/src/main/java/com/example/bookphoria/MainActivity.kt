@@ -23,6 +23,7 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.bookphoria.ui.AppNavHost
 import com.example.bookphoria.ui.theme.BookPhoriaTheme
@@ -31,6 +32,8 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private lateinit var navController: NavHostController
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         handleDeepLink(intent)
@@ -41,17 +44,17 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
         handleDeepLink(intent)
     }
 
     private fun handleDeepLink(intent: Intent) {
         if (intent?.action == Intent.ACTION_VIEW) {
             intent.data?.let { uri ->
-                if (uri.host == "reset-password") {
-                    DeepLinkHolder.apply {
-                        token = uri.getQueryParameter("token") ?: ""
-                        email = uri.getQueryParameter("email") ?: ""
-                        shouldNavigate = true
+                if (uri.toString().startsWith("bookphoria://login")) {
+                    navController.navigate("login") {
+                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             }

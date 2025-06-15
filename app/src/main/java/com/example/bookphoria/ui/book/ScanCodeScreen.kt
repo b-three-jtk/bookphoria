@@ -2,7 +2,6 @@ package com.example.bookphoria.ui.book
 
 import android.util.Log
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -26,11 +25,14 @@ import com.example.bookphoria.BarcodeScannerHandler
 import com.google.mlkit.vision.common.InputImage
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import com.example.bookphoria.toBitmap
 
 @androidx.camera.core.ExperimentalGetImage
 @Composable
@@ -124,39 +126,52 @@ private fun CameraPreview(
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
 
-            imageAnalysis.setAnalyzer(
-                ContextCompat.getMainExecutor(context),
-                { imageProxy ->
-                    val mediaImage = imageProxy.image
-                    if (mediaImage != null) {
-                        val image = InputImage.fromMediaImage(
-                            mediaImage,
-                            imageProxy.imageInfo.rotationDegrees
-                        )
+            imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(context)) { imageProxy ->
+                val mediaImage = imageProxy.image
+                if (mediaImage != null) {
+                    val rotationDegrees = imageProxy.imageInfo.rotationDegrees
+                    val bitmap = mediaImage.toBitmap()
 
-                        BarcodeScannerHandler.processImage(image) { result ->
-                            if (result != null) {
-                                onScanResult(result)
-                            }
-                            imageProxy.close()
+                    // Crop area: center 60% width, 20% height
+                    val width = bitmap.width
+                    val height = bitmap.height
+                    val cropWidth = (width * 0.6).toInt()
+                    val cropHeight = (height * 0.2).toInt()
+                    val cropX = (width - cropWidth) / 2
+                    val cropY = (height - cropHeight) / 2
+
+                    val croppedBitmap = try {
+                        Bitmap.createBitmap(bitmap, cropX, cropY, cropWidth, cropHeight)
+                    } catch (e: Exception) {
+                        Log.e("CameraPreview", "Crop failed: ${e.message}")
+                        imageProxy.close()
+                        return@setAnalyzer
+                    }
+
+                    val inputImage = InputImage.fromBitmap(croppedBitmap, rotationDegrees)
+
+                    BarcodeScannerHandler.processImage(inputImage) { result ->
+                        if (result != null) {
+                            onScanResult(result)
                         }
-                    } else {
                         imageProxy.close()
                     }
+                } else {
+                    imageProxy.close()
                 }
-            )
+            }
 
             try {
                 cameraProvider.unbindAll()
-                val camera = cameraProvider.bindToLifecycle(
+                cameraProvider.bindToLifecycle(
                     lifecycleOwner,
                     CameraSelector.DEFAULT_BACK_CAMERA,
                     preview,
                     imageAnalysis
                 )
-
             } catch (e: Exception) {
                 Log.e("CameraPreview", "Use case binding failed", e)
+                Toast.makeText(context, "Camera binding failed", Toast.LENGTH_SHORT).show()
             }
         }, ContextCompat.getMainExecutor(context))
     }
