@@ -26,11 +26,19 @@ import com.example.bookphoria.BarcodeScannerHandler
 import com.google.mlkit.vision.common.InputImage
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.SystemClock
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.geometry.Offset
 
 @androidx.camera.core.ExperimentalGetImage
 @Composable
@@ -98,7 +106,6 @@ private fun CameraPreview(
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
 
-    // Configure PreviewView
     val previewView = remember {
         PreviewView(context).apply {
             implementationMode = PreviewView.ImplementationMode.COMPATIBLE
@@ -106,11 +113,12 @@ private fun CameraPreview(
         }
     }
 
-    // Camera setup
     AndroidView(
         factory = { previewView },
         modifier = Modifier.fillMaxSize()
     )
+
+    val lastScanTime = remember { mutableStateOf(SystemClock.elapsedRealtime()) }
 
     LaunchedEffect(Unit) {
         cameraProviderFuture.addListener({
@@ -125,57 +133,85 @@ private fun CameraPreview(
                 .build()
 
             imageAnalysis.setAnalyzer(
-                ContextCompat.getMainExecutor(context),
-                { imageProxy ->
-                    val mediaImage = imageProxy.image
-                    if (mediaImage != null) {
-                        val image = InputImage.fromMediaImage(
-                            mediaImage,
-                            imageProxy.imageInfo.rotationDegrees
-                        )
+                ContextCompat.getMainExecutor(context)
+            ) { imageProxy ->
+                val currentTime = SystemClock.elapsedRealtime()
+                val debounceTime = 4000L
 
-                        BarcodeScannerHandler.processImage(image) { result ->
-                            if (result != null) {
-                                onScanResult(result)
-                            }
-                            imageProxy.close()
+                val mediaImage = imageProxy.image
+                if (mediaImage != null && currentTime - lastScanTime.value > debounceTime) {
+                    val image = InputImage.fromMediaImage(
+                        mediaImage,
+                        imageProxy.imageInfo.rotationDegrees
+                    )
+
+                    BarcodeScannerHandler.processImage(image) { result ->
+                        if (result != null) {
+                            lastScanTime.value = currentTime
+                            onScanResult(result)
                         }
-                    } else {
                         imageProxy.close()
                     }
+                } else {
+                    imageProxy.close()
                 }
-            )
+            }
 
             try {
                 cameraProvider.unbindAll()
-                val camera = cameraProvider.bindToLifecycle(
+                cameraProvider.bindToLifecycle(
                     lifecycleOwner,
                     CameraSelector.DEFAULT_BACK_CAMERA,
                     preview,
                     imageAnalysis
                 )
-
             } catch (e: Exception) {
                 Log.e("CameraPreview", "Use case binding failed", e)
             }
         }, ContextCompat.getMainExecutor(context))
     }
 
-    // Overlay UI with rectangular barcode scanner frame
     Box(modifier = Modifier.fillMaxSize()) {
+        val scanBoxHeight = 120.dp
+        val scanBoxWidth = 280.dp
+        val lineY = remember { Animatable(0f) }
+
+        LaunchedEffect(Unit) {
+            while (true) {
+                lineY.animateTo(
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 1500, easing = LinearEasing),
+                        repeatMode = RepeatMode.Reverse
+                    )
+                )
+            }
+        }
+
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Changed from square to rectangular shape for barcode scanning
             Box(
                 modifier = Modifier
-                    .width(280.dp)
-                    .height(120.dp)
+                    .width(scanBoxWidth)
+                    .height(scanBoxHeight)
                     .border(2.dp, Color.Red, RoundedCornerShape(8.dp))
-            )
+            ) {
+                // Garis merah animasi
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val y = size.height * lineY.value
+                    drawLine(
+                        color = Color.Red,
+                        start = Offset(0f, y),
+                        end = Offset(size.width, y),
+                        strokeWidth = 3f
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
             Button(
                 onClick = onCancel,
