@@ -20,3 +20,8 @@ data class ShelfDetailNetworkModel(
     @SerializedName("image") val image: String?,
     @SerializedName("books") val books: List<BookNetworkModel>
 )
+
+data class ShelfResponse(
+    @SerializedName("message")
+    val message: String
+)

@@ -5,6 +5,7 @@ import com.example.bookphoria.data.remote.responses.AddBookToShelfResponse
 import com.example.bookphoria.data.remote.responses.AddShelfResponse
 import com.example.bookphoria.data.remote.responses.BookIdRequest
 import com.example.bookphoria.data.remote.responses.ShelfDetailNetworkModel
+import com.example.bookphoria.data.remote.responses.ShelfResponse
 import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import okhttp3.MultipartBody
@@ -34,7 +35,7 @@ interface ShelfApiServices {
         @Header("Authorization") token: String,
         @Path("shelf_id") shelfId: String,
         @Path("book_id") bookId: String
-    ): Response<JsonObject>
+    ): ShelfResponse
 
     @DELETE("shelves/{shelf_id}")
     suspend fun deleteShelf(

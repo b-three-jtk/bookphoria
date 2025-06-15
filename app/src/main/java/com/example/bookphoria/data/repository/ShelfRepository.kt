@@ -9,6 +9,7 @@ import com.example.bookphoria.data.local.AppDatabase
 import com.example.bookphoria.data.local.dao.BookDao
 import com.example.bookphoria.data.local.dao.ShelfDao
 import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
+import com.example.bookphoria.data.local.entities.ShelfBookCrossRef
 import com.example.bookphoria.data.local.entities.ShelfEntity
 import com.example.bookphoria.data.local.entities.ShelfWithBooks
 import com.example.bookphoria.data.local.entities.UserBookCrossRef
@@ -190,6 +191,44 @@ class ShelfRepository @Inject constructor(
         } catch (e: Exception) {
             Log.e("ShelfRepository", "Error adding book: ${e.message}")
             false
+        }
+    }
+
+    suspend fun deleteBookFromShelf(shelfId: Int, bookId: Int): Boolean {
+        try {
+            val accessToken = userPreferences.getAccessToken().first()
+            if (accessToken.isNullOrEmpty()) {
+                Log.e("ShelfRepository", "Access token is missing")
+                throw IllegalStateException("Access token is missing")
+            }
+
+            val bookServerId = bookDao.getBookServerIdById(bookId)
+                ?: throw IllegalStateException("Book server ID not found for bookId: $bookId")
+            val shelfServerId = shelfDao.getShelfById(shelfId)
+                ?: throw IllegalStateException("Shelf server ID not found for shelfId: $shelfId")
+
+            val shelfResponse = api.deleteBookFromShelf(
+                token = "Bearer $accessToken",
+                shelfId = shelfServerId,
+                bookId = bookServerId
+            )
+
+            Log.d("ShelfRepository", "Request: shelfId=$shelfId, bookId=$bookId, response=$shelfResponse, rawMessage=${shelfResponse.message}")
+
+            // Check if message matches or handle null case
+            if (shelfResponse.message == "Buku berhasil dihapus dari rak.") {
+                shelfDao.removeBookFromShelf(ShelfBookCrossRef(shelfId = shelfId, bookId = bookId))
+                return true
+            } else {
+                Log.e("ShelfRepository", "Failed to remove book: ${shelfResponse.message ?: "No message returned"}")
+                throw Exception("Failed to remove book: ${shelfResponse.message ?: "No message returned"}")
+            }
+        } catch (e: IOException) {
+            Log.e("ShelfRepository", "Network error removing book: ${e.message}")
+            throw Exception("Network error: ${e.message}", e)
+        } catch (e: Exception) {
+            Log.e("ShelfRepository", "Error removing book: ${e.message}")
+            throw e
         }
     }
 
