@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.bookphoria.data.local.dao.BookDao
+import com.example.bookphoria.data.local.dao.ReadingLogDao
 import com.example.bookphoria.data.local.dao.ShelfDao
 import com.example.bookphoria.data.local.dao.UserDao
 import com.example.bookphoria.data.local.entities.AuthorEntity
@@ -14,6 +15,7 @@ import com.example.bookphoria.data.local.entities.BookAuthorCrossRef
 import com.example.bookphoria.data.local.entities.BookEntity
 import com.example.bookphoria.data.local.entities.BookGenreCrossRef
 import com.example.bookphoria.data.local.entities.GenreEntity
+import com.example.bookphoria.data.local.entities.ReadingLogEntity
 import com.example.bookphoria.data.local.entities.ShelfBookCrossRef
 import com.example.bookphoria.data.local.entities.ShelfEntity
 import com.example.bookphoria.data.local.entities.UserBookCrossRef
@@ -31,6 +33,7 @@ import kotlinx.coroutines.CoroutineScope
     BookGenreCrossRef::class,
     UserFriendCrossRef::class,
     ShelfBookCrossRef::class,
+    ReadingLogEntity::class,
     UserBookCrossRef::class], version = 4,
     exportSchema = false
 )
@@ -39,6 +42,7 @@ abstract class AppDatabase: RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun bookDao(): BookDao
     abstract fun ShelfDao(): ShelfDao
+    abstract fun ReadingLogDao(): ReadingLogDao
 
     companion object {
         @Volatile

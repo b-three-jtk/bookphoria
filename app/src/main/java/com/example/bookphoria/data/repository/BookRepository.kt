@@ -6,6 +6,8 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import com.example.bookphoria.data.local.dao.BookDao
+import com.example.bookphoria.data.local.dao.ReadingLogDao
+import com.example.bookphoria.data.local.dao.ReadingSummary
 import com.example.bookphoria.data.local.entities.AuthorEntity
 import com.example.bookphoria.data.local.entities.BookAuthorCrossRef
 import com.example.bookphoria.data.local.entities.BookEntity
@@ -13,6 +15,7 @@ import com.example.bookphoria.data.local.entities.BookGenreCrossRef
 import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.data.local.entities.FullBookDataWithUserInfo
 import com.example.bookphoria.data.local.entities.GenreEntity
+import com.example.bookphoria.data.local.entities.ReadingLogEntity
 import com.example.bookphoria.data.local.entities.UserBookCrossRef
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.BookApiService
@@ -33,12 +36,14 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import javax.inject.Inject
 
 class BookRepository @Inject constructor(
     private val bookDao: BookDao,
     private val apiService: BookApiService,
-    private val userPreferences: UserPreferences
+    private val userPreferences: UserPreferences,
+    private val readingLogDao: ReadingLogDao,
 ) {
     suspend fun addBookFromApi(request: AddBookRequest): Int {
         val accessToken = userPreferences.getAccessToken().first()
@@ -365,7 +370,21 @@ class BookRepository @Inject constructor(
     }
 
     suspend fun updateReadingProgress(crossRef: UserBookCrossRef) {
+        val existing = bookDao.getUserBookCrossRef(crossRef.userId, crossRef.bookId)
+        val delta = crossRef.pagesRead - (existing?.pagesRead ?: 0)
+
         bookDao.insertUserBookCrossRef(crossRef)
+
+        if (delta > 0) {
+            val today = LocalDate.now().toString()
+            val log = ReadingLogEntity(
+                userId = crossRef.userId,
+                bookId = crossRef.bookId,
+                date = today,
+                pagesRead = delta
+            )
+            readingLogDao.insert(log)
+        }
     }
 
     suspend fun getReadingProgress(userId: Int, bookId: Int): Int? {
@@ -595,4 +614,24 @@ class BookRepository @Inject constructor(
             Log.d("BookRepository", "Failed to delete user book: ${e.message}")
         }
     }
+    fun getReadingSummary(userId: Int, startDate: String, endDate: String): Flow<List<ReadingSummary>> {
+        return readingLogDao.getPagesReadPerDay(userId, startDate, endDate)
+    }
+
+    suspend fun insertReadingLog(log: ReadingLogEntity) {
+        readingLogDao.insert(log)
+    }
+
+    suspend fun logReadingProgress(userId: Int, bookId: Int, newPagesRead: Int) {
+        val today = LocalDate.now().toString() // Format yyyy-MM-dd
+        val log = ReadingLogEntity(
+            userId = userId,
+            bookId = bookId,
+            date = today,
+            pagesRead = newPagesRead
+        )
+        readingLogDao.insert(log)
+    }
+
+
 }

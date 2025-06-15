@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.example.bookphoria.data.local.AppDatabase
 import com.example.bookphoria.data.local.dao.BookDao
+import com.example.bookphoria.data.local.dao.ReadingLogDao
 import com.example.bookphoria.data.local.dao.ShelfDao
 import com.example.bookphoria.data.local.dao.UserDao
 import dagger.Module
@@ -40,5 +41,10 @@ object DatabaseModule {
     @Provides
     fun provideShelfDao(database: AppDatabase): ShelfDao {
         return database.ShelfDao()
+    }
+
+    @Provides
+    fun provideReadingLogDao(database: AppDatabase): ReadingLogDao {
+        return database.ReadingLogDao()
     }
 }
