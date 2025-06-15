@@ -1,12 +1,12 @@
 package com.example.bookphoria.ui.profile
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -55,13 +55,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import coil.compose.AsyncImage
 import com.example.bookphoria.R
-import com.example.bookphoria.data.remote.responses.BookNetworkModel
 import com.example.bookphoria.data.remote.responses.BookStatusNetworkModel
+import com.example.bookphoria.data.remote.responses.ShelfDetailNetworkModel
 import com.example.bookphoria.data.remote.responses.ShelfNetworkModel
 import com.example.bookphoria.ui.book.BookSearchItem
 import com.example.bookphoria.ui.components.ConfirmationDialog
@@ -72,7 +71,6 @@ import com.example.bookphoria.ui.theme.SubTitleExtraSmall
 import com.example.bookphoria.ui.theme.TitleExtraSmall
 import com.example.bookphoria.ui.viewmodel.FriendViewModel
 import com.example.bookphoria.ui.viewmodel.ProfileFriendViewModel
-import com.example.bookphoria.ui.viewmodel.isContains
 
 @Composable
 fun ProfileFriendScreen(
@@ -94,9 +92,16 @@ fun ProfileFriendScreen(
     val friends by viewModel.friends.collectAsState()
     val friendBooks by viewModel.friendBooks.collectAsState()
     val friendReadlist by viewModel.shelfBooks.collectAsState()
+    val userName by viewModel.userName.collectAsState()
 
     LaunchedEffect(userId) {
         viewModel.getFriendById(userId)
+        viewModel.getUserId()
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.getFriendById(userId)
+        viewModel.getUserId()
     }
 
     if (friendDetail == null) {
@@ -109,7 +114,6 @@ fun ProfileFriendScreen(
             .fillMaxSize()
             .background(SoftCream)
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -161,7 +165,7 @@ fun ProfileFriendScreen(
             Row {
                 Button(
                     onClick = {
-                        if (!friends.any { it.username == friendDetail?.username }) {
+                        if (!friends.any { it.username == userName }) {
                             showRequestDialog = friendDetail!!.id
                         }
                     },
@@ -169,7 +173,7 @@ fun ProfileFriendScreen(
                         .wrapContentWidth(),
                     shape = RoundedCornerShape(20.dp),
                     colors =
-                    if (friends.isContains(friendDetail!!.username.orEmpty())) {
+                    if (friends.any { it.username == userName }) {
                         ButtonDefaults.buttonColors(containerColor = Color(0xFFE45758))
                     } else {
                         ButtonDefaults.buttonColors(containerColor = Color.White)
@@ -179,7 +183,8 @@ fun ProfileFriendScreen(
                     Row (
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (friends.any { it.username == friendDetail?.username }) {
+                        Log.d("ProfileFriendScreen", "Friends: $userName")
+                        if (friends.any { it.username == userName}) {
                             Text(
                                 text = "Friends",
                                 color = Color.White,
@@ -332,9 +337,9 @@ fun CollectionContent(books: List<BookStatusNetworkModel>, navController: NavCon
         } else {
             books.forEach { data ->
                 BookSearchItem(
-                    title = data.book.title ?: "Unknown Title",
-                    author = data.book.authors?.joinToString(", ") { it.name ?: "Unknown Author" } ?: "No Authors",
-                    imageUrl = data.book.cover ?: "",
+                    title = data.book.title,
+                    author = data.book.authors.joinToString(", ") { it.name },
+                    imageUrl = data.book.cover,
                     modifier = Modifier.padding(vertical = 8.dp),
                     onClick = {
                         navController.navigate("detail/search/${data.book.id}")
@@ -346,7 +351,7 @@ fun CollectionContent(books: List<BookStatusNetworkModel>, navController: NavCon
 }
 
 @Composable
-fun ReadlistContent(friendReadlist: List<ShelfNetworkModel>, navController: NavController) {
+fun ReadlistContent(friendReadlist: List<ShelfDetailNetworkModel>, navController: NavController) {
     Spacer(modifier = Modifier.height(10.dp))
     Column {
         friendReadlist.forEach { shelf ->
@@ -356,7 +361,7 @@ fun ReadlistContent(friendReadlist: List<ShelfNetworkModel>, navController: NavC
                 imageUrl = shelf.image,
                 modifier = Modifier.padding(vertical = 8.dp),
                 onClick = {
-                    navController.navigate("search")
+                    navController.navigate("shelf/${shelf.id}")
                 }
             )
         }

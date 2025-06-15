@@ -7,6 +7,7 @@ import com.example.bookphoria.data.local.entities.UserEntity
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.responses.BookNetworkModel
 import com.example.bookphoria.data.remote.responses.BookStatusNetworkModel
+import com.example.bookphoria.data.remote.responses.ShelfDetailNetworkModel
 import com.example.bookphoria.data.remote.responses.ShelfNetworkModel
 import com.example.bookphoria.data.remote.responses.UserNetworkModel
 import com.example.bookphoria.data.repository.FriendRepository
@@ -26,8 +27,8 @@ class ProfileFriendViewModel @Inject constructor(
     val friendDetail: StateFlow<UserEntity?> = _friendDetail
     private val _friendBooks = MutableStateFlow<List<BookStatusNetworkModel>>(emptyList())
     val friendBooks: StateFlow<List<BookStatusNetworkModel>> = _friendBooks
-    private val _shelfBooks = MutableStateFlow<List<ShelfNetworkModel>>(emptyList())
-    val shelfBooks: StateFlow<List<ShelfNetworkModel>> = _shelfBooks
+    private val _shelfBooks = MutableStateFlow<List<ShelfDetailNetworkModel>>(emptyList())
+    val shelfBooks: StateFlow<List<ShelfDetailNetworkModel>> = _shelfBooks
     private val _friends = MutableStateFlow<List<UserNetworkModel>>(emptyList())
     val friends: StateFlow<List<UserNetworkModel>> = _friends
     private val _friendCount = MutableStateFlow(0)
@@ -38,10 +39,13 @@ class ProfileFriendViewModel @Inject constructor(
     val listCount: StateFlow<Int> = _listCount
     private val _userId = MutableStateFlow(0)
     val userId: StateFlow<Int> = _userId
+    private val _userName = MutableStateFlow("")
+    val userName: StateFlow<String> = _userName
 
     fun getUserId() {
         viewModelScope.launch {
             _userId.value = userPreferences.getUserId().first()!!
+            _userName.value = userPreferences.getUserName().first()!!
         }
     }
 
@@ -49,6 +53,7 @@ class ProfileFriendViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val result = repository.getFriendById(friendId)
+                Log.d("FriendViewModel", "Result: $result")
                 _friendDetail.value = UserEntity(
                     id = 0,
                     username = result.username ?: "",
@@ -65,17 +70,7 @@ class ProfileFriendViewModel @Inject constructor(
                 _listCount.value = result.shelves.size ?: 0
             } catch (e: Exception) {
                 Log.e("FriendViewModel", "Error: ${e.message}")
-                _friendBooks.value = emptyList()
-                _shelfBooks.value = emptyList()
-                _friends.value = emptyList()
-                _friendCount.value = 0
-                _bookCount.value = 0
-                _listCount.value = 0
             }
         }
     }
-}
-
-fun List<UserNetworkModel>.isContains(userName: String): Boolean {
-    return any { it.username == userName }
 }
