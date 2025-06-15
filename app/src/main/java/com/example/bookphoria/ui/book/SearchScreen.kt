@@ -36,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -68,13 +69,21 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel(), navController: Na
     val query by viewModel.searchQuery.collectAsState()
     val results = viewModel.searchResults.collectAsLazyPagingItems()
 
-    val navQuery = navController.currentBackStackEntry?.arguments?.getString("query")?.takeIf { it.isNotEmpty() }
+    val savedQuery = navController
+        .previousBackStackEntry
+        ?.savedStateHandle
+        ?.getLiveData<String>("search_query")
+        ?.observeAsState()
 
-    LaunchedEffect(navQuery) {
-        navQuery?.let { queryFromNav ->
-            viewModel.setSearchQuery(queryFromNav)
+    LaunchedEffect(savedQuery?.value) {
+        savedQuery?.value?.let { scannedValue ->
+            viewModel.setSearchQuery(scannedValue)
+            navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.remove<String>("search_query")
         }
     }
+
 
     Column(
         modifier = Modifier
