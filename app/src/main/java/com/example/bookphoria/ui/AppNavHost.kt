@@ -35,6 +35,7 @@ import com.example.bookphoria.ui.profile.EditProfileScreen
 import com.example.bookphoria.ui.profile.FriendScreen
 import com.example.bookphoria.ui.profile.ProfileFriendScreen
 import com.example.bookphoria.ui.profile.ProfileScreen
+import com.example.bookphoria.ui.profile.RecapScreen
 import com.example.bookphoria.ui.profile.SettingScreen
 import com.example.bookphoria.ui.viewmodel.AuthViewModel
 import com.example.bookphoria.ui.viewmodel.BookViewModel
@@ -242,7 +243,9 @@ fun AppNavHost(
             composable("change") {
                 ChangePasswordScreen(viewModel = authViewModel, navController = navController)
             }
-
+            composable("recap") {
+                RecapScreen(navController = navController, viewModel = homeViewModel)
+            }
         }
     }
 }
