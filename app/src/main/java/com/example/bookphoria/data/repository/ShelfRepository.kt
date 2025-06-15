@@ -63,13 +63,15 @@ class ShelfRepository @Inject constructor(
                                 image = coverPart
                             )
              Log.d("ShelfRepository","Response: $response")
-            if (response.message == "Shelf created successfully") {
-                saveToLocalDatabase(
-                    name, desc, response.data.image, response.data.id)
-            }
-        } catch (e: Exception) {
-            Log.d("ShelfRepository","Unexpected error: ${e.message}")
-        }
+             if (response.message == "Shelf created successfully") {
+                 saveToLocalDatabase(name, desc, response.data.image, response.data.id)
+             } else {
+                 throw Exception(response.message ?: "Gagal membuat shelf")
+             }
+         } catch (e: Exception) {
+             Log.d("ShelfRepository", "Unexpected error: ${e.message}")
+             throw Exception("Gagal membuat shelf: ${e.message}")
+         }
     }
 
     private suspend fun saveToLocalDatabase(

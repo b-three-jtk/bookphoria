@@ -3,7 +3,9 @@ package com.example.bookphoria.ui.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bookphoria.data.local.dao.ReadingSummary
 import com.example.bookphoria.data.local.entities.FullBookDataWithUserInfo
+import com.example.bookphoria.data.local.entities.ReadingLogEntity
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.repository.AuthRepository
 import com.example.bookphoria.data.repository.BookRepository
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -37,6 +40,9 @@ class HomeViewModel @Inject constructor(
 
     private val _isLoadingBooks = MutableStateFlow(false)
     val isLoadingBooks = _isLoadingBooks
+
+    private val _readingSummary = MutableStateFlow<List<ReadingSummary>>(emptyList())
+    val readingSummary: StateFlow<List<ReadingSummary>> = _readingSummary
 
     fun loadUserProfile() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -72,4 +78,38 @@ class HomeViewModel @Inject constructor(
             Log.d("HomeViewModel", "Currently Reading: $_currentlyReading")
         }
     }
+
+    fun loadReadingSummary(startDate: String, endDate: String) {
+        viewModelScope.launch {
+            val userId = userPreferences.getUserId().first() ?: return@launch
+            repository.getReadingSummary(userId, startDate, endDate).collect {
+                Log.d("HomeViewModel", "Reading Summary: $it")
+                _readingSummary.value = it
+            }
+        }
+    }
+
+//    fun seedDummyLogs() {
+//        viewModelScope.launch {
+//            val userId = userPreferences.getUserId().firstOrNull() ?: return@launch
+//            val bookId = 1
+//
+//            val today = LocalDate.now()
+//            val logs = listOf(
+//                ReadingLogEntity(userId, bookId, today.minusDays(6).toString(), 10),
+//                ReadingLogEntity(userId, bookId, today.minusDays(5).toString(), 5),
+//                ReadingLogEntity(userId, bookId, today.minusDays(4).toString(), 7),
+//                ReadingLogEntity(userId, bookId, today.minusDays(3).toString(), 0),
+//                ReadingLogEntity(userId, bookId, today.minusDays(2).toString(), 8),
+//                ReadingLogEntity(userId, bookId, today.minusDays(1).toString(), 3),
+//                ReadingLogEntity(userId, bookId, today.toString(), 12),
+//            )
+//
+//            logs.forEach {
+//                repository.insertReadingLog(it)
+//            }
+//        }
+//    }
+
 }
+

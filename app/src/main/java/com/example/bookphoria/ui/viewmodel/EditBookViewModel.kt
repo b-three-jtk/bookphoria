@@ -44,6 +44,19 @@ class EditBookViewModel @Inject constructor(
     var imageFile by mutableStateOf<File?>(null)
     var serverId by mutableStateOf("")
 
+    fun validateForm(): List<String> {
+        val errors = mutableListOf<String>()
+        if (title.isBlank()) errors.add("Judul buku belum diisi")
+        if (publisher.isBlank()) errors.add("Penerbit belum diisi")
+        if (publishedDate.isBlank()) errors.add("Tanggal terbit belum diisi")
+        if (pages.isBlank()) errors.add("Jumlah halaman belum diisi")
+        if (isbn.isBlank()) errors.add("ISBN belum diisi")
+        if (synopsis.isBlank()) errors.add("Sinopsis belum diisi")
+        if (selectedAuthorIds.isEmpty()) errors.add("Penulis belum dipilih")
+        if (selectedGenreIds.isEmpty()) errors.add("Genre belum dipilih")
+        return errors
+    }
+
     fun loadBook(bookId: Int) {
         viewModelScope.launch {
             val bookEntity = bookRepository.getBookById(bookId)
@@ -74,25 +87,36 @@ class EditBookViewModel @Inject constructor(
         }
     }
 
-    fun updateBook(bookNetworkId: String, onSuccess: () -> Unit) {
+    fun updateBook(bookNetworkId: String, onSuccess: () -> Unit, onError: (String?) -> Unit = {}) {
         viewModelScope.launch {
-            val request = EditBookRequest(
-                id = bookNetworkId,
-                title = title,
-                publisher = publisher,
-                publishedDate = publishedDate,
-                synopsis = synopsis,
-                isbn = isbn,
-                pages = pages.toInt(),
-                cover = imageFile,
-                authors = selectedAuthorIds.toList(),
-                genres = selectedGenreIds.toList(),
-            )
-            Log.d("EditBookViewModel", "Request: $request")
-            bookRepository.updateBook(
-                request
-            )
-            onSuccess()
+            try {
+                // Validasi pages sebelum konversi
+                val pageCount = pages.toIntOrNull() ?: run {
+                    onError("Jumlah halaman tidak valid")
+                    return@launch
+                }
+
+                val request = EditBookRequest(
+                    id = bookNetworkId,
+                    title = title,
+                    publisher = publisher,
+                    publishedDate = publishedDate,
+                    synopsis = synopsis,
+                    isbn = isbn,
+                    pages = pageCount,
+                    cover = imageFile,
+                    authors = selectedAuthorIds.toList(),
+                    genres = selectedGenreIds.toList(),
+                )
+                Log.d("EditBookViewModel", "Request: $request")
+
+                // Panggil repository
+                bookRepository.updateBook(request)
+                onSuccess() // Jika tidak ada eksepsi, anggap sukses
+            } catch (e: Exception) {
+                Log.e("EditBookViewModel", "Error updating book", e)
+                onError("Terjadi kesalahan: ${e.message}")
+            }
         }
     }
 

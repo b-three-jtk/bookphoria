@@ -121,7 +121,7 @@ fun SettingScreen(
                             icon = Icons.Default.History,
                             title = "Riwayat Baca",
                             subtitle = "Lihat aktivitas membaca",
-                            onClick = { /* Handle history click */ }
+                            onClick = { navController.navigate("recap") }
                         )
                     }
                 }

@@ -37,6 +37,20 @@ class EntryBookViewModel @Inject constructor(
     val genres = mutableStateListOf<String>()
     var genreInput by mutableStateOf("")
 
+    // Fungsi validasi
+    fun validateForm(): List<String> {
+        val errors = mutableListOf<String>()
+        if (title.isBlank()) errors.add("Judul buku belum diisi")
+        if (publisher.isBlank()) errors.add("Penerbit belum diisi")
+        if (authors.isEmpty()) errors.add("Penulis belum ditambahkan")
+        if (publishedDate.isBlank()) errors.add("Tanggal terbit belum diisi")
+        if (pageCount.isBlank()) errors.add("Jumlah halaman belum diisi")
+        if (isbn.isBlank()) errors.add("ISBN belum diisi")
+        if (synopsis.isBlank()) errors.add("Sinopsis belum diisi")
+        if (genres.isEmpty()) errors.add("Genre belum ditambahkan")
+        return errors
+    }
+
     fun addBookToDatabase(
         onSuccess: (Int) -> Unit,
         onError: (Throwable) -> Unit,

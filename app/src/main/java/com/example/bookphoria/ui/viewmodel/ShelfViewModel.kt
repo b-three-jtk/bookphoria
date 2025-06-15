@@ -25,8 +25,14 @@ class ShelfViewModel @Inject constructor(
     val localShelves: Flow<List<ShelfEntity>> = database.ShelfDao().getAllShelves()
 
     fun createShelf(name: String, desc: String?, imageUri: String?, imageFile: File?) {
+        _uiState.value = ShelfUiState.Loading // Set ke Loading
         viewModelScope.launch {
-            repository.createShelf(name, desc, imageUri, imageFile)
+            try {
+                repository.createShelf(name, desc, imageUri, imageFile)
+                _uiState.value = ShelfUiState.Success // Set ke Success setelah sukses
+            } catch (e: Exception) {
+                _uiState.value = ShelfUiState.Error(e.message ?: "Gagal membuat shelf") // Set ke Error jika gagal
+            }
         }
     }
 
