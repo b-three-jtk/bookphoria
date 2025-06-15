@@ -8,11 +8,14 @@ import android.util.Log
 import com.example.bookphoria.data.local.AppDatabase
 import com.example.bookphoria.data.local.dao.BookDao
 import com.example.bookphoria.data.local.dao.ShelfDao
+import com.example.bookphoria.data.local.entities.BookWithGenresAndAuthors
 import com.example.bookphoria.data.local.entities.ShelfEntity
 import com.example.bookphoria.data.local.entities.ShelfWithBooks
+import com.example.bookphoria.data.local.entities.UserBookCrossRef
 import com.example.bookphoria.data.local.preferences.UserPreferences
 import com.example.bookphoria.data.remote.api.ShelfApiServices
 import com.example.bookphoria.data.remote.responses.BookIdRequest
+import com.example.bookphoria.data.remote.responses.ShelfDetailNetworkModel
 import com.google.gson.JsonObject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -225,5 +228,25 @@ class ShelfRepository @Inject constructor(
             Log.e("ShelfRepository", "Error deleting shelf: ${e.message}")
             false
         }
+    }
+
+    suspend fun getShelfById(shelfId: String): ShelfDetailNetworkModel? {
+        try {
+            val token = userPreferences.getAccessToken().first()
+
+            return api.getShefById(
+                token = "Bearer $token",
+                shelfId = shelfId
+            )
+        } catch (e: Exception) {
+            Log.e("ShelfRepository", "Error getting shelf by ID: ${e.message}")
+            return null
+        }
+    }
+
+    suspend fun getBookById(bookId: String): UserBookCrossRef? {
+        val localID = bookDao.getBookIdByServerId(bookId)
+        val userId = userPreferences.getUserId().first() ?: throw IllegalStateException("User ID is null")
+        return localID?.let { bookDao.getUserBookCrossRef(userId, it) }
     }
 }

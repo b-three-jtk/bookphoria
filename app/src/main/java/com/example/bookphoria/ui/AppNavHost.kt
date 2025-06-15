@@ -26,6 +26,7 @@ import com.example.bookphoria.ui.book.EntryBookScreen
 import com.example.bookphoria.ui.book.MyShelfScreen
 import com.example.bookphoria.ui.book.ScanCodeScreen
 import com.example.bookphoria.ui.book.SearchScreen
+import com.example.bookphoria.ui.book.ShelfDetailNetworkScreen
 import com.example.bookphoria.ui.book.ShelfDetailScreen
 import com.example.bookphoria.ui.book.YourBooksScreen
 import com.example.bookphoria.ui.home.MainScreen
@@ -46,6 +47,7 @@ import com.example.bookphoria.ui.viewmodel.HomeViewModel
 import com.example.bookphoria.ui.viewmodel.OnboardingViewModel
 import com.example.bookphoria.ui.viewmodel.ProfileFriendViewModel
 import com.example.bookphoria.ui.viewmodel.ProfileViewModel
+import com.example.bookphoria.ui.viewmodel.ShelfDetailNetworkViewModel
 import com.example.bookphoria.ui.viewmodel.ShelfDetailViewModel
 
 @OptIn(ExperimentalGetImage::class)
@@ -63,6 +65,7 @@ fun AppNavHost(
     val friendViewModel: FriendViewModel = hiltViewModel()
     val profileFriendViewModel: ProfileFriendViewModel = hiltViewModel()
     val profilViewModel: ProfileViewModel = hiltViewModel()
+    val ShelfDetailNetworkViewModel: ShelfDetailNetworkViewModel = hiltViewModel()
 
     val isOnboardingCompleteState = onboardingViewModel
         .isOnboardingComplete
@@ -236,6 +239,19 @@ fun AppNavHost(
                     userId = userId,
                     shelfId = shelfId,
                     viewModel = viewModel,
+                    navController = navController
+                )
+            }
+            composable(
+                route = "shelf/{shelfId}",
+                arguments = listOf(
+                    navArgument("shelfId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val shelfId = backStackEntry.arguments?.getString("shelfId") ?: ""
+                ShelfDetailNetworkScreen(
+                    shelfId = shelfId,
+                    viewModel = ShelfDetailNetworkViewModel,
                     navController = navController
                 )
             }

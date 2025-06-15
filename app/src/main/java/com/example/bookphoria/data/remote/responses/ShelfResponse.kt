@@ -12,3 +12,11 @@ data class ShelfNetworkModel(
     @SerializedName("desc") val desc: String,
     @SerializedName("image") val image: String?,
 )
+
+data class ShelfDetailNetworkModel(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String,
+    @SerializedName("desc") val desc: String,
+    @SerializedName("image") val image: String?,
+    @SerializedName("books") val books: List<BookNetworkModel>
+)
