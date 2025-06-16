@@ -421,7 +421,10 @@ fun EntryBookScreen(
                                     "Buku berhasil ditambahkan!",
                                     Toast.LENGTH_SHORT
                                 ).show()
-                                navController.navigate("detail/$newBookId")
+                                navController.navigate("detail/$newBookId"){
+                                    popUpTo("home"){inclusive = false } // Clear stack up to HomeScreen
+                                    launchSingleTop = true
+                                }
                             },
                             onError = { errorMessage ->
                                 Toast.makeText(
