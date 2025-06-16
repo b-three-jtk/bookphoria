@@ -531,6 +531,7 @@ fun CreateProgressDialog(
 ) {
     var currentPage by remember { mutableStateOf(currentProgress.toString())}
     var isError by remember { mutableStateOf(false) }
+    var showAlert by remember { mutableStateOf(false) }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
@@ -543,7 +544,7 @@ fun CreateProgressDialog(
             ) {
                 Text(
                     text = "Update Progress Baccan",
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 24.dp),
@@ -581,12 +582,20 @@ fun CreateProgressDialog(
 
                     Text("Halaman", style = MaterialTheme.typography.bodyMedium)
 
+                    var showAlert by remember { mutableStateOf(false) }
+
                     OutlinedTextField(
                         value = currentPage,
-                        onValueChange = { currentPage = it
-                            isError = it.toIntOrNull()?.let { num ->
-                                num > totalPages || num < 0
-                            } ?: false
+                        onValueChange = {
+                            val number = it.toIntOrNull()
+                            if (number == null && it.isNotEmpty()) {
+                                showAlert = true
+                                currentPage = ""   // Reset input
+                                isError = true
+                            } else {
+                                currentPage = it
+                                isError = number?.let { num -> num > totalPages || num < 0 } ?: false
+                            }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
@@ -604,11 +613,25 @@ fun CreateProgressDialog(
                             }
                         }
                     )
+
                     if (isError) {
                         Text(
                             text = "Halaman harus antara 0 dan $totalPages",
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    if (showAlert) {
+                        AlertDialog(
+                            onDismissRequest = { showAlert = false },
+                            confirmButton = {
+                                TextButton(onClick = { showAlert = false }) {
+                                    Text("OK")
+                                }
+                            },
+                            title = { Text("Input Tidak Valid") },
+                            text = { Text("Hanya angka yang diperbolehkan.") }
                         )
                     }
                 }
