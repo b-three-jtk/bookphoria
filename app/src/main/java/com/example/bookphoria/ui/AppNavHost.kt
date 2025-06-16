@@ -98,7 +98,7 @@ fun AppNavHost(
                 OnboardingScreen(
                     onFinished = {
                         onboardingViewModel.completeOnboarding()
-                        navController.navigate("register") {
+                        navController.navigate("login") {
                             popUpTo("onboarding") { inclusive = true }
                         }
                     }

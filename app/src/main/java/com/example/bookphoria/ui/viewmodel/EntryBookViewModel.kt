@@ -45,7 +45,11 @@ class EntryBookViewModel @Inject constructor(
         if (authors.isEmpty()) errors.add("Penulis belum ditambahkan")
         if (publishedDate.isBlank()) errors.add("Tanggal terbit belum diisi")
         if (pageCount.isBlank()) errors.add("Jumlah halaman belum diisi")
-        if (isbn.isBlank()) errors.add("ISBN belum diisi")
+        if (isbn.isBlank()) {
+            errors.add("ISBN belum diisi")
+        } else if (isbn.length != 11 && isbn.length != 13) {
+            errors.add("ISBN harus 11 atau 13 digit")
+        }
         if (synopsis.isBlank()) errors.add("Sinopsis belum diisi")
         if (genres.isEmpty()) errors.add("Genre belum ditambahkan")
         return errors

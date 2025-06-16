@@ -300,7 +300,11 @@ fun EntryBookScreen(
                     }
                 },
                 keyboardType = KeyboardType.Number,
-                errorMessage = if (validationErrors.contains("ISBN belum diisi")) "ISBN harus diisi" else null
+                errorMessage = when {
+                    validationErrors.contains("ISBN belum diisi") -> "ISBN harus diisi"
+                    validationErrors.contains("ISBN harus 11 atau 13 digit") -> "ISBN harus 11 atau 13 digit"
+                    else -> null
+                }
             )
 
             Spacer(modifier = Modifier.height(20.dp))
