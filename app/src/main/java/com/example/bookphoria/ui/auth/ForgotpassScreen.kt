@@ -152,7 +152,7 @@ fun ForgotpassScreen(viewModel: AuthViewModel, navController: NavController) {
             forgotPasswordState?.let { result ->
                 if (result.isSuccess) {
                     message = "Link reset telah dikirim ke $email"
-                    delay(10000L)
+                    delay(20000L)
                     navController.navigate("login") {
                         popUpTo(navController.graph.startDestinationId) { inclusive = false }
                         launchSingleTop = true
