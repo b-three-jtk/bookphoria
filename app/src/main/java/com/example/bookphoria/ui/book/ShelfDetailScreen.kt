@@ -2,6 +2,7 @@ package com.example.bookphoria.ui.book
 
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -69,6 +70,8 @@ fun ShelfDetailScreen(
     val addResult by viewModel.addBookResult.collectAsState()
     var showBookPicker by remember { mutableStateOf(false) }
     val deleteResult by viewModel.deleteResult.collectAsState()
+    val deleteBookResult by viewModel.deleteBookResult.collectAsState()
+    val errorState by viewModel.errorState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var showEditShelf by remember { mutableStateOf(false) }
     var shelfName by remember { mutableStateOf("") }
@@ -104,6 +107,7 @@ fun ShelfDetailScreen(
     LaunchedEffect(addResult) {
         addResult?.let {
             if (it.isSuccess) {
+                Toast.makeText(context, "Buku berhasil ditambahkan.", Toast.LENGTH_SHORT).show()
                 showBookPicker = false
             }
             delay(1500)
@@ -114,11 +118,30 @@ fun ShelfDetailScreen(
     LaunchedEffect(deleteResult) {
         deleteResult?.let {
             if (it.isSuccess) {
+                Toast.makeText(context, "Shelf berhasil dihapus.", Toast.LENGTH_SHORT).show()
                 navController.popBackStack() // kembali setelah hapus sukses
             } else {
                 Log.e("ShelfDelete", "Error: ${it.exceptionOrNull()}")
             }
             viewModel.resetDeleteResult()
+        }
+    }
+
+    LaunchedEffect(deleteBookResult) {
+        deleteBookResult?.let {
+            if (it.isSuccess) {
+                viewModel.resetDeleteBookResult()
+                viewModel.refreshShelf(userId, shelfId)
+            } else {
+                Toast.makeText(context, "Gagal menghapus buku: ${it.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    LaunchedEffect(errorState) {
+        errorState?.let { error ->
+            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+            viewModel.clearError()
         }
     }
 
@@ -254,6 +277,7 @@ fun ShelfDetailScreen(
             BookCollection(
                 books = shelf.books,
                 userId = userId,
+                shelfId = shelfId,
                 viewModel = viewModel,
                 navController = navController
             )
@@ -482,9 +506,11 @@ fun ShelfDetailScreen(
 fun BookCollection(
     books: List<BookEntity>,
     userId: Int,
+    shelfId: Int,
     viewModel: ShelfDetailViewModel,
     navController: NavController
 ) {
+    val context = LocalContext.current
     if (books.isEmpty()) {
         Box(
             modifier = Modifier
@@ -509,6 +535,7 @@ fun BookCollection(
         items(books, key = { it.id }) { book ->
             var authorName by remember { mutableStateOf("") }
             var isFinished by remember(book.id) { mutableStateOf(false) }
+            var showDeleteDialog by remember { mutableStateOf(false) }
 
             LaunchedEffect(book.id) {
                 try {
@@ -524,15 +551,67 @@ fun BookCollection(
                 }
             }
 
-            BookItem(
-                coverUrl = book.imageUrl,
-                title = book.title,
-                author = authorName,
-                isFinished = isFinished,
-                onClick = {
-                    navController.navigate("detail/${book.id}")
+            if (showDeleteDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDeleteDialog = false },
+                    title = { Text("Konfirmasi") },
+                    text = { Text("Apakah anda yakin untuk menghapus buku dari rak?") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showDeleteDialog = false
+                            viewModel.deleteBookFromShelf(shelfId = shelfId, book.id)
+                        }) {
+                            Text("Ya")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDeleteDialog = false }) {
+                            Text("Batal")
+                        }
+                    }
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { navController.navigate("detail/${book.id}") }
+            ) {
+                BookItem(
+                    coverUrl = book.imageUrl,
+                    title = book.title,
+                    author = authorName,
+                    isFinished = isFinished,
+                    onClick = { navController.navigate("detail/${book.id}") }
+                )
+                IconButton(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete book",
+                        tint = Color.Red
+                    )
                 }
-            )
+            }
+        }
+    }
+    LaunchedEffect(viewModel.deleteBookResult) {
+        viewModel.deleteBookResult.collect { result ->
+            result?.let {
+                if (it.isSuccess) {
+                    viewModel.resetDeleteBookResult()
+                    // Refresh shelf setelah penghapusan berhasil
+                    Toast.makeText(context, "Buku berhasil dihapus", Toast.LENGTH_SHORT).show()
+                    viewModel.refreshShelf(userId, shelfId)
+                } else {
+                    val errorMessage = viewModel.errorState.value ?: "Gagal menghapus buku"
+                    Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 }

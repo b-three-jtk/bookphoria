@@ -40,6 +40,9 @@ class ShelfDetailViewModel @Inject constructor(
     private val _deleteResult = MutableStateFlow<Result<Unit>?>(null)
     val deleteResult: StateFlow<Result<Unit>?> = _deleteResult
 
+    private val _deleteBookResult = MutableStateFlow<Result<Unit>?>(null)
+    val deleteBookResult: StateFlow<Result<Unit>?> = _deleteBookResult
+
     fun deleteShelf(shelfId: Int) {
         viewModelScope.launch {
             try {
@@ -60,6 +63,22 @@ class ShelfDetailViewModel @Inject constructor(
 
     fun resetDeleteResult() {
         _deleteResult.value = null
+    }
+
+    fun deleteBookFromShelf(shelfId: Int, bookId: Int) {
+        viewModelScope.launch {
+            try {
+                val success = repository.deleteBookFromShelf(shelfId, bookId)
+                if (success) {
+                    _deleteBookResult.value = Result.success(Unit)
+                } else {
+                    throw Exception("Gagal menghapus buku dari rak")
+                }
+            } catch (e: Exception) {
+                _errorState.value = "Gagal menghapus buku dari rak: ${e.message}"
+                _deleteBookResult.value = Result.failure(e)
+            }
+        }
     }
 
     fun loadShelfWithBooks(userId: Int, shelfId: Int) {
@@ -174,5 +193,9 @@ class ShelfDetailViewModel @Inject constructor(
 
     fun refreshShelf(userId: Int, shelfId: Int) {
         loadShelfWithBooks(userId, shelfId)
+    }
+
+    fun resetDeleteBookResult() {
+        _deleteBookResult.value = null
     }
 }
